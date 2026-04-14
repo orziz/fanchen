@@ -110,10 +110,24 @@
     return world.industryOrders;
   }
 
-  function canFulfillIndustryOrder(orderId) {
+  function getIndustryOrderIssues(orderId) {
     const order = getIndustryOrders().find((entry) => entry.id === orderId);
-    if (!order) return false;
-    return order.requirements.every((entry) => (app.findInventoryEntry(entry.itemId)?.quantity || 0) >= entry.quantity);
+    if (!order) return ["这张订单已经失效。"];
+    return order.requirements.flatMap((entry) => {
+      const current = app.findInventoryEntry(entry.itemId)?.quantity || 0;
+      if (current >= entry.quantity) return [];
+      const itemName = app.getItem(entry.itemId)?.name || entry.itemId;
+      return [`缺少${itemName} ${entry.quantity - current}件`];
+    });
+  }
+
+  function explainIndustryOrder(orderId) {
+    const issues = getIndustryOrderIssues(orderId);
+    return issues.length ? issues.join("；") : "货物齐备，可以交付。";
+  }
+
+  function canFulfillIndustryOrder(orderId) {
+    return getIndustryOrderIssues(orderId).length === 0;
   }
 
   function fulfillIndustryOrder(orderId) {
@@ -161,16 +175,51 @@
     });
   }
 
-  function canPurchaseProperty(propertyId) {
+  function getLocalProperties() {
+    const current = app.getCurrentLocation();
+    return PROPERTY_DEFS.filter((property) => property.locationTags.some((tag) => current.tags.includes(tag)));
+  }
+
+  function getPropertyPurchaseIssues(propertyId) {
     const game = app.getGame();
     const property = app.getPropertyDef(propertyId);
-    if (!property) return false;
-    if (!hasIndustryAccess(property.kind, property)) return false;
-    if (!property.locationTags.some((tag) => app.getCurrentLocation().tags.includes(tag))) return false;
-    if (game.player.money < property.cost) return false;
+    if (!property) return ["这处产业已经不存在。"];
+    const issues = [];
+    if (!property.locationTags.some((tag) => app.getCurrentLocation().tags.includes(tag))) {
+      issues.push("当前地点不提供这类产业");
+    }
+    if (!hasIndustryAccess(property.kind, property)) {
+      issues.push(`尚未打通${property.kind === "farm" ? "田产" : property.kind === "workshop" ? "工坊" : "铺面"}门路`);
+    }
+    if (game.player.money < property.cost) {
+      issues.push(`灵石不足，还差${property.cost - game.player.money}`);
+    }
     const deedItemId = DEED_ITEM_BY_KIND[property.kind];
-    if (deedItemId && !app.findInventoryEntry(deedItemId)) return false;
-    return true;
+    if (deedItemId && !app.findInventoryEntry(deedItemId)) {
+      issues.push(`缺少${app.getItem(deedItemId)?.name || "对应契据"}`);
+    }
+    return issues;
+  }
+
+  function explainPropertyPurchase(propertyId) {
+    const issues = getPropertyPurchaseIssues(propertyId);
+    return issues.length ? issues.join("；") : "条件齐备，可以购入。";
+  }
+
+  function canPurchaseProperty(propertyId) {
+    return getPropertyPurchaseIssues(propertyId).length === 0;
+  }
+
+  function getHarvestIssues(assetId) {
+    const asset = getAssets("farm").find((entry) => entry.id === assetId);
+    if (!asset || !asset.cropId) return ["这块田里还没有作物。"];
+    if (asset.daysRemaining > 0) return [`作物尚未成熟，还需${asset.daysRemaining}天`];
+    return [];
+  }
+
+  function explainHarvest(assetId) {
+    const issues = getHarvestIssues(assetId);
+    return issues.length ? issues.join("；") : "作物已熟，可以收成。";
   }
 
   function purchaseProperty(propertyId) {
@@ -240,13 +289,35 @@
   }
 
   function canCraftRecipe(recipeId) {
+    return getCraftRecipeIssues(recipeId).length === 0;
+  }
+
+  function getCraftRecipeIssues(recipeId) {
     const recipe = app.getRecipe(recipeId);
     const game = app.getGame();
-    if (!recipe) return false;
-    if (!getAssets(recipe.requiresPropertyKind).length) return false;
-    if (game.player.rankIndex < recipe.minRankIndex) return false;
-    if (game.player.money < recipe.cost) return false;
-    return recipe.inputs.every((input) => (app.findInventoryEntry(input.itemId)?.quantity || 0) >= input.quantity);
+    if (!recipe) return ["这张配方当前不可用。"];
+    const issues = [];
+    if (!getAssets(recipe.requiresPropertyKind).length) {
+      issues.push(`名下还没有可用${recipe.requiresPropertyKind === "workshop" ? "工坊" : recipe.requiresPropertyKind}`);
+    }
+    if (game.player.rankIndex < recipe.minRankIndex) {
+      issues.push(`境界不足，需要${app.getRankData(recipe.minRankIndex).name}`);
+    }
+    if (game.player.money < recipe.cost) {
+      issues.push(`灵石不足，还差${recipe.cost - game.player.money}`);
+    }
+    recipe.inputs.forEach((input) => {
+      const current = app.findInventoryEntry(input.itemId)?.quantity || 0;
+      if (current < input.quantity) {
+        issues.push(`缺少${app.getItem(input.itemId)?.name || input.itemId} ${input.quantity - current}件`);
+      }
+    });
+    return issues;
+  }
+
+  function explainCraftRecipe(recipeId) {
+    const issues = getCraftRecipeIssues(recipeId);
+    return issues.length ? issues.join("；") : "材料与条件齐备，可以动工。";
   }
 
   function craftRecipe(recipeId) {
@@ -320,15 +391,24 @@
 
   Object.assign(app, {
     getAvailableProperties,
+    getLocalProperties,
     getIndustryOrders,
     refreshIndustryOrders,
     canFulfillIndustryOrder,
+    getIndustryOrderIssues,
+    explainIndustryOrder,
     fulfillIndustryOrder,
     canPurchaseProperty,
+    getPropertyPurchaseIssues,
+    explainPropertyPurchase,
     purchaseProperty,
     plantCrop,
     harvestCrop,
+    getHarvestIssues,
+    explainHarvest,
     canCraftRecipe,
+    getCraftRecipeIssues,
+    explainCraftRecipe,
     craftRecipe,
     restockShop,
     collectShopIncome,

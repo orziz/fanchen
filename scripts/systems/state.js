@@ -18,6 +18,12 @@
   } = tables;
   const { randomInt, randomFloat, sample, uid, ensureArray } = utils;
 
+  const LEGACY_DEED_REFUND_MAP = {
+    "你使用了薄田地契。": "farm-deed",
+    "你使用了工坊牌照。": "workshop-permit",
+    "你使用了铺面契书。": "shop-deed",
+  };
+
   function getGame() {
     return runtime.game;
   }
@@ -328,9 +334,53 @@
       auction: createAuctionListings(randomInt(4, 6)),
       world: createInitialWorld(),
       combat: createInitialCombat(),
+      migrationFlags: {
+        legacyDeedRefund: false,
+      },
       log: [],
       lastSavedAt: null,
     };
+  }
+
+  function addInventoryItemToGame(game, itemId, quantity = 1) {
+    const entry = ensureArray(game.player.inventory).find((candidate) => candidate.itemId === itemId);
+    if (entry) {
+      entry.quantity += quantity;
+      return;
+    }
+    game.player.inventory.push({ itemId, quantity });
+  }
+
+  function applyLegacyDeedRefund(game) {
+    if (game.migrationFlags?.legacyDeedRefund) return;
+
+    const refunds = {};
+    ensureArray(game.log).forEach((entry) => {
+      const itemId = LEGACY_DEED_REFUND_MAP[entry?.text];
+      if (!itemId) return;
+      refunds[itemId] = (refunds[itemId] || 0) + 1;
+    });
+
+    Object.entries(refunds).forEach(([itemId, quantity]) => {
+      addInventoryItemToGame(game, itemId, quantity);
+    });
+
+    if (Object.keys(refunds).length) {
+      const refundText = Object.entries(refunds)
+        .map(([itemId, quantity]) => `${app.getItem(itemId)?.name || itemId} x${quantity}`)
+        .join("、");
+      const stamp = `第${game.world.day}日 ${tables.TIME_LABELS[game.world.hour]}`;
+      game.log.unshift({
+        stamp,
+        text: `旧版本曾错误吞掉契据，已补回背包：${refundText}。`,
+        type: "loot",
+      });
+      if (game.log.length > (app.config.MAX_LOG || 120)) {
+        game.log.length = app.config.MAX_LOG || 120;
+      }
+    }
+
+    game.migrationFlags.legacyDeedRefund = true;
   }
 
   function hydrateGameState(raw) {
@@ -359,6 +409,7 @@
       combat: { ...fresh.combat, ...(raw.combat || {}) },
       market: raw.market || fresh.market,
       auction: raw.auction || fresh.auction,
+      migrationFlags: { ...fresh.migrationFlags, ...(raw.migrationFlags || {}) },
       npcs: ensureArray(raw.npcs).length
         ? raw.npcs.map((npc, index) => ({
             ...createNPC(index + 80),
@@ -369,6 +420,8 @@
         : fresh.npcs,
       log: ensureArray(raw.log).slice(0, app.config.MAX_LOG || 120),
     };
+
+    applyLegacyDeedRefund(game);
 
     state.selectedLocationId = game.player.locationId;
     return game;

@@ -33,14 +33,19 @@
         </div>
       </div>
       <div class="hero-actions">
-        <button class="control-button primary" id="saveButton">手动存档</button>
-        <button class="control-button" id="loadButton">读取存档</button>
-        <button class="control-button" id="newGameButton">重开此世</button>
-        <div class="speed-switch" id="speedSwitch">
-          <button class="speed-button" data-speed="0.5">0.5x</button>
-          <button class="speed-button active" data-speed="1">1x</button>
-          <button class="speed-button" data-speed="2">2x</button>
-          <button class="speed-button" data-speed="4">4x</button>
+        <div class="hero-action-row">
+          <button class="control-button primary" id="saveButton">手动存档</button>
+          <button class="control-button" id="loadButton">读取存档</button>
+          <button class="control-button" id="newGameButton">重开此世</button>
+        </div>
+        <div class="hero-speed-row">
+          <div class="speed-switch" id="speedSwitch">
+            <button class="speed-button" data-speed="0.5">半速</button>
+            <button class="speed-button active" data-speed="1">常速</button>
+            <button class="speed-button" data-speed="2">双速</button>
+            <button class="speed-button" data-speed="4">四倍速</button>
+            <button class="speed-button" data-speed="10">十倍速</button>
+          </div>
         </div>
       </div>
     </header>
@@ -60,6 +65,7 @@
           </div>
           <div class="workbench-tools">
             <div class="tool-row">
+              <button class="control-button ghost" id="openCommandButton" data-open-window="command" title="打开挂机策略与手动操作">维生求进</button>
               <button class="control-button ghost" id="openMapButton" data-open-window="map">打开山河图</button>
               <button class="control-button ghost" id="openJournalButton" data-open-window="journal">打开纪事</button>
               <button class="control-button ghost" id="openProfileButton" data-open-window="profile">打开人物簿</button>
@@ -67,7 +73,6 @@
             </div>
           </div>
         </div>
-        <section class="workbench-command-panel" id="commandPanel"></section>
         <nav class="tab-strip" id="tabStrip">
           <button class="tab-button active" data-tab="inventory">行囊与功法</button>
           <button class="tab-button" data-tab="industry">产业经营</button>
@@ -189,9 +194,28 @@
         </div>
       </div>
       <div class="window-body">
-        <div class="profile-detail" id="profileDetail"></div>
+        <div class="profile-detail window-scroll" id="profileDetail"></div>
       </div>
     </aside>
+
+    <aside class="floating-window command-window" id="commandWindow" data-window="command" hidden>
+      <div class="window-header" data-window-handle="command">
+        <div>
+          <p class="section-kicker">挂机策略</p>
+          <h2>谋局令</h2>
+        </div>
+        <div class="window-actions">
+          <button class="control-button ghost" data-window-action="minimize" data-window-id="command">最小化</button>
+          <button class="control-button ghost" data-window-action="dock" data-window-id="command">停靠</button>
+          <button class="control-button" id="closeCommandButton" data-close-window="command">收起</button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="command-detail window-scroll" id="commandDetail"></div>
+      </div>
+    </aside>
+
+    <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
   </div>
 
   <script src="scripts/app/namespace.js" defer></script>
@@ -212,7 +236,10 @@
   <script src="scripts/ui/shared.js" defer></script>
   <script src="scripts/ui/windows.js" defer></script>
   <script src="scripts/ui/interactions.js" defer></script>
-  <script src="scripts/ui/panels.js" defer></script>
+  <script src="scripts/ui/panels/layout.js" defer></script>
+  <script src="scripts/ui/panels/exploration.js" defer></script>
+  <script src="scripts/ui/panels/commerce.js" defer></script>
+  <script src="scripts/ui/panels/social.js" defer></script>
   <script src="scripts/ui/map.js" defer></script>
   <script src="scripts/ui/main.js" defer></script>
   <script src="game.js" defer></script>

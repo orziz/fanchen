@@ -22,6 +22,21 @@
     width: 100%;
     justify-content: flex-start;
   }
+
+  .hero-action-row,
+  .hero-speed-row {
+    justify-content: flex-start;
+  }
+
+  .hero-action-row,
+  .hero-speed-row,
+  .hero-speed-row .speed-switch {
+    width: 100%;
+  }
+
+  .industry-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1120px) {
@@ -31,6 +46,9 @@
 
   .status-console,
   .command-layout,
+  .command-core-grid,
+  .command-reading-grid,
+  .command-action-grid,
   .badge-row,
   .mode-grid,
   .quick-actions,
@@ -58,5 +76,18 @@
   .profile-window {
     width: min(92vw, 660px);
     height: 84vh;
+  }
+
+  .command-window {
+    width: min(94vw, 760px);
+    height: 84vh;
+  }
+
+  .command-hero-top {
+    grid-template-columns: 1fr;
+  }
+
+  .industry-stack {
+    grid-template-columns: 1fr;
   }
 }

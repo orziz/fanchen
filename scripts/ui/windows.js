@@ -1,7 +1,7 @@
 (() => {
   const app = window.ShanHai;
   const { config, dom, state, runtime } = app;
-  const WINDOW_IDS = ["map", "journal", "profile"];
+  const WINDOW_IDS = ["map", "journal", "profile", "command"];
   const WINDOW_LAYOUT_KEY = `${config.SAVE_KEY || "fan-chen-li-dao-save"}-window-layout-v1`;
 
   function getDefaultDockSide(windowId) {
@@ -33,6 +33,17 @@
       };
     }
 
+    if (windowId === "command") {
+      return {
+        open: false,
+        left: Math.max(24, window.innerWidth - Math.min(Math.round(viewportWidth * 0.42), 720) - 56),
+        top: Math.max(116, Math.round(viewportHeight * 0.16)),
+        z: 5,
+        minimized: false,
+        dockSide: null,
+      };
+    }
+
     return {
       open: false,
       left: Math.max(24, viewportWidth - Math.min(Math.round(viewportWidth * 0.34), 560) - 28),
@@ -47,6 +58,7 @@
     if (windowId === "map") return dom.mapWindow;
     if (windowId === "journal") return dom.journalWindow;
     if (windowId === "profile") return dom.profileWindow;
+    if (windowId === "command") return dom.commandWindow;
     return null;
   }
 

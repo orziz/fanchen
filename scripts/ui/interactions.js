@@ -20,7 +20,7 @@
     dom.locationDetail = document.getElementById("locationDetail");
     dom.playerPanel = document.getElementById("playerPanel");
     dom.dockPanel = document.getElementById("dockPanel");
-    dom.commandPanel = document.getElementById("commandPanel");
+    dom.commandDetail = document.getElementById("commandDetail");
     dom.inventoryPanel = document.getElementById("inventoryPanel");
     dom.industryPanel = document.getElementById("industryPanel");
     dom.marketPanel = document.getElementById("marketPanel");
@@ -37,17 +37,30 @@
     dom.newGameButton = document.getElementById("newGameButton");
     dom.openJournalButton = document.getElementById("openJournalButton");
     dom.openMapButton = document.getElementById("openMapButton");
+    dom.openCommandButton = document.getElementById("openCommandButton");
     dom.openProfileButton = document.getElementById("openProfileButton");
     dom.closeJournalButton = document.getElementById("closeJournalButton");
     dom.closeMapButton = document.getElementById("closeMapButton");
+    dom.closeCommandButton = document.getElementById("closeCommandButton");
     dom.closeProfileButton = document.getElementById("closeProfileButton");
     dom.journalWindow = document.getElementById("journalWindow");
     dom.mapWindow = document.getElementById("mapWindow");
+    dom.commandWindow = document.getElementById("commandWindow");
     dom.profileWindow = document.getElementById("profileWindow");
     dom.speedSwitch = document.getElementById("speedSwitch");
     dom.focusPlayerButton = document.getElementById("focusPlayerButton");
     dom.clearLogButton = document.getElementById("clearLogButton");
     dom.tabStrip = document.getElementById("tabStrip");
+    dom.toastStack = document.getElementById("toastStack");
+  }
+
+  function handleBlockedControl(event) {
+    const blocked = getClosest(event.target, "[aria-disabled=\"true\"][data-disabled-reason]");
+    if (!blocked) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    app.showFeedback(blocked.dataset.disabledReason || "当前条件不足，暂时无法执行。", "warn");
+    return true;
   }
 
   function showLocationOnMap(locationId) {
@@ -67,6 +80,22 @@
   }
 
   function handlePlayerPanelClick(event) {
+    const switchButton = getClosest(event.target, "[data-switch-tab]");
+    if (switchButton) {
+      state.selectedTab = switchButton.dataset.switchTab;
+      app.renderTabs();
+      return;
+    }
+
+    const focusButton = getClosest(event.target, "[data-focus-realm]");
+    if (focusButton) {
+      const realm = app.getRealm(focusButton.dataset.focusRealm);
+      if (realm) {
+        showLocationOnMap(realm.locationId);
+      }
+      return;
+    }
+
     const modeButton = getClosest(event.target, "[data-mode]");
     if (modeButton) {
       app.setMode(modeButton.dataset.mode);
@@ -385,6 +414,9 @@
       }
     });
     document.addEventListener("click", (event) => {
+      handleBlockedControl(event);
+    }, true);
+    document.addEventListener("click", (event) => {
       const openButton = getClosest(event.target, "[data-open-window]");
       if (openButton) {
         event.preventDefault();
@@ -438,7 +470,7 @@
       app.renderTabs();
     });
 
-    [dom.mapWindow, dom.journalWindow, dom.profileWindow].forEach((element) => {
+    [dom.mapWindow, dom.journalWindow, dom.profileWindow, dom.commandWindow].forEach((element) => {
       if (!element) return;
       element.addEventListener("pointerdown", () => app.bringWindowToFront(element.dataset.window));
     });
@@ -463,7 +495,7 @@
     dom.mapCanvas.addEventListener("click", onCanvasClick);
     dom.locationDetail.addEventListener("click", handleLocationDetailClick);
     dom.playerPanel.addEventListener("click", handlePlayerPanelClick);
-    dom.commandPanel.addEventListener("click", handlePlayerPanelClick);
+    dom.commandDetail.addEventListener("click", handlePlayerPanelClick);
     dom.inventoryPanel.addEventListener("click", handleInventoryClick);
     dom.marketPanel.addEventListener("click", handleMarketClick);
     dom.industryPanel.addEventListener("click", handleIndustryClick);

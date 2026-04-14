@@ -4,6 +4,26 @@
   const { MODE_OPTIONS } = tables;
   const { round, clamp } = utils;
 
+  const MARKET_BIAS_LABELS = {
+    herb: "药材",
+    grain: "粮货",
+    wood: "木料",
+    ore: "矿料",
+    ice: "寒材",
+    relic: "异宝",
+    fire: "火材",
+    scroll: "残卷",
+    pill: "丹药",
+  };
+
+  const UNLOCK_LABELS = {
+    farm: "田产",
+    workshop: "工坊",
+    shop: "铺面",
+    warehouse: "仓房",
+    sect: "门内事务",
+  };
+
   function renderSpeedButtons() {
     if (!dom.speedSwitch) return;
     Array.from(dom.speedSwitch.querySelectorAll(".speed-button")).forEach((button) => {
@@ -23,6 +43,48 @@
       partner: "道侣",
       rival: "仇敌",
     }[role || "none"];
+  }
+
+  function getMarketBiasLabel(type) {
+    return MARKET_BIAS_LABELS[type] || type || "杂市";
+  }
+
+  function getUnlockLabel(type) {
+    return UNLOCK_LABELS[type] || type;
+  }
+
+  function formatUnlockLabels(unlocks = []) {
+    return unlocks.map((entry) => getUnlockLabel(entry)).join("、");
+  }
+
+  function getGuardAttrs(enabled, reason = "当前条件不足，暂时无法执行。") {
+    return enabled ? "" : `aria-disabled="true" data-disabled-reason="${reason}"`;
+  }
+
+  function showFeedback(text, type = "info") {
+    if (!text || !dom.toastStack) return;
+
+    const existing = dom.toastStack.querySelectorAll(".toast-item");
+    if (existing.length >= 4) {
+      existing[0].remove();
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `toast-item ${type}`;
+    toast.innerHTML = `
+      <span class="toast-badge">${type === "warn" ? "提示" : type === "loot" ? "收获" : "消息"}</span>
+      <div class="toast-text">${text}</div>
+    `;
+    dom.toastStack.appendChild(toast);
+
+    window.requestAnimationFrame(() => {
+      toast.classList.add("visible");
+    });
+
+    window.setTimeout(() => {
+      toast.classList.remove("visible");
+      window.setTimeout(() => toast.remove(), 220);
+    }, type === "warn" ? 3200 : 2400);
   }
 
   function describeItemEffect(item) {
@@ -64,6 +126,11 @@
     renderSpeedButtons,
     getModeLabel,
     getRoleLabel,
+    getMarketBiasLabel,
+    getUnlockLabel,
+    formatUnlockLabels,
+    getGuardAttrs,
+    showFeedback,
     describeItemEffect,
     renderMeter,
   });

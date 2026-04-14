@@ -57,15 +57,25 @@
   }
 
   function canJoinFaction(factionId) {
+    return getFactionJoinIssues(factionId).length === 0;
+  }
+
+  function getFactionJoinIssues(factionId) {
     const game = app.getGame();
     const faction = app.getFaction(factionId);
-    if (!faction) return false;
-    if (game.player.affiliationId === factionId) return false;
-    if (game.player.locationId !== faction.locationId) return false;
-    if (game.player.money < faction.joinRequirement.money) return false;
-    if (game.player.reputation < faction.joinRequirement.reputation) return false;
-    if (game.player.rankIndex < faction.joinRequirement.rankIndex) return false;
-    return true;
+    if (!faction) return ["这方势力暂时无法接触。"];
+    const issues = [];
+    if (game.player.affiliationId === factionId) issues.push("你已经在这方势力中");
+    if (game.player.locationId !== faction.locationId) issues.push(`需前往${app.tables.LOCATION_MAP[faction.locationId]?.name || faction.locationId}`);
+    if (game.player.money < faction.joinRequirement.money) issues.push(`灵石不足，还差${faction.joinRequirement.money - game.player.money}`);
+    if (game.player.reputation < faction.joinRequirement.reputation) issues.push(`声望不足，还差${round(faction.joinRequirement.reputation - game.player.reputation, 1)}`);
+    if (game.player.rankIndex < faction.joinRequirement.rankIndex) issues.push(`境界不足，需要${app.getRankData(faction.joinRequirement.rankIndex).name}`);
+    return issues;
+  }
+
+  function explainFactionJoin(factionId) {
+    const issues = getFactionJoinIssues(factionId);
+    return issues.length ? issues.join("；") : "条件齐备，可以加入。";
   }
 
   function joinFaction(factionId) {
@@ -143,14 +153,26 @@
   }
 
   function canRecruitDisciple(npcId) {
+    return getRecruitDiscipleIssues(npcId).length === 0;
+  }
+
+  function getRecruitDiscipleIssues(npcId) {
     const game = app.getGame();
     const npc = app.getNpc(npcId);
     const relation = getRelation(npcId);
-    if (!game.player.sect || !npc) return false;
-    if (game.player.sect.disciples.includes(npcId)) return false;
-    if (relation.affinity < 24 || relation.trust < 18) return false;
-    if (npc.rankIndex > game.player.rankIndex + 1) return false;
-    return true;
+    if (!npc) return ["此人当前不在江湖册录中。"];
+    const issues = [];
+    if (!game.player.sect) issues.push("你尚未建立宗门");
+    if (game.player.sect?.disciples.includes(npcId)) issues.push("对方已经是门下弟子");
+    if (relation.affinity < 24) issues.push(`好感不足，还差${24 - relation.affinity}`);
+    if (relation.trust < 18) issues.push(`信任不足，还差${18 - relation.trust}`);
+    if (npc.rankIndex > game.player.rankIndex + 1) issues.push("对方修为过高，暂时不愿屈就");
+    return issues;
+  }
+
+  function explainRecruitDisciple(npcId) {
+    const issues = getRecruitDiscipleIssues(npcId);
+    return issues.length ? issues.join("；") : "缘分已到，可以收入门墙。";
   }
 
   function recruitDisciple(npcId) {
@@ -169,13 +191,25 @@
   }
 
   function canBecomeMaster(npcId) {
+    return getMasterBondIssues(npcId).length === 0;
+  }
+
+  function getMasterBondIssues(npcId) {
     const game = app.getGame();
     const npc = app.getNpc(npcId);
     const relation = getRelation(npcId);
-    if (!npc) return false;
-    if (game.player.masterId || relation.role === "master") return false;
-    if (npc.rankIndex < game.player.rankIndex + 1) return false;
-    return relation.affinity >= 18 && relation.trust >= 22;
+    if (!npc) return ["此人当前无法结成师承。"];
+    const issues = [];
+    if (game.player.masterId || relation.role === "master") issues.push("你已经有师承了");
+    if (npc.rankIndex < game.player.rankIndex + 1) issues.push("对方修为还不足以收你为徒");
+    if (relation.affinity < 18) issues.push(`好感不足，还差${18 - relation.affinity}`);
+    if (relation.trust < 22) issues.push(`信任不足，还差${22 - relation.trust}`);
+    return issues;
+  }
+
+  function explainMasterBond(npcId) {
+    const issues = getMasterBondIssues(npcId);
+    return issues.length ? issues.join("；") : "对方已经愿意收你入门。";
   }
 
   function becomeMasterBond(npcId) {
@@ -193,12 +227,25 @@
   }
 
   function canBecomePartner(npcId) {
+    return getPartnerBondIssues(npcId).length === 0;
+  }
+
+  function getPartnerBondIssues(npcId) {
     const game = app.getGame();
     const npc = app.getNpc(npcId);
     const relation = getRelation(npcId);
-    if (!npc) return false;
-    if (game.player.partnerId || relation.role === "partner") return false;
-    return relation.affinity >= 36 && relation.trust >= 32 && relation.romance >= 26;
+    if (!npc) return ["此人当前无法结成道侣。"];
+    const issues = [];
+    if (game.player.partnerId || relation.role === "partner") issues.push("你已经有道侣了");
+    if (relation.affinity < 36) issues.push(`好感不足，还差${36 - relation.affinity}`);
+    if (relation.trust < 32) issues.push(`信任不足，还差${32 - relation.trust}`);
+    if (relation.romance < 26) issues.push(`情缘不足，还差${26 - relation.romance}`);
+    return issues;
+  }
+
+  function explainPartnerBond(npcId) {
+    const issues = getPartnerBondIssues(npcId);
+    return issues.length ? issues.join("；") : "水到渠成，可以结为道侣。";
   }
 
   function becomePartner(npcId) {
@@ -361,14 +408,22 @@
     getCurrentAffiliation,
     adjustFactionStanding,
     canJoinFaction,
+    getFactionJoinIssues,
+    explainFactionJoin,
     joinFaction,
     createSect,
     upgradeSectBuilding,
     canRecruitDisciple,
+    getRecruitDiscipleIssues,
+    explainRecruitDisciple,
     recruitDisciple,
     canBecomeMaster,
+    getMasterBondIssues,
+    explainMasterBond,
     becomeMasterBond,
     canBecomePartner,
+    getPartnerBondIssues,
+    explainPartnerBond,
     becomePartner,
     declareRival,
     assignTeaching,

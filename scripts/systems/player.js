@@ -1,8 +1,20 @@
 (() => {
   const app = window.ShanHai;
   const { tables, utils, state, config } = app;
-  const { RANKS, MODE_OPTIONS, ACTION_META, MAX_LOG, ITEMS } = { ...tables, MAX_LOG: config.MAX_LOG };
-  const { clamp, round, sample } = utils;
+  const { RANKS, MODE_OPTIONS, ACTION_META, MAX_LOG, ITEMS, PROPERTY_DEFS } = { ...tables, MAX_LOG: config.MAX_LOG };
+  const { clamp, round, sample, uid } = utils;
+
+  const ASSET_EFFECT_KIND_MAP = {
+    assetFarm: "farm",
+    assetWorkshop: "workshop",
+    assetShop: "shop",
+  };
+
+  const ASSET_KIND_LABELS = {
+    farm: "田产",
+    workshop: "工坊",
+    shop: "铺面",
+  };
 
   function rerender() {
     if (app.render) app.render();
@@ -40,12 +52,78 @@
     game.player[key] = clamp(game.player[key] + amount, 0, max);
   }
 
+  function getAssetCollection(kind) {
+    return app.getGame().player.assets[`${kind}s`];
+  }
+
+  function getLocalPropertyForAssetKind(kind) {
+    const current = app.getCurrentLocation();
+    return PROPERTY_DEFS
+      .filter((property) => property.kind === kind && property.locationTags?.some((tag) => current.tags.includes(tag)))
+      .sort((left, right) => (left.cost || 0) - (right.cost || 0))[0] || null;
+  }
+
+  function claimAssetFromItem(item) {
+    const effectEntry = Object.entries(ASSET_EFFECT_KIND_MAP).find(([effectKey]) => item.effect?.[effectKey]);
+    if (!effectEntry) return { handled: false };
+
+    const [effectKey, kind] = effectEntry;
+    const amount = Math.max(1, Math.floor(item.effect[effectKey] || 0));
+    const property = getLocalPropertyForAssetKind(kind);
+    if (!property) {
+      return {
+        handled: true,
+        success: false,
+        message: `这里暂时不能把${item.name}落成${ASSET_KIND_LABELS[kind] || "资产"}，换到合适地点再用。`,
+      };
+    }
+
+    if (!removeItemFromInventory(item.id, 1)) {
+      return {
+        handled: true,
+        success: false,
+        message: `你手头已经没有${item.name}了。`,
+      };
+    }
+
+    const current = app.getCurrentLocation();
+    const collection = getAssetCollection(kind);
+    const created = [];
+
+    for (let index = 0; index < amount; index += 1) {
+      const asset = {
+        id: uid(kind),
+        propertyId: property.id,
+        locationId: current.id,
+        kind,
+        label: amount > 1 ? `${property.label}·${collection.length + 1}` : property.label,
+        cropId: null,
+        daysRemaining: 0,
+        stock: 0,
+        pendingIncome: 0,
+        level: 1,
+      };
+      collection.push(asset);
+      created.push(asset.label);
+    }
+
+    return {
+      handled: true,
+      success: true,
+      message: `${item.name}兑成了${created.join("、")}，已经记在你名下。`,
+    };
+  }
+
   function appendLog(text, type = "info") {
     const game = app.getGame();
     const stamp = `第${game.world.day}日 ${tables.TIME_LABELS[game.world.hour]}`;
     game.log.unshift({ stamp, text, type });
     if (game.log.length > MAX_LOG) {
       game.log.length = MAX_LOG;
+    }
+    app.renderLog?.();
+    if (["warn", "loot"].includes(type)) {
+      app.showFeedback?.(text, type);
     }
   }
 
@@ -196,21 +274,32 @@
     const game = app.getGame();
     const item = app.getItem(itemId);
     if (!item) return;
-    if (!removeItemFromInventory(itemId, 1)) return;
 
     if (item.type === "weapon") {
+      if (!removeItemFromInventory(itemId, 1)) return;
       if (game.player.equipment.weapon) addItemToInventory(game.player.equipment.weapon, 1);
       game.player.equipment.weapon = item.id;
       appendLog(`你装备了${item.name}。`, "info");
     } else if (item.type === "armor") {
+      if (!removeItemFromInventory(itemId, 1)) return;
       if (game.player.equipment.armor) addItemToInventory(game.player.equipment.armor, 1);
       game.player.equipment.armor = item.id;
       appendLog(`你换上了${item.name}。`, "info");
     } else if (item.type === "manual") {
+      if (!removeItemFromInventory(itemId, 1)) return;
       if (game.player.equipment.manual) addItemToInventory(game.player.equipment.manual, 1);
       game.player.equipment.manual = item.id;
       appendLog(`你开始参悟${item.name}。`, "info");
     } else {
+      const assetClaim = claimAssetFromItem(item);
+      if (assetClaim.handled) {
+        appendLog(assetClaim.message, assetClaim.success ? "loot" : "warn");
+        updateDerivedStats();
+        rerender();
+        return;
+      }
+
+      if (!removeItemFromInventory(itemId, 1)) return;
       if (item.effect.hp) adjustResource("hp", item.effect.hp, "maxHp");
       if (item.effect.qi) adjustResource("qi", item.effect.qi, "maxQi");
       if (item.effect.stamina) adjustResource("stamina", item.effect.stamina, "maxStamina");

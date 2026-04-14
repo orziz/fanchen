@@ -9,13 +9,15 @@
     1: 7600,
     2: 4200,
     4: 2100,
+    10: 900,
   };
 
   const SPEED_OPTIONS = [
-    { value: 0.5, label: "0.5x" },
-    { value: 1, label: "1x" },
-    { value: 2, label: "2x" },
-    { value: 4, label: "4x" },
+    { value: 0.5, label: "半速" },
+    { value: 1, label: "常速" },
+    { value: 2, label: "双速" },
+    { value: 4, label: "四倍速" },
+    { value: 10, label: "十倍速" },
   ];
 
   const TIME_LABELS = ["子时", "丑时", "寅时", "卯时", "辰时", "巳时", "午时", "未时", "申时", "酉时", "戌时", "亥时"];
