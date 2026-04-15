@@ -1,0 +1,613 @@
+/* ═══════════════ V3 HUD Shell Layout ═══════════════ */
+
+.v3-shell-wrapper {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* 允许背后露出大背景，或者让wrapper做全屏响应式中转 */
+}
+
+.v3-shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1920px; /* 带鱼屏最大拉伸范围，超大宽屏下将居中显示安全区 */
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.05); /* 超宽下屏幕边缘增加区隔 */
+  background: var(--bg-ink); /* 给游戏本体垫底 */
+}
+
+/* ── Top HUD Bar ── */
+.hud-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: linear-gradient(180deg, rgba(248, 245, 238, 0.96), rgba(241, 234, 220, 0.92));
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.hud-bar::-webkit-scrollbar { display: none; }
+
+.hud-identity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.hud-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.hud-sep { color: var(--text-faint); }
+
+.hud-realm {
+  font-size: 15px;
+  color: var(--gold);
+}
+
+.hud-vitals {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.hud-meter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hud-meter-label {
+  font-size: 14px;
+  color: var(--text-faint);
+  min-width: 24px;
+}
+
+.hud-meter-track {
+  width: 80px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.hud-meter-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.hm-hp { background: var(--cinnabar); }
+.hm-qi { background: var(--sky); }
+.hm-bt { background: var(--gold); }
+
+.hud-meter-num {
+  font-size: 14px;
+  color: var(--text-dim);
+  min-width: 40px;
+}
+
+.hud-resources,
+.hud-world,
+.hud-focus,
+.hud-save-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.hud-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.hud-chip strong {
+  color: var(--text-main);
+  font-size: 15px;
+}
+
+.hud-chip-label {
+  color: var(--text-faint);
+}
+
+.hud-chip-gold {
+  border-color: rgba(179, 133, 43, 0.25);
+  background: rgba(179, 133, 43, 0.09);
+}
+
+.hud-chip-gold strong { color: var(--gold); }
+
+.hud-chip-accent {
+  background: rgba(66, 126, 97, 0.08);
+  border-color: rgba(66, 126, 97, 0.2);
+  color: var(--jade);
+}
+
+.hud-chip-save {
+  background: rgba(70, 130, 180, 0.08);
+  border-color: rgba(70, 130, 180, 0.18);
+  color: var(--sky);
+  font-size: 13px;
+}
+
+.hud-pins {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.hud-pin-btn {
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(248, 243, 233, 0.96), rgba(239, 231, 216, 0.92));
+  border: 1px solid rgba(179, 133, 43, 0.14);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s ease;
+}
+
+.hud-pin-btn:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(252, 247, 238, 0.98), rgba(243, 234, 218, 0.94));
+  border-color: rgba(179, 133, 43, 0.24);
+  color: var(--text-main);
+}
+
+.hud-pin-btn.is-pinned {
+  background: rgba(179, 133, 43, 0.12);
+  border-color: rgba(179, 133, 43, 0.35);
+  color: var(--gold);
+}
+
+.hud-speed {
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.speed-button {
+  padding: 6px 13px;
+  font-size: 14px;
+}
+
+.hud-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+/* ── Body: stage wrap + pin rail ── */
+.v3-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  overflow: hidden;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+  /* 加入纸张轻噪点质感 */
+}
+
+/* pin-rail layout handled by windows.css */
+
+.pin-close {
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.pin-close:hover {
+  color: var(--cinnabar);
+}
+
+/* ── Stage Wrap ── */
+.v3-stage-wrap {
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 12px;
+  overflow: hidden;
+  transition: grid-template-columns 0.22s ease;
+}
+
+.v3-stage-wrap.has-context {
+  grid-template-columns: min(340px, 28vw) 1fr;
+  gap: 12px;
+}
+
+/* ── Context column ── */
+.v3-context-col {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.v3-context-col .panel-card {
+  height: 100%;
+}
+
+/* Inventory in context column: remove fixed heights */
+.v3-ctx-inventory {
+  height: 100%;
+  overflow: auto;
+}
+
+/* ── Main stage ── */
+.v3-stage {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(165deg, rgba(249, 244, 235, 0.96), rgba(241, 234, 221, 0.92));
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.v3-workbench {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Full-height panel body (inside v3-stage) */
+.v3-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 20px;
+  scrollbar-gutter: stable;
+}
+
+.v3-panel-full {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Bottom Dock ── */
+.game-dock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 14px;
+  background: linear-gradient(180deg, rgba(248, 245, 238, 0.96), rgba(240, 233, 220, 0.94));
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.03);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.game-dock::-webkit-scrollbar { display: none; }
+
+.dock-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.dock-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+  font-size: 14px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.dock-tab-label-short {
+  display: none;
+}
+
+.dock-tab-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-main);
+}
+
+.dock-tab-btn.active {
+  background: rgba(208, 171, 108, 0.14);
+  border-color: rgba(208, 171, 108, 0.3);
+  color: var(--gold);
+}
+
+.dock-quick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.dock-quick .dock-hotbar {
+  flex-wrap: nowrap;
+}
+
+.dock-ops {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  margin-left: auto;
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.dock-cluster {
+  display: grid;
+  gap: 7px;
+}
+
+.dock-cluster-label {
+  color: var(--text-faint);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.dock-hotbar {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.dock-hotbar::-webkit-scrollbar { display: none; }
+
+.dock-hotbar-btn {
+  padding: 7px 12px;
+  font-size: 14px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dock-hotbar-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-main);
+}
+
+.dock-hotbar-btn.active {
+  background: linear-gradient(135deg, rgba(208, 171, 108, 0.18), rgba(127, 178, 148, 0.2));
+  border-color: rgba(208, 171, 108, 0.28);
+  color: var(--gold-bright);
+}
+
+.dock-hotbar-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(208, 171, 108, 0.08), rgba(125, 178, 200, 0.08));
+  border: 1px solid rgba(179, 133, 43, 0.14);
+  color: var(--text-dim);
+  font-size: 13px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.dock-hotbar-state strong {
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.dock-strategy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(179, 133, 43, 0.22);
+  background: linear-gradient(135deg, rgba(208, 171, 108, 0.14), rgba(125, 178, 200, 0.12));
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.dock-strategy-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(179, 133, 43, 0.32);
+  background: linear-gradient(135deg, rgba(208, 171, 108, 0.18), rgba(125, 178, 200, 0.16));
+}
+
+.dock-hotbar-kicker {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.dock-hotbar-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dock-hotbar-divider {
+  color: var(--text-faint);
+}
+
+.dock-hotbar-action {
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dock-hotbar-location {
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dock-hotbar-state .mini-button {
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+/* ── Map Panel (full stage) ── */
+.map-panel-full {
+  display: grid;
+  grid-template-columns: minmax(0, 1.34fr) minmax(340px, 0.78fr);
+  gap: 18px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 16px 18px 18px;
+  align-items: stretch;
+}
+
+.map-stage-full {
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+}
+
+.map-stage-full .canvas-shell {
+  min-height: clamp(400px, 62vh, 860px);
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.location-panel-side {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 520px;
+  overflow: hidden;
+  align-content: start;
+  justify-self: end;
+}
+
+/* canvas-shell 统一定义在 windows.css */
+
+.map-pixi-container {
+  width: 100%;
+  height: 100%;
+}
+
+.map-pixi-container canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.map-overlay-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.overlay-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--card-soft);
+  border: 1px solid var(--border);
+}
+
+.overlay-stat span { font-size: 12px; color: var(--text-faint); }
+.overlay-stat strong { font-size: 15px; color: var(--text-main); }
+
+/* ── Legacy support (panels use these) ── */
+.panel-card {
+  min-height: 0;
+  padding: 20px;
+  overflow: auto;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+.status-pill strong {
+  color: var(--text-main);
+  font-size: 16px;
+}
+
+.map-stage,
+.location-panel,
+.dock-layout,
+.player-layout {
+  min-height: 0;
+  display: grid;
+  gap: 18px;
+}
+
+.location-panel {
+  grid-template-rows: auto 1fr;
+}
+
+/* responsive breakpoints → see responsive.css */

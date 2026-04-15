@@ -115,7 +115,7 @@ const routeLabel = computed(() =>
 )
 
 const routeDesc = computed(() => {
-  if (sect.value) return '已立山门，可直接处理门内事务。'
+  if (sect.value) return '已立宗门，可直接处理门内事务。'
   if (currentAffiliation.value) return `现为${currentAffiliation.value.titles[player.value.affiliationRank]}。`
   return `资产 ${assetCount.value} 处，仍需继续摸门路。`
 })

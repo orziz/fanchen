@@ -5,16 +5,16 @@
   <template v-if="!enemy">
     <div class="combat-grid single">
       <div v-if="activeRealm" class="combat-card standout">
-        <div class="auction-top">
+        <div class="combat-top">
           <div>
             <p class="section-kicker">活跃秘境</p>
-            <h3 class="auction-title">{{ activeRealm.name }}</h3>
-            <p class="auction-meta">{{ activeRealm.desc }}</p>
+            <h3 class="combat-title">{{ activeRealm.name }}</h3>
+            <p class="combat-meta">{{ activeRealm.desc }}</p>
           </div>
           <span class="rarity epic">声望需求 {{ activeRealm.unlockRep }}</span>
         </div>
-        <p class="auction-meta">出现地点：{{ getLocationName(activeRealm.locationId) }}，首领：{{ activeRealm.boss.name }}</p>
-        <div class="auction-actions">
+        <p class="combat-meta">出现地点：{{ getLocationName(activeRealm.locationId) }}，首领：{{ activeRealm.boss.name }}</p>
+        <div class="combat-actions">
           <button class="item-button" @click="doChallenge(activeRealm.id)">
             {{ player.locationId === activeRealm.locationId ? '立即挑战' : '赶赴并挑战' }}
           </button>
@@ -23,8 +23,8 @@
       <div v-else class="empty-state">当前没有活跃的首领秘境，继续游历与刷图，等待世界异象出现。</div>
       <div v-if="combat.lastResult" class="combat-card">
         <p class="section-kicker">最近战报</p>
-        <h3 class="auction-title">{{ combat.lastResult.outcome === 'victory' ? '胜利' : '败退' }}</h3>
-        <p class="auction-meta">对象：{{ combat.lastResult.enemy }}{{ combat.lastResult.boss ? ' · 首领' : '' }}</p>
+        <h3 class="combat-title">{{ combat.lastResult.outcome === 'victory' ? '胜利' : '败退' }}</h3>
+        <p class="combat-meta">对象：{{ combat.lastResult.enemy }}{{ combat.lastResult.boss ? ' · 首领' : '' }}</p>
       </div>
     </div>
   </template>
@@ -33,11 +33,11 @@
   <template v-else>
     <div class="combat-grid">
       <div class="combat-card standout">
-        <div class="auction-top">
+        <div class="combat-top">
           <div>
             <p class="section-kicker">当前敌人</p>
-            <h3 class="auction-title">{{ enemy.name }}{{ enemy.boss ? ' · 首领' : '' }}</h3>
-            <p class="auction-meta">区域：{{ getLocationName(enemy.regionId) }}{{ enemy.realmId ? ` · 来自秘境` : '' }}</p>
+            <h3 class="combat-title">{{ enemy.name }}{{ enemy.boss ? ' · 首领' : '' }}</h3>
+            <p class="combat-meta">区域：{{ getLocationName(enemy.regionId) }}{{ enemy.realmId ? ` · 来自秘境` : '' }}</p>
           </div>
           <span :class="['rarity', enemy.boss ? 'legendary' : 'epic']">{{ enemy.boss ? '首领' : '遭遇战' }}</span>
         </div>
@@ -57,11 +57,11 @@
           </template>
           <span v-else class="trait-chip">无特殊词条</span>
         </div>
-        <p class="auction-meta">
+        <p class="combat-meta">
           预计收益：灵石 {{ enemy.rewards.money }}，修为 {{ round(enemy.rewards.cultivation) }}，
           突破 {{ round(enemy.rewards.breakthrough) }}，声望 {{ round(enemy.rewards.reputation) }}
         </p>
-        <div class="auction-actions">
+        <div class="combat-actions">
           <button class="item-button" @click="doAction('attack')">普攻</button>
           <button class="item-button" @click="doAction('skill')">术法</button>
           <button class="item-button" @click="doAction('defend')">防守</button>

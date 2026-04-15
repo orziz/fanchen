@@ -1,0 +1,204 @@
+/* ═══════════════ Pin Rail (replaces old floating windows) ═══════════════ */
+
+.pin-rail {
+  width: min(340px, 28vw);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 12px 12px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  flex-shrink: 0;
+}
+
+.pin-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(179, 133, 43, 0.16);
+  background:
+    radial-gradient(circle at top right, rgba(228, 206, 151, 0.2), transparent 34%),
+    linear-gradient(180deg, rgba(250, 246, 238, 0.98), rgba(241, 233, 219, 0.95));
+  overflow: hidden;
+  flex: 1 1 0;
+  min-height: 160px;
+  box-shadow: var(--shadow);
+}
+
+.pin-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px dashed var(--line);
+  background: linear-gradient(180deg, rgba(247, 242, 231, 0.96), rgba(240, 232, 217, 0.92));
+  flex-shrink: 0;
+}
+
+.pin-card-journal .pin-card-head {
+  background: linear-gradient(180deg, rgba(239, 246, 249, 0.96), rgba(240, 232, 217, 0.92));
+}
+
+.pin-card-profile .pin-card-head {
+  background: linear-gradient(180deg, rgba(242, 247, 241, 0.96), rgba(240, 232, 217, 0.92));
+}
+
+.pin-card-command .pin-card-head {
+  background: linear-gradient(180deg, rgba(248, 244, 235, 0.98), rgba(239, 231, 216, 0.92));
+}
+
+.pin-card-head h3 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.pin-card-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.pin-card-body {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: 14px;
+  scrollbar-gutter: stable;
+  background: linear-gradient(180deg, rgba(252, 249, 243, 0.88), rgba(244, 236, 221, 0.9));
+}
+
+.pin-card-body > * {
+  min-height: 0;
+}
+
+.window-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.map-toolbar {
+  align-items: flex-start;
+}
+
+.map-toolbar-copy {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.map-stage .window-toolbar {
+  align-items: center;
+}
+
+.map-toolbar-tools,
+.map-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.map-toolbar-tools {
+  margin-left: auto;
+  align-self: flex-start;
+}
+
+.map-zoom-pill {
+  min-width: 138px;
+  padding: 10px 14px;
+}
+
+.map-zoom-pill strong {
+  min-width: 68px;
+  text-align: right;
+}
+
+.window-toolbar h3 {
+  font-size: 22px;
+}
+
+.compact-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dock-callout {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 16px;
+}
+
+.quick-link-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.canvas-shell {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  flex: 1;
+  min-height: clamp(280px, 44vh, 520px);
+  aspect-ratio: 2.2 / 1;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid rgba(179, 133, 43, 0.18);
+  background:
+    radial-gradient(circle at top left, rgba(228, 206, 151, 0.22), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(125, 178, 200, 0.18), transparent 24%),
+    linear-gradient(180deg, rgba(251, 246, 235, 0.96), rgba(242, 235, 222, 0.92));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.canvas-shell.is-panning {
+  cursor: grabbing;
+}
+
+#worldMap {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 1;
+  cursor: grab;
+  touch-action: none;
+}
+
+.canvas-shell.is-panning #worldMap {
+  cursor: grabbing;
+}
+
+/* (canvas-overlay removed — map overlay now in toolbar) */
+
+.overlay-stat {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(179, 133, 43, 0.12);
+}
+
+.overlay-stat span {
+  display: block;
+  color: var(--text-faint);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.overlay-stat strong {
+  font-size: 14px;
+}
+
+.location-detail {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}

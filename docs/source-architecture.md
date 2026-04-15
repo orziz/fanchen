@@ -16,25 +16,24 @@
 ### src/composables
 
 - 放组合式逻辑。
-- 当前主要承载源码运行时启动与启动状态管理。
+- 当前主要承载舞台切换、窗口状态和界面辅助逻辑。
 
-### src/runtime
+### src/config
 
-- 放统一游戏运行时源码。
-- bootstrap.ts 负责静态导入模块并启动运行时。
-- styles.css 负责聚合游戏样式入口。
+- 放配置表、常量和模板数据。
 
-### src/runtime/app、config、systems、ui
+### src/stores
 
-- app：命名空间与基础工具。
-- config：配置表与模板数据。
-- systems：玩法系统与规则循环。
-- ui：当前渲染和交互层。
+- 放 Pinia 状态、派生视图和存读档逻辑。
 
-### src/runtime/styles
+### src/systems
 
-- 放全局样式、窗口样式、面板样式和启动覆盖层样式。
-- 开发态由 index.html 直接引用，发布态由 Vite build 复制到 dist。
+- 放世界推进、战斗、产业、势力和 NPC 等规则系统。
+
+### src/styles
+
+- 放全局样式、布局样式、面板样式、响应式样式和启动覆盖层样式。
+- 开发态与发布态统一由 src/main.ts 导入聚合入口，不再由 index.html 单独挂旧 runtime 样式。
 
 ### src/types
 
@@ -51,4 +50,4 @@
 - 开发态只直接引用 src 下源码。
 - 发布态只消费 dist 下产物。
 - 不再把根目录 scripts、styles、game.js 作为源码入口。
-- 不再把运行时脚本目录原样复制到 dist 作为对外执行入口。
+- 不再保留旧 runtime 目录作为脚本或样式入口。

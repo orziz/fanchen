@@ -10,7 +10,7 @@ import {
   RANKS, ITEMS, LOCATIONS, LOCATION_MAP, FACTIONS, FACTION_MAP,
   MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES, PROPERTY_DEFS,
   CROPS, CRAFT_RECIPES, MODE_OPTIONS, ACTION_META, TIME_LABELS,
-  SAVE_KEY, MAX_LOG, NPC_ARCHETYPES, PERSONALITIES,
+  SAVE_KEY, LEGACY_SAVE_KEYS, MAX_LOG, NPC_ARCHETYPES, PERSONALITIES,
   WORLD_EVENT_TEMPLATES, TRAVEL_EVENT_TEMPLATES, SOCIAL_EVENT_TEMPLATES, SECT_EVENT_TEMPLATES,
   SECT_BUILDINGS,
 } from '@/config'
@@ -87,7 +87,8 @@ function createInitialPlayer(): PlayerState {
     ],
     equipment: { weapon: null, armor: null, manual: null },
     affiliationId: null, affiliationRank: 0,
-    factionStanding: {}, regionStanding: {}, relations: {},
+    factionStanding: {}, regionStanding: {}, factionCooldowns: {},
+    wantedByFactionId: null, wantedUntilDay: 0, relations: {},
     masterId: null, partnerId: null, rivalIds: [],
     affiliationTasks: [], affiliationTaskDay: 0,
     sect: null, playerFaction: null, tradeRun: null,
@@ -223,7 +224,7 @@ function createInitialWorld(): WorldState {
   return {
     day: 1, hour: 0, subStep: 0,
     weather: sample(['晴', '微雨', '雾起', '大风', '寒霜']),
-    omen: sample(['星辉平稳', '灵潮暗涌', '海雾倒卷', '山门钟鸣', '赤霞流火']),
+    omen: sample(['星辉平稳', '灵潮暗涌', '海雾倒卷', '宗门钟鸣', '赤霞流火']),
     factionFavor: { merchants: 0, court: 0, sect: 0, rogues: 0 },
     factions: Object.fromEntries(FACTIONS.map(f => [f.id, { standing: 0, favor: 0, joined: false }])),
     realm: { activeRealmId: null, cooldown: 0, bossVictories: [] },
@@ -312,6 +313,15 @@ function hydrateGameState(raw: Partial<GameState> = {}): GameState {
   game.player.assets.shops = ensureArray<AssetState>(game.player.assets.shops).map(a => ({ ...assetDefaults, ...a }))
 
   return game
+}
+
+function readStoredSave() {
+  const keys = [SAVE_KEY, ...LEGACY_SAVE_KEYS]
+  for (const key of keys) {
+    const raw = localStorage.getItem(key)
+    if (raw) return { key, raw }
+  }
+  return null
 }
 
 /* ═══════════════════ Store ═══════════════════ */
@@ -410,7 +420,7 @@ export const useGameStore = defineStore('game', () => {
     const stamp = `第${w.day}日 ${TIME_LABELS[w.hour]}`
     game.value.log.unshift({ stamp, text, type })
     if (game.value.log.length > MAX_LOG) game.value.log.length = MAX_LOG
-    if (['warn', 'loot'].includes(type)) {
+    if (['warn', 'loot', 'action'].includes(type)) {
       feedback.value = { text, type }
       setTimeout(() => { feedback.value = null }, 3000)
     }
@@ -519,6 +529,7 @@ export const useGameStore = defineStore('game', () => {
     try {
       game.value.lastSavedAt = Date.now()
       localStorage.setItem(SAVE_KEY, JSON.stringify(game.value))
+      LEGACY_SAVE_KEYS.forEach(key => localStorage.removeItem(key))
       saveState.value = `${manual ? '已手动存档' : '自动存档'} ${new Date(game.value.lastSavedAt).toLocaleTimeString('zh-CN', { hour12: false })}`
       bus.emit('game:saved', { manual })
     } catch {
@@ -529,9 +540,11 @@ export const useGameStore = defineStore('game', () => {
 
   function loadGame() {
     try {
-      const raw = localStorage.getItem(SAVE_KEY)
-      if (!raw) { appendLog('当前浏览器里没有可读取的存档。', 'warn'); return }
-      game.value = hydrateGameState(JSON.parse(raw))
+      const stored = readStoredSave()
+      if (!stored?.raw) { appendLog('当前浏览器里没有可读取的存档。', 'warn'); return }
+      game.value = hydrateGameState(JSON.parse(stored.raw))
+      localStorage.setItem(SAVE_KEY, JSON.stringify(game.value))
+      LEGACY_SAVE_KEYS.forEach(key => localStorage.removeItem(key))
       updateDerivedStats()
       selectedLocationId.value = game.value.player.locationId
       saveState.value = `已读取 ${new Date(game.value.lastSavedAt || Date.now()).toLocaleTimeString('zh-CN', { hour12: false })}`
@@ -553,10 +566,12 @@ export const useGameStore = defineStore('game', () => {
 
   function initializeGame() {
     if (initialized.value) return
-    const raw = localStorage.getItem(SAVE_KEY)
-    if (raw) {
+    const stored = readStoredSave()
+    if (stored?.raw) {
       try {
-        game.value = hydrateGameState(JSON.parse(raw))
+        game.value = hydrateGameState(JSON.parse(stored.raw))
+        localStorage.setItem(SAVE_KEY, JSON.stringify(game.value))
+        LEGACY_SAVE_KEYS.forEach(key => localStorage.removeItem(key))
         saveState.value = '已载入本地存档'
       } catch {
         game.value = createGameState()

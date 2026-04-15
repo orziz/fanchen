@@ -1,5 +1,5 @@
 import { reactive, ref } from 'vue'
-import { SAVE_KEY } from '@/config'
+import { WINDOW_LAYOUT_KEY, LEGACY_WINDOW_LAYOUT_KEYS } from '@/config'
 
 export interface WindowState {
   open: boolean
@@ -12,7 +12,7 @@ export interface WindowState {
 
 const WINDOW_IDS = ['map', 'journal', 'profile', 'command'] as const
 export type WindowId = typeof WINDOW_IDS[number]
-const LAYOUT_KEY = `${SAVE_KEY}-window-layout-v2`
+const LAYOUT_KEY = WINDOW_LAYOUT_KEY
 let zCounter = 3
 let layoutLoaded = false
 
@@ -36,14 +36,17 @@ function loadLayout() {
   if (layoutLoaded) return
   layoutLoaded = true
   try {
-    const raw = localStorage.getItem(LAYOUT_KEY)
-    if (!raw) return
-    const parsed = JSON.parse(raw)
+    const entry = [LAYOUT_KEY, ...LEGACY_WINDOW_LAYOUT_KEYS]
+      .map(key => ({ key, raw: localStorage.getItem(key) }))
+      .find(item => item.raw)
+    if (!entry?.raw) return
+    const parsed = JSON.parse(entry.raw)
     zCounter = Math.max(3, Number(parsed.zCounter) || 3)
     for (const id of WINDOW_IDS) {
       const saved = parsed.windows?.[id]
       if (saved) Object.assign(windows[id], saved)
     }
+    if (entry.key !== LAYOUT_KEY) persistLayout()
   } catch { /* ignore */ }
 }
 
@@ -53,6 +56,7 @@ function persistLayout() {
       zCounter,
       windows: Object.fromEntries(WINDOW_IDS.map(id => [id, { ...windows[id] }])),
     }))
+    LEGACY_WINDOW_LAYOUT_KEYS.forEach(key => localStorage.removeItem(key))
   } catch { /* ignore */ }
 }
 

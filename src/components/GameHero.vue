@@ -3,7 +3,7 @@
     <div class="hero-copy">
       <p class="eyebrow">离线原生修真经营</p>
       <h1>凡尘立道录</h1>
-      <p class="subtitle">从寒门凡人起步，在乡社、商帮、官府与行院之间挣门路、跑商路、攒产业，再决定自己是继续借势而起，还是另立唯一的山门。</p>
+      <p class="subtitle">从寒门凡人起步，在乡社、商帮、官府与行院之间挣门路、跑商路、攒产业，再决定自己是继续借势而起，还是另立唯一的宗门。</p>
     </div>
     <div class="hero-side">
       <div class="hero-top-row">

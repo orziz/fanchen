@@ -45,5 +45,5 @@ export interface SectEventTemplate {
 export const SECT_EVENT_TEMPLATES: SectEventTemplate[] = [
   { id: 'tribute', text: '外门弟子上缴了{value}灵石供奉。', type: 'info' },
   { id: 'teaching-progress', text: '{npc}在传功中有所精进，宗门威望增加。', type: 'info' },
-  { id: 'raid', text: '宿敌势力试探山门，幸好被弟子合力挡下。', type: 'warn' },
+  { id: 'raid', text: '宿敌势力试探宗门，幸好被弟子合力挡下。', type: 'warn' },
 ]

@@ -6,10 +6,10 @@ import {
 } from '@/config'
 import { sample, randomInt, fillTemplate } from '@/utils'
 import { applyPassiveAction, attemptBreakthrough, revivePlayer } from './player'
-import { autoCombatTick, maybeStartEncounter, startEncounter } from './combat'
+import { autoCombatTick, maybeStartEncounter, startEncounter, startPursuitEncounter } from './combat'
 import { advanceTradeRun, resolvePassiveTrade, isTradeHub, maybeStartBestTradeRun } from './trade'
 import { resolveAuctionVisit, resolveAuctionTurn, refreshMarketIfNeeded, maybeActivateRealm } from './auction'
-import { processRelationshipTick, processSectTick, processPlayerFactionTick } from './social'
+import { hasActiveFactionPursuit, processRelationshipTick, processSectTick, processPlayerFactionTick, processFactionStatusTick } from './social'
 import { processNpcLifeTick, runNpcAI } from './npc'
 import { processIndustryTick } from './industry'
 
@@ -40,6 +40,18 @@ function triggerTravelEvent(location: ReturnType<typeof LOCATION_MAP.get>) {
   ctx.appendLog(event.text, 'warn')
 }
 
+function maybeTriggerFactionPursuit(source: 'travel' | 'hunt' | 'quest') {
+  const ctx = getContext()
+  const player = ctx.game.player
+  if (!player.wantedByFactionId || !hasActiveFactionPursuit(player.wantedByFactionId) || ctx.game.combat.currentEnemy) return false
+  const chance = source === 'travel' ? 0.34 : source === 'quest' ? 0.28 : 0.24
+  if (Math.random() < chance) {
+    startPursuitEncounter(player.wantedByFactionId, source)
+    return true
+  }
+  return false
+}
+
 /* ─── Travel ─── */
 
 export function travelTo(locationId: string) {
@@ -64,11 +76,13 @@ export function travelTo(locationId: string) {
   for (let i = 0; i < segments; i++) {
     if (Math.random() < 0.24 + segments * 0.04) triggerTravelEvent(target)
   }
+  maybeTriggerFactionPursuit('travel')
 }
 
 export function travelAndAct(locationId: string, action: string) {
   travelTo(locationId)
-  if (getContext().game.player.locationId === locationId) performAction(action)
+  const ctx = getContext()
+  if (ctx.game.player.locationId === locationId && !ctx.game.combat.currentEnemy) performAction(action)
 }
 
 export function currentLocationCanReach(targetId: string): boolean {
@@ -86,7 +100,7 @@ export function chooseAutoAction(): string | null {
 
   if (mode === 'manual') return null
   if (g.combat.currentEnemy) return g.combat.autoBattle ? 'combat' : null
-  if (g.player.hp < g.player.maxHp * 0.42 || g.player.qi < g.player.maxQi * 0.32) return 'meditate'
+  if (g.player.hp < g.player.maxHp * 0.42 || g.player.qi < g.player.maxQi * 0.32 || g.player.stamina < g.player.maxStamina * 0.18) return 'rest'
   if (g.player.breakthrough >= ctx.getNextBreakthroughNeed() * 0.92 && location.actions.includes('breakthrough')) return 'breakthrough'
 
   if (mode === 'cultivation') {
@@ -128,8 +142,8 @@ function processActionKey(actionKey: string | null) {
   const ctx = getContext()
   const g = ctx.game
 
-  if (actionKey === 'combat') { autoCombatTick(); return }
-  if (actionKey === 'breakthrough') { attemptBreakthrough(); return }
+  if (actionKey === 'combat') { g.player.action = 'combat'; autoCombatTick(); return }
+  if (actionKey === 'breakthrough') { g.player.action = 'breakthrough'; attemptBreakthrough(); return }
   if (actionKey === 'sect') {
     applyPassiveAction('sect')
     if (g.player.sect) {
@@ -152,6 +166,7 @@ function processActionKey(actionKey: string | null) {
   if (['hunt', 'quest'].includes(actionKey)) {
     if (actionKey === 'quest') g.player.stats.questsFinished += 1
     ctx.adjustFactionStanding(g.player.affiliationId, actionKey === 'quest' ? 1.2 : 0.8)
+    if (maybeTriggerFactionPursuit(actionKey as 'hunt' | 'quest')) return
     const started = maybeStartEncounter(actionKey)
     if (!started) {
       const pool = ITEMS.filter(i => i.tier <= (ctx.getCurrentLocation().marketTier || 0) + 1 && (i.type === ctx.getCurrentLocation().marketBias || Math.random() < 0.2))
@@ -183,11 +198,12 @@ export function tickWorld() {
     if (g.world.hour === 0) {
       g.world.day += 1
       g.world.weather = sample(['晴', '微雨', '大风', '寒霜', '雾起', '雷暴'])
-      g.world.omen = sample(['星辉平稳', '灵潮暗涌', '海雾倒卷', '山门钟鸣', '赤霞流火', '北斗失位'])
+      g.world.omen = sample(['星辉平稳', '灵潮暗涌', '海雾倒卷', '宗门钟鸣', '赤霞流火', '北斗失位'])
     }
     resolveAuctionTurn()
     refreshMarketIfNeeded()
     maybeActivateRealm()
+    processFactionStatusTick()
     processRelationshipTick()
     processSectTick()
     processPlayerFactionTick()

@@ -8,7 +8,7 @@ import { sample, randomFloat, randomInt } from '@/utils'
 function getNpcProfessionPool(npc: { lifeStage: string; homeId: string; locationId: string }) {
   const home = LOCATION_MAP.get(npc.homeId) || LOCATION_MAP.get(npc.locationId)
   const tags = home?.tags || []
-  if (tags.includes('sect')) return npc.lifeStage === '少年' ? ['杂役弟子', '抄经童子', '听差弟子'] : npc.lifeStage === '壮年' ? ['外门弟子', '内门行走', '丹房执役', '护山弟子'] : npc.lifeStage === '中年' ? ['执事', '丹房教习', '护法', '司库'] : ['守阁老人', '山门宿老', '外门教习']
+  if (tags.includes('sect')) return npc.lifeStage === '少年' ? ['杂役弟子', '抄经童子', '听差弟子'] : npc.lifeStage === '壮年' ? ['外门弟子', '内门行走', '丹房执役', '护山弟子'] : npc.lifeStage === '中年' ? ['执事', '丹房教习', '护法', '司库'] : ['守阁老人', '宗门宿老', '外门教习']
   if (tags.includes('court')) return npc.lifeStage === '少年' ? ['衙门杂役', '跑堂信差', '文牍学徒'] : npc.lifeStage === '壮年' ? ['皂隶', '书吏', '巡街快手', '税契小吏'] : npc.lifeStage === '中年' ? ['捕头', '典吏', '粮台主事'] : ['老书办', '退居老吏', '旧案守库人']
   if (tags.includes('pass')) return npc.lifeStage === '少年' ? ['趟子学徒', '关城杂役', '驿卒'] : npc.lifeStage === '壮年' ? ['镖师', '关城军健', '赶车把式', '护货刀手'] : npc.lifeStage === '中年' ? ['押队头', '老镖头', '关市主事'] : ['守关老人', '退役镖师', '驿路旧人']
   if (tags.includes('forge')) return npc.lifeStage === '少年' ? ['打杂学徒', '矿场童工', '送炭小厮'] : npc.lifeStage === '壮年' ? ['学徒铁匠', '匠工', '押镖好手', '矿场工头'] : npc.lifeStage === '中年' ? ['监造', '工坊主事', '老镖头'] : ['老匠', '炉前师傅', '退役镖师']
@@ -150,7 +150,7 @@ export function runNpcAI() {
 
     if (npc.masterId === 'player' && g.player.sect && Math.random() < 0.3) {
       npc.locationId = g.player.locationId
-      npc.lastEvent = '赶来山门听候安排'
+      npc.lastEvent = '赶来宗门听候安排'
     } else if (Math.random() < (npc.lifeStage === '老年' ? 0.12 : npc.lifeStage === '少年' ? 0.32 : 0.26)) {
       npc.locationId = sample(current.neighbors)
       npc.lastEvent = `动身前往${LOCATION_MAP.get(npc.locationId)!.name}`

@@ -1,0 +1,325 @@
+:root {
+  color-scheme: light;
+  /* 宣纸水墨风 (Light Mode) 变量体系 */
+  --bg-ink: #f2ebd9;        /* 亮宣纸色 */
+  --bg-deep: #e8decc;       /* 深宣纸色 */
+  --mist: rgba(0, 0, 0, 0.04);
+  --card: rgba(255, 255, 255, 0.9);
+  --card-soft: rgba(248, 245, 238, 0.7);
+  --border: rgba(0, 0, 0, 0.08);
+  --line: rgba(0, 0, 0, 0.05);
+  
+  /* 文本色：墨色为主 */
+  --text-main: #2b2823;
+  --text-dim: #5c5850;
+  --text-faint: #8e897f;
+  
+  /* 游戏内状态颜色：以不刺眼的古典色为主 */
+  --gold: #b3852b;          /* 暗琉璃黄 */
+  --gold-bright: #d4a340;   
+  --jade: #427e61;          /* 翠玉绿 */
+  --cinnabar: #b44a42;      /* 朱砂红 */
+  --sky: #4682b4;           /* 苍石蓝 */
+  
+  --shadow: 0 16px 32px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.02);
+  --radius-xl: 22px;        /* 稍微减弱圆角更显修仙书卷感 */
+  --radius-lg: 16px;
+  --radius-md: 10px;
+  --radius-sm: 6px;
+  --font-title: "STKaiti", "KaiTi", "Kaiti SC", "FangSong", "STFangsong", serif;
+  --font-body: "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+  --font-ui: "Microsoft YaHei UI", "Segoe UI", "Noto Sans SC", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  min-width: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(179, 133, 43, 0.25) transparent;
+}
+
+/* 全局统一滚动条 —— 游戏风宣纸主题 */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(179, 133, 43, 0.22);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(179, 133, 43, 0.38);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  position: relative;
+  /* 外部环境背景：极简宣纸过渡色 */
+  background: 
+    radial-gradient(circle at top, rgba(230, 222, 204, 0.8), transparent 40%),
+    linear-gradient(180deg, #edebd9 0%, #e0dac2 100%);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
+  opacity: 0.16;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.22), transparent 18%),
+    radial-gradient(circle at 85% 8%, rgba(125, 178, 200, 0.18), transparent 16%),
+    radial-gradient(circle at 45% 78%, rgba(208, 171, 108, 0.14), transparent 24%);
+  filter: blur(18px);
+}
+
+body::after {
+  opacity: 0.08;
+  background-image:
+    linear-gradient(90deg, transparent 0, transparent 24%, rgba(255, 255, 255, 0.08) 24%, transparent 25%),
+    linear-gradient(transparent 0, transparent 24%, rgba(255, 255, 255, 0.08) 24%, transparent 25%);
+  background-size: 64px 64px;
+  mix-blend-mode: screen;
+}
+
+body.dragging-window,
+body.dragging-window * {
+  user-select: none;
+  cursor: grabbing !important;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 110%, rgba(242, 214, 162, 0.18), transparent 40%),
+    radial-gradient(circle at 50% -10%, rgba(125, 178, 200, 0.08), transparent 30%);
+  pointer-events: none;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(160deg, rgba(248, 245, 238, 0.95), rgba(242, 235, 222, 0.92)),
+    var(--card);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+}
+
+.eyebrow,
+.section-kicker {
+  margin: 0 0 8px;
+  color: var(--gold);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.hero h1,
+.player-name,
+.window-header h2,
+.workbench-head h2,
+.location-title,
+.item-title,
+.market-title,
+.auction-title,
+.npc-name,
+.subsection-title,
+.window-toolbar h3 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 700;
+}
+
+.subtitle,
+.workbench-subtitle {
+  margin: 10px 0 0;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+.subtitle {
+  max-width: 66ch;
+}
+
+.control-button,
+.speed-button,
+.mode-button,
+.tab-button,
+.mini-button,
+.item-button,
+.npc-button {
+  appearance: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--text-main);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.control-button:hover,
+.speed-button:hover,
+.mode-button:hover,
+.tab-button:hover,
+.mini-button:hover,
+.item-button:hover,
+.npc-button:hover {
+  transform: translateY(-1px);
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.control-button[aria-disabled="true"],
+.speed-button[aria-disabled="true"],
+.mode-button[aria-disabled="true"],
+.tab-button[aria-disabled="true"],
+.mini-button[aria-disabled="true"],
+.item-button[aria-disabled="true"],
+.npc-button[aria-disabled="true"] {
+  opacity: 0.72;
+  border-style: dashed;
+  color: var(--text-dim);
+}
+
+.control-button[aria-disabled="true"]:hover,
+.speed-button[aria-disabled="true"]:hover,
+.mode-button[aria-disabled="true"]:hover,
+.tab-button[aria-disabled="true"]:hover,
+.mini-button[aria-disabled="true"]:hover,
+.item-button[aria-disabled="true"]:hover,
+.npc-button[aria-disabled="true"]:hover {
+  transform: none;
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.control-button.primary,
+.control-button.active,
+.mode-button.active,
+.tab-button.active,
+.mini-button.active,
+.item-button.active,
+.speed-button.active,
+.npc-button.active {
+  background: linear-gradient(135deg, rgba(208, 171, 108, 0.2), rgba(127, 178, 148, 0.22));
+  border-color: rgba(242, 214, 162, 0.28);
+  color: var(--gold-bright);
+}
+
+.control-button.ghost {
+  background: transparent;
+}
+
+.tag,
+.rarity,
+.trait-chip,
+.route-pill,
+.auction-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-family: var(--font-ui);
+  color: var(--text-dim);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.rarity.common {
+  color: #8e897f;
+}
+
+.rarity.uncommon {
+  color: #427e61;
+}
+
+.rarity.rare {
+  color: #4682b4;
+}
+
+.rarity.epic {
+  color: #b3852b;
+}
+
+.rarity.legendary {
+  color: #b44a42;
+}
+
+.item-button,
+.npc-button,
+.mini-button {
+  padding: 9px 12px;
+  border-radius: 14px;
+}
+
+.inline-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.standout {
+  border-color: rgba(179, 133, 43, 0.2);
+  background:
+    linear-gradient(180deg, rgba(208, 171, 108, 0.08), transparent),
+    var(--card);
+}
+
+.empty-state {
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.muted {
+  color: var(--text-faint);
+}
+
+.divider {
+  height: 1px;
+  margin: 16px 0;
+  background: linear-gradient(90deg, transparent, rgba(242, 214, 162, 0.2), transparent);
+}

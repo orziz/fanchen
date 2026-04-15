@@ -11,19 +11,39 @@
   <!-- Factions -->
   <h3 class="subsection-title">可投势力</h3>
   <div class="npc-grid">
-    <div v-for="faction in FACTIONS" :key="faction.id" :class="['npc-card', { standout: currentAffiliation?.id === faction.id }]">
-      <div class="npc-top">
+    <div
+      v-for="faction in FACTIONS"
+      :key="faction.id"
+      :class="[
+        'npc-card',
+        'sect-faction-card',
+        {
+          standout: currentAffiliation?.id === faction.id,
+          'is-current-faction': currentAffiliation?.id === faction.id,
+          'is-cooldown-card': factionStatusTone(faction) === 'cooldown-chip' || factionStatusTone(faction) === 'warning-chip',
+        },
+      ]"
+    >
+      <div class="npc-top sect-faction-head">
         <div>
           <h3 class="npc-name">{{ faction.name }}</h3>
           <p class="npc-meta">{{ faction.desc }}</p>
         </div>
-        <span class="trait-chip">{{ getFactionTypeLabel(faction.type) }}</span>
+        <div class="inline-list sect-faction-status">
+          <span class="trait-chip">{{ getFactionTypeLabel(faction.type) }}</span>
+          <span class="trait-chip" :class="factionStatusTone(faction)">{{ factionStatusText(faction) }}</span>
+        </div>
       </div>
       <p class="npc-meta">所在：{{ getLocationName(faction.locationId) }} · 可开：{{ formatUnlockLabels(faction.unlocks) }}</p>
       <p class="npc-meta">入门条件：境界 {{ getRankName(faction.joinRequirement.rankIndex) }}，声望 {{ faction.joinRequirement.reputation }}，灵石 {{ faction.joinRequirement.money }}</p>
+      <p class="npc-meta">当前缺口：{{ factionGapText(faction) }}</p>
+      <p v-if="currentAffiliation?.id === faction.id" class="npc-meta">退出代价：全局声望 -8，12 天内不可重返{{ faction.name }}；若是官府、军府或转运司，还会进入追缉期。</p>
       <div class="item-actions">
-        <button class="item-button" @click="doJoin(faction.id)">
-          {{ currentAffiliation?.id === faction.id ? `当前身份：${faction.titles[player.affiliationRank]}` : '加入此势力' }}
+        <button v-if="currentAffiliation?.id === faction.id" class="item-button is-current" @click="doLeave()">
+          当前身份：{{ faction.titles[player.affiliationRank] }} · 退出此势力
+        </button>
+        <button v-else class="item-button" :class="canJoinFaction(faction.id) ? 'is-route' : ''" :disabled="!canJoinFaction(faction.id)" @click="doJoin(faction.id)">
+          {{ canJoinFaction(faction.id) ? '加入此势力' : '条件未满足' }}
         </button>
       </div>
     </div>
@@ -41,8 +61,13 @@
           </div>
           <span class="rarity uncommon">声望 +{{ round(task.rewardReputation, 1) }}</span>
         </div>
+        <p class="item-meta">完成条件：{{ describeAffiliationNeed(task) }}</p>
+        <p class="item-meta">当前差口：{{ describeAffiliationGap(task) }}</p>
+        <p class="item-meta">{{ describeAffiliationReward(task) }}</p>
         <div class="item-actions">
-          <button class="item-button" @click="doCompleteAffiliation(task.id)">完成差使</button>
+          <button class="item-button" :class="canCompleteAffiliation(task.id) ? 'is-route' : ''" :disabled="!canCompleteAffiliation(task.id)" @click="doCompleteAffiliation(task.id)">
+            {{ canCompleteAffiliation(task.id) ? '完成差使' : '条件未满足' }}
+          </button>
         </div>
       </div>
     </template>
@@ -125,7 +150,7 @@
       </template>
       <div v-else class="empty-state">今天门中暂无额外差使。</div>
     </div>
-    <h3 class="subsection-title">山门建筑</h3>
+    <h3 class="subsection-title">宗门建筑</h3>
     <div class="world-grid">
       <div v-for="(building, key) in SECT_BUILDINGS" :key="key" class="world-card">
         <span>{{ building.label }}</span>
@@ -182,10 +207,10 @@
   <template v-else>
     <div class="combat-card standout">
       <p class="auction-meta">
-        宗门是你独占的一脉山门。需求：至少筑基、声望 68、灵石 3800、立宗旗幡 1。
+        宗门是你独占的一脉根基。需求：至少筑基、声望 68、灵石 3800、立宗旗幡 1。
         当前：境界 {{ getRankName(player.rankIndex) }}、声望 {{ formatNumber(player.reputation) }}、灵石 {{ formatNumber(player.money) }}。
       </p>
-      <div class="auction-actions"><button class="item-button" @click="doCreateSect">另立山门</button></div>
+      <div class="auction-actions"><button class="item-button" @click="doCreateSect">开宗立门</button></div>
     </div>
   </template>
 </template>
@@ -194,11 +219,12 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { FACTIONS, RANKS, LOCATION_MAP, SECT_BUILDINGS, getItem } from '@/config'
+import { FACTIONS, FACTION_MAP, RANKS, LOCATION_MAP, SECT_BUILDINGS, getItem } from '@/config'
 import { formatNumber, round } from '@/utils'
 import { getFactionTypeLabel, formatUnlockLabels } from '@/composables/useUIHelpers'
 import {
-  joinFaction, completeAffiliationTask, refreshAffiliationTasks,
+  canCompleteAffiliationTask, canJoinFaction, completeAffiliationTask, explainFactionJoin, getAffiliationTaskIssues,
+  getFactionRejoinCooldownDays, hasActiveFactionPursuit, joinFaction, leaveFaction, refreshAffiliationTasks,
   createPlayerFaction, upgradePlayerFactionBranch, completePlayerFactionMission,
   refreshPlayerFactionMissions, PLAYER_FACTION_BRANCHES,
   createSect, upgradeSectBuilding, refreshSectMissions, completeSectMission,
@@ -206,7 +232,7 @@ import {
 } from '@/systems/social'
 
 const store = useGameStore()
-const { player, currentAffiliation, playerFaction, sect } = storeToRefs(store)
+const { player, world, currentAffiliation, playerFaction, sect } = storeToRefs(store)
 
 function getRankName(idx: number) { return RANKS[Math.min(idx, RANKS.length - 1)].name }
 function getLocationName(id: string) { return LOCATION_MAP.get(id)?.name || id }
@@ -217,8 +243,51 @@ const affiliationTasks = computed(() => currentAffiliation.value ? refreshAffili
 const factionMissions = computed(() => playerFaction.value ? refreshPlayerFactionMissions() : [])
 const sectMissions = computed(() => sect.value ? refreshSectMissions() : [])
 
+function factionStatusText(faction: { id: string }) {
+  if (currentAffiliation.value?.id === faction.id) {
+    return hasActiveFactionPursuit(faction.id) ? '已加入 · 追缉未解' : '已加入'
+  }
+  const cooldownDays = getFactionRejoinCooldownDays(faction.id)
+  if (hasActiveFactionPursuit(faction.id)) {
+    return cooldownDays > 0 ? `追缉中 · 冷却 ${cooldownDays} 天` : '追缉中'
+  }
+  return cooldownDays > 0 ? `重返冷却 ${cooldownDays} 天` : '可加入'
+}
+
+function factionStatusTone(faction: { id: string }) {
+  if (currentAffiliation.value?.id === faction.id) return 'current-chip'
+  if (hasActiveFactionPursuit(faction.id)) return 'warning-chip'
+  return getFactionRejoinCooldownDays(faction.id) > 0 ? 'cooldown-chip' : 'route-chip'
+}
+
+function factionGapText(faction: { id: string }) {
+  if (currentAffiliation.value?.id === faction.id) return '你当前已在这方势力中。'
+  if (canJoinFaction(faction.id)) return '条件已满足，可立即加入。'
+  return explainFactionJoin(faction.id)
+}
+
+function describeAffiliationNeed(task: any) {
+  const faction = FACTION_MAP.get(task.factionId)
+  const needs = [`需前往${getLocationName(faction?.locationId || player.value.locationId)}`]
+  if (task.kind === 'supply') needs.push(`缴付${getItemName(task.itemId)} x${task.quantity}`)
+  if (task.kind === 'patrol') needs.push(`体力至少 ${task.staminaCost}，真气至少 ${task.qiCost}`)
+  if (task.kind === 'liaison') needs.push(`灵石至少 ${task.moneyCost}，本地声望至少 ${task.standingNeed}`)
+  return needs.join('；')
+}
+
+function describeAffiliationReward(task: any) {
+  return `完成后：灵石 +${task.rewardMoney}，声望 +${round(task.rewardReputation, 1)}，势力立场 +${round(task.rewardStanding, 1)}，本地声望 +${round(task.rewardRegion, 1)}`
+}
+
+function describeAffiliationGap(task: any) {
+  const issues = getAffiliationTaskIssues(task.id)
+  return issues.length ? issues.join('；') : '当前已满足，可立即交付。'
+}
+
 function doJoin(id: string) { joinFaction(id) }
 function doCompleteAffiliation(id: string) { completeAffiliationTask(id) }
+function doLeave() { leaveFaction() }
+function canCompleteAffiliation(id: string) { return canCompleteAffiliationTask(id) }
 function doCreateFaction() { createPlayerFaction() }
 function doUpgradeBranch(key: string) { upgradePlayerFactionBranch(key) }
 function doCompleteFactionMission(id: string) { completePlayerFactionMission(id) }

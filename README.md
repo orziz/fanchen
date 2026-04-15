@@ -6,18 +6,18 @@
 
 - 新源码入口放在 src，使用 TypeScript 作为后续迁移主线。
 - UI 宿主选用 Vue3，页面骨架与运行时启动都由源码入口直接托管。
-- 游戏运行时统一收束到 src/runtime，下属 app、config、systems、ui 和 styles 都纳入同一源码树与打包图，不再通过顺序注入脚本接管页面。
+- 游戏规则现按 src/config、src/stores、src/systems、src/components 和 src/styles 分层维护，不再保留旧 runtime 脚本入口。
 - 开发与发布统一由 Vite 8 驱动；发布阶段仍输出 classic IIFE bundle，这样 dist/index.html 可以在 file 协议下直接打开。
-- 当前不把 PixiJS 作为全局宿主引擎；后续若要增强地图或战斗演出，只考虑局部引入。
+- 地图渲染使用 PixiJS 局部接入，不再作为全局宿主引擎。
 
 ## 源码目录
 
 - src/components：Vue 外壳组件与后续逐步迁出的界面组件。
-- src/composables：启动、运行时状态和后续状态接入逻辑。
-- src/runtime：统一游戏运行时源码目录。
-- src/runtime/bootstrap.ts：源码运行时静态启动入口。
-- src/runtime/app、src/runtime/config、src/runtime/systems、src/runtime/ui：世界、系统、UI 渲染与规则模块。
-- src/runtime/styles：游戏样式与启动覆盖层样式。
+- src/composables：舞台、窗口、界面辅助等组合式逻辑。
+- src/config：世界表、常量和玩法配置。
+- src/stores：Pinia 状态、派生数据和存读档入口。
+- src/systems：世界循环、战斗、产业、势力等规则模块。
+- src/styles：全局样式、响应式和启动覆盖层样式。
 - src/types：全局类型与 Vue 声明。
 - docs：迁移、架构和设计说明。
 

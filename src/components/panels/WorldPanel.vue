@@ -32,14 +32,27 @@
   <!-- All locations -->
   <h3 class="subsection-title">九州总览</h3>
   <div class="world-grid">
-    <div v-for="loc in LOCATIONS" :key="loc.id" :class="['world-card', { standout: isRealmHere(loc.id) }]">
-      <span>{{ loc.name }}</span>
-      <strong>{{ loc.region }}</strong>
-      <p class="item-meta">灵气 {{ loc.aura }}，风险 {{ loc.danger }}，市集 {{ loc.marketTier || 0 }} 阶</p>
+    <div v-for="loc in LOCATIONS" :key="loc.id" :class="['world-card', { standout: isRealmHere(loc.id), 'is-current-card': player.locationId === loc.id }]">
+      <div class="world-card-head">
+        <div>
+          <p class="section-kicker">地点</p>
+          <h3 class="world-card-title">{{ loc.name }}</h3>
+          <p class="item-meta">{{ loc.region }} · {{ loc.terrain }} · 市集 {{ loc.marketTier || 0 }} 阶</p>
+        </div>
+        <div class="world-card-status">
+          <span v-if="player.locationId === loc.id" class="trait-chip current-chip">你在此地</span>
+          <span v-else class="trait-chip route-chip">可前往</span>
+          <span v-if="isRealmHere(loc.id)" class="rarity epic">异象活跃</span>
+        </div>
+      </div>
+      <p class="item-meta">灵气 {{ loc.aura }}，风险 {{ loc.danger }}，可在此处理 {{ getActionLine(loc.actions) }}</p>
       <div class="item-actions">
         <button class="item-button" @click="doFocus(loc.id)">查看地图</button>
-        <button class="item-button" :disabled="player.locationId === loc.id" @click="doTravel(loc.id)">
-          {{ player.locationId === loc.id ? '你在此地' : `前往${loc.short}` }}
+        <button class="item-button" :class="player.locationId === loc.id ? 'is-current' : 'is-route'" :disabled="player.locationId === loc.id" @click="doTravel(loc.id)">
+          {{ player.locationId === loc.id ? '你在此地' : `前往${loc.name}` }}
+        </button>
+        <button v-if="isRealmHere(loc.id) && activeRealm" class="item-button" :class="{ 'is-route': player.locationId !== loc.id }" @click="doChallenge(activeRealm.id)">
+          {{ player.locationId === loc.id ? '挑战秘境' : '赶赴并挑战' }}
         </button>
       </div>
     </div>
@@ -50,15 +63,15 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { LOCATIONS, LOCATION_MAP, REALM_TEMPLATES } from '@/config'
+import { ACTION_META, LOCATIONS, LOCATION_MAP, REALM_TEMPLATES } from '@/config'
 import { round } from '@/utils'
-import { useWindows } from '@/composables/useWindows'
+import { useStage } from '@/composables/useStage'
 import { travelTo } from '@/systems/world'
 import { challengeRealm } from '@/systems/combat'
 
 const store = useGameStore()
 const { player, world, selectedLocationId } = storeToRefs(store)
-const { openWindow } = useWindows()
+const { setTab } = useStage()
 
 const activeRealm = computed(() => {
   const id = world.value.realm.activeRealmId
@@ -71,9 +84,14 @@ function isRealmHere(locId: string) {
   return activeRealm.value?.locationId === locId
 }
 
+function getActionLine(actions: string[]) {
+  return actions.map(action => ACTION_META[action]?.label || action).join('、')
+}
+
 function doFocus(locId: string) {
   selectedLocationId.value = locId
-  openWindow('map')
+  store.appendLog(`山河图已标出${getLocationName(locId)}。`, 'action')
+  setTab('map')
 }
 
 function doTravel(locId: string) {

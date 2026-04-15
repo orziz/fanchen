@@ -10,6 +10,9 @@ import type { RelationState, TerritoryEntry } from '@/types/game'
 /* ═══════════════════ Constants ═══════════════════ */
 
 const OFFICIAL_FACTION_TYPES = new Set(['court', 'bureau', 'garrison'])
+const FACTION_LEAVE_REPUTATION_COST = 8
+const FACTION_REJOIN_COOLDOWN_DAYS = 12
+const OFFICIAL_PURSUIT_DAYS = 12
 const FACTION_TYPE_LABELS: Record<string, string> = {
   village: '乡社', society: '行社', guild: '商帮', escort: '镖局',
   court: '官府', bureau: '转运司', garrison: '军府', order: '行院',
@@ -79,6 +82,44 @@ function getTerritoryControllerName(territory: TerritoryEntry) {
   const pf = getContext().game.player.playerFaction
   if (territory.controllerId && pf && territory.controllerId === pf.id) return pf.name
   return FACTION_MAP.get(territory.controllerId || '')?.name || '散户地头'
+}
+
+function getFactionCooldownMap() {
+  const player = getContext().game.player
+  player.factionCooldowns = player.factionCooldowns || {}
+  return player.factionCooldowns
+}
+
+function clearExpiredFactionStatuses() {
+  const ctx = getContext()
+  const player = ctx.game.player
+  const cooldownMap = getFactionCooldownMap()
+  Object.keys(cooldownMap).forEach(factionId => {
+    if ((cooldownMap[factionId] || 0) <= ctx.game.world.day) delete cooldownMap[factionId]
+  })
+  if (player.wantedByFactionId && player.wantedUntilDay <= ctx.game.world.day) {
+    const factionName = FACTION_MAP.get(player.wantedByFactionId)?.name || '原势力'
+    player.wantedByFactionId = null
+    player.wantedUntilDay = 0
+    ctx.appendLog(`${factionName}对你的追缉逐渐平息。`, 'info')
+  }
+}
+
+export function processFactionStatusTick() {
+  clearExpiredFactionStatuses()
+}
+
+export function getFactionRejoinCooldownDays(factionId: string) {
+  const ctx = getContext()
+  const untilDay = getFactionCooldownMap()[factionId] || 0
+  return untilDay > ctx.game.world.day ? untilDay - ctx.game.world.day : 0
+}
+
+export function hasActiveFactionPursuit(factionId?: string | null) {
+  const ctx = getContext()
+  const player = ctx.game.player
+  if (!player.wantedByFactionId || player.wantedUntilDay <= ctx.game.world.day) return false
+  return factionId ? player.wantedByFactionId === factionId : true
 }
 
 /* ─── Faction standing ─── */
@@ -225,6 +266,8 @@ export function getFactionJoinIssues(factionId: string): string[] {
   if (!faction) return ['这方势力暂时无法接触。']
   const issues: string[] = []
   if (g.player.affiliationId === factionId) issues.push('你已经在这方势力中')
+  const cooldownDays = getFactionRejoinCooldownDays(factionId)
+  if (cooldownDays > 0) issues.push(`还需等待${cooldownDays}天才能重返这方势力`)
   if (g.player.locationId !== faction.locationId) issues.push(`需前往${LOCATION_MAP.get(faction.locationId)?.name || faction.locationId}`)
   if (g.player.money < faction.joinRequirement.money) issues.push(`灵石不足，还差${faction.joinRequirement.money - g.player.money}`)
   if (g.player.reputation < faction.joinRequirement.reputation) issues.push(`声望不足，还差${round(faction.joinRequirement.reputation - g.player.reputation, 1)}`)
@@ -239,6 +282,7 @@ export function joinFaction(factionId: string) {
   if (!faction || !canJoinFaction(factionId)) { ctx.appendLog('眼下还没有资格加入这方势力。', 'warn'); return }
   const prev = FACTION_MAP.get(g.player.affiliationId)
   g.player.affiliationId = factionId; g.player.affiliationRank = 0
+  delete getFactionCooldownMap()[factionId]
   g.player.factionStanding[factionId] = Math.max(g.player.factionStanding[factionId] || 0, 8)
   ctx.adjustRegionStanding(faction.locationId, 2.4)
   refreshAffiliationTasks(true)
@@ -246,6 +290,36 @@ export function joinFaction(factionId: string) {
   if (prev && prev.id !== factionId) ctx.appendLog(`你离开了${prev.name}，转而投向${faction.name}。`, 'npc')
   g.player.title = `${faction.name}${faction.titles[0]}`
   ctx.appendLog(`你正式加入${faction.name}，身份为"${faction.titles[0]}"。`, 'loot')
+}
+
+export function leaveFaction() {
+  const ctx = getContext()
+  const g = ctx.game
+  const faction = FACTION_MAP.get(g.player.affiliationId || '')
+  if (!faction) { ctx.appendLog('你当前并未投身任何势力。', 'warn'); return }
+
+  g.player.reputation = Math.max(0, g.player.reputation - FACTION_LEAVE_REPUTATION_COST)
+  g.player.affiliationId = null
+  g.player.affiliationRank = 0
+  g.player.affiliationTasks = []
+  g.player.affiliationTaskDay = g.world.day
+  g.player.title = `${ctx.getRankData(g.player.rankIndex).name}境修士`
+  g.player.factionStanding[faction.id] = Math.min(g.player.factionStanding[faction.id] || 0, -12)
+  getFactionCooldownMap()[faction.id] = g.world.day + FACTION_REJOIN_COOLDOWN_DAYS
+
+  if (g.world.factions[faction.id]) {
+    g.world.factions[faction.id].joined = false
+    g.world.factions[faction.id].standing = g.player.factionStanding[faction.id]
+  }
+
+  if (isOfficialFaction(faction)) {
+    g.player.wantedByFactionId = faction.id
+    g.player.wantedUntilDay = g.world.day + OFFICIAL_PURSUIT_DAYS
+    ctx.appendLog(`你脱离了${faction.name}，声望受损，且接下来${OFFICIAL_PURSUIT_DAYS}天仍可能遭遇追缉。`, 'warn')
+    return
+  }
+
+  ctx.appendLog(`你退出了${faction.name}，声望受损，且${FACTION_REJOIN_COOLDOWN_DAYS}天内不得重返。`, 'warn')
 }
 
 /* ═══════════════════ Territory ═══════════════════ */
@@ -489,9 +563,9 @@ export function processPlayerFactionTick() {
 
 function getSectMissions(): any[] { const sect = getContext().game.player.sect; if (!sect) return []; sect.missions = Array.isArray(sect.missions) ? sect.missions : []; return sect.missions }
 
-function buildSectGranaryMission(sect: any) { return createTask('sect', 'granary', { title: '补山门粮库', desc: `给${sect.name}补一批口粮和药草，门内杂役与弟子才能安稳过日子。`, grainNeed: 3, herbNeed: 1, rewardFood: 22, rewardTreasury: 18, rewardPrestige: 2.4, rewardReputation: 0.8 }) }
+function buildSectGranaryMission(sect: any) { return createTask('sect', 'granary', { title: '补宗门粮库', desc: `给${sect.name}补一批口粮和药草，门内杂役与弟子才能安稳过日子。`, grainNeed: 3, herbNeed: 1, rewardFood: 22, rewardTreasury: 18, rewardPrestige: 2.4, rewardReputation: 0.8 }) }
 function buildSectLectureMission(sect: any) { return createTask('sect', 'lecture', { title: '开一场讲经课', desc: `抽时间给${sect.name}门下开讲经课，稳住门风也带一带弟子。`, qiCost: 10, discipleNeed: 1, rewardPrestige: 3.4, rewardTreasury: 16, rewardTeaching: 1.6 }) }
-function buildSectRecruitMission(sect: any) { return createTask('sect', 'recruit', { title: '招募外门弟子', desc: `拿一笔安置银去招一批外门新丁，让${sect.name}真正像个山门。`, moneyCost: 88, reputationNeed: 40, rewardOuter: 1, rewardPrestige: 2.8, rewardFood: 6 }) }
+function buildSectRecruitMission(sect: any) { return createTask('sect', 'recruit', { title: '招募外门弟子', desc: `拿一笔安置银去招一批外门新丁，让${sect.name}真正像个宗门。`, moneyCost: 88, reputationNeed: 40, rewardOuter: 1, rewardPrestige: 2.8, rewardFood: 6 }) }
 
 export function refreshSectMissions(force = false) {
   const ctx = getContext(); const sect = ctx.game.player.sect; if (!sect) return []
@@ -522,20 +596,20 @@ export function completeSectMission(missionId: string) {
   sect.food = clamp(sect.food + (mission.rewardFood || 0), 0, 240); sect.treasury += mission.rewardTreasury || 0; sect.prestige += mission.rewardPrestige || 0
   g.player.reputation += mission.rewardReputation || 0; g.player.stats.sectTasksCompleted += 1
   sect.missions = missions.filter((e: any) => e.id !== missionId) as any[]
-  ctx.appendLog(`你替${sect.name}办妥"${mission.title}"，山门根基更稳了。`, 'loot')
+  ctx.appendLog(`你替${sect.name}办妥"${mission.title}"，宗门根基更稳了。`, 'loot')
 }
 
 export function createSect() {
   const ctx = getContext(); const g = ctx.game
   if (g.player.sect) { ctx.appendLog('你已经建立了自己的宗门。', 'warn'); return }
-  if (g.player.rankIndex < 4) { ctx.appendLog('你还只是江湖中人，离自立山门差得太远。', 'warn'); return }
+  if (g.player.rankIndex < 4) { ctx.appendLog('你还只是江湖中人，离自立宗门差得太远。', 'warn'); return }
   if (!ctx.findInventoryEntry('sect-banner')) { ctx.appendLog('建宗至少要备好一面宗门旗幡。', 'warn'); return }
   if (g.player.reputation < 68 || g.player.money < 3800) { ctx.appendLog('建宗需要筑基以上名望、足够灵石和真正的立宗资格。', 'warn'); return }
   const name = createSectName(); g.player.money -= 3800; ctx.removeItemFromInventory('sect-banner', 1)
   g.player.sect = ctx.createInitialSect(name); g.player.sect!.foundedDay = g.world.day; g.player.sect!.treasury = 420
   g.player.sect!.manualLibrary = g.player.inventory.filter(e => getItem(e.itemId)?.type === 'manual').slice(0, 1).map(e => e.itemId)
   refreshSectMissions(true); g.player.reputation += 6
-  ctx.appendLog(`你正式立下山门，宗门"${name}"就此开宗。`, 'loot')
+  ctx.appendLog(`你正式开宗立门，宗门"${name}"就此开宗。`, 'loot')
 }
 
 export function upgradeSectBuilding(buildingKey: string) {

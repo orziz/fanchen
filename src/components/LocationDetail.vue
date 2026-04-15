@@ -1,66 +1,88 @@
 <template>
-  <div class="location-card">
-    <div class="location-top">
-      <div>
-        <p class="section-kicker">地脉详情</p>
-        <h3 class="location-title">{{ selected.name }}</h3>
-        <p class="location-meta">{{ selected.desc }}</p>
-      </div>
-      <div class="inline-list">
-        <span class="tag">{{ selected.region }}</span>
-        <span class="tag">灵气 {{ selected.aura }}</span>
-        <span class="tag">风险 {{ selected.danger }}</span>
-      </div>
-    </div>
+  <div class="location-detail">
+    <div class="location-card location-detail-card">
+      <section class="location-head">
+        <div class="location-heading-copy">
+          <h3 class="location-title">{{ selected.name }}</h3>
+          <p class="location-subtitle">{{ locationTypeLine }}</p>
+        </div>
+        <div class="inline-list location-inline-tags">
+          <span v-for="tag in locationTags" :key="tag" class="tag">{{ tag }}</span>
+        </div>
+        <p class="location-summary">{{ selected.desc }}</p>
+      </section>
 
-    <div class="two-column">
-      <div class="world-card"><span>地貌</span><strong>{{ selected.terrain }}</strong></div>
-      <div class="world-card"><span>特产</span><strong>{{ selected.resource }}</strong></div>
-      <div class="world-card"><span>市集层级</span><strong>{{ selected.marketTier || 0 }} 阶</strong></div>
-      <div class="world-card"><span>势力驻点</span><strong>{{ factionsHere.length ? factionsHere.map(f => f.name).join('、') : '暂无' }}</strong></div>
-      <div class="world-card"><span>地头归属</span><strong>{{ territoryHolder }}</strong></div>
-      <div class="world-card"><span>你在此地的门路</span><strong>{{ Math.round(territory?.playerInfluence || 0) }}</strong></div>
-    </div>
+      <div class="location-fact-grid">
+        <div v-for="fact in locationFacts" :key="fact.label" class="location-fact">
+          <span>{{ fact.label }}</span>
+          <strong>{{ fact.value }}</strong>
+        </div>
+      </div>
 
-    <!-- Active realm at this location -->
-    <template v-if="activeRealm">
-      <div class="divider"></div>
-      <div class="combat-card standout">
-        <div class="location-top">
-          <div>
-            <p class="section-kicker">首领秘境</p>
-            <h3 class="location-title">{{ activeRealm.name }}</h3>
-            <p class="location-meta">{{ activeRealm.desc }}</p>
+      <section class="location-journey-card" :class="{ 'is-current': isCurrent, 'is-unreachable': !isCurrent && !reachable }">
+        <div class="location-journey-copy">
+          <p class="section-kicker">{{ journeyTag }}</p>
+          <h3 class="location-journey-title">{{ journeyTitle }}</h3>
+          <p class="location-meta">{{ journeySummary }}</p>
+        </div>
+        <button
+          class="item-button location-travel-btn"
+          :class="{ active: !isCurrent && reachable, 'is-current': isCurrent, 'is-unreachable': !isCurrent && !reachable }"
+          :aria-disabled="!canTravel"
+          @click="canTravel ? onTravel() : undefined"
+        >{{ travelButtonLabel }}</button>
+      </section>
+
+      <template v-if="activeRealm">
+        <div class="divider"></div>
+        <div class="combat-card standout">
+          <div class="location-top">
+            <div>
+              <p class="section-kicker">首领秘境</p>
+              <h3 class="location-title">{{ activeRealm.name }}</h3>
+              <p class="location-meta">{{ activeRealm.desc }}</p>
+            </div>
+            <span class="rarity epic">声望需求 {{ activeRealm.unlockRep }}</span>
           </div>
-          <span class="rarity epic">声望需求 {{ activeRealm.unlockRep }}</span>
+          <div class="location-actions">
+            <button class="item-button" @click="onChallengeRealm">{{ isCurrent ? '立即闯入秘境' : '先赶赴此地并挑战' }}</button>
+          </div>
         </div>
-        <div class="location-actions">
-          <button class="item-button" @click="onChallengeRealm">{{ isCurrent ? '立即闯入秘境' : '先赶赴此地并挑战' }}</button>
+      </template>
+
+      <div class="divider"></div>
+      <section class="location-action-stack">
+        <div class="location-action-head">
+          <div>
+            <p class="section-kicker">当地门路</p>
+            <h3 class="location-section-title">可做事务</h3>
+          </div>
+          <div class="inline-list">
+            <span v-for="action in selected.actions" :key="action" class="route-pill">{{ ACTION_META[action]?.label || action }}</span>
+            <span v-for="hint in industryHints" :key="hint" class="route-pill">{{ hint }}</span>
+          </div>
         </div>
+
+        <div class="location-actions location-actions-secondary">
+          <button
+            v-for="action in selected.actions" :key="action"
+            class="item-button"
+            @click="onLocationAction(action)"
+          >{{ isCurrent ? `执行${ACTION_META[action]?.label || action}` : `前往后${ACTION_META[action]?.label || action}` }}</button>
+        </div>
+      </section>
+
+      <div class="location-footer-copy">
+        <section class="location-note">
+          <p class="section-kicker">常驻人物</p>
+          <p class="location-meta">{{ residents.length ? residents.map(n => `${n.name}·${n.personalityLabel}`).join('、') : '暂无熟悉面孔' }}</p>
+        </section>
+        <section class="location-note">
+          <p class="section-kicker">此地门路</p>
+          <p class="location-meta">{{ factionsText }}</p>
+        </section>
       </div>
-    </template>
-
-    <div class="divider"></div>
-    <div class="inline-list">
-      <span v-for="action in selected.actions" :key="action" class="route-pill">{{ ACTION_META[action]?.label || action }}</span>
-      <span v-for="hint in industryHints" :key="hint" class="route-pill">{{ hint }}</span>
     </div>
-
-    <div class="location-actions">
-      <button
-        class="item-button"
-        :aria-disabled="!canTravel"
-        @click="canTravel ? onTravel() : undefined"
-      >{{ isCurrent ? '已在此地' : reachable ? '前往此地' : '尚不可达' }}</button>
-      <button
-        v-for="action in selected.actions" :key="action"
-        class="item-button"
-        @click="onLocationAction(action)"
-      >{{ isCurrent ? `执行${ACTION_META[action]?.label || action}` : `前往后${ACTION_META[action]?.label || action}` }}</button>
-    </div>
-
-    <p class="location-meta">常驻人物：{{ residents.length ? residents.map(n => `${n.name}·${n.personalityLabel}`).join('、') : '暂无熟悉面孔' }}</p>
-    <p class="location-meta">此地门路：{{ factionsText }}</p>
   </div>
 </template>
 
@@ -80,6 +102,23 @@ const { player, npcs, world, currentLocation, selectedLocation: selected } = sto
 const isCurrent = computed(() => selected.value.id === currentLocation.value.id)
 const reachable = computed(() => isCurrent.value || currentLocationCanReach(selected.value.id))
 const canTravel = computed(() => reachable.value && !isCurrent.value)
+const actionLabels = computed(() => selected.value.actions.map(action => ACTION_META[action]?.label || action).join('、'))
+const journeyTag = computed(() => isCurrent.value ? '所在地' : reachable.value ? '可前往' : '路径未通')
+const journeyTitle = computed(() => isCurrent.value ? '你已在此地' : reachable.value ? `前往${selected.value.name}` : '当前尚不可达')
+const journeySummary = computed(() => {
+  if (isCurrent.value) return '你可直接在此地处理风闻、跑差、历练与当地事务。'
+  if (reachable.value) return `动身后可在此地进行${actionLabels.value}。`
+  return '先打通与周边州县的通路，再来此地落脚。'
+})
+const travelButtonLabel = computed(() => isCurrent.value ? '你在此地' : reachable.value ? `前往${selected.value.name}` : '尚不可达')
+
+const locationTypeLine = computed(() => `${selected.value.region} · ${selected.value.terrain}`)
+
+const locationTags = computed(() => [
+  `灵气 ${selected.value.aura}`,
+  `风险 ${selected.value.danger}`,
+  `市集 ${selected.value.marketTier || 0} 阶`,
+])
 
 const residents = computed(() =>
   store.npcs.filter(n => n.locationId === selected.value.id).slice(0, 5)
@@ -99,6 +138,14 @@ const territoryHolder = computed(() => {
   const faction = FACTIONS.find(f => f.id === t.controllerId)
   return faction?.name || '散户地头'
 })
+
+const locationFacts = computed(() => [
+  { label: '特产', value: selected.value.resource },
+  { label: '市集层级', value: `${selected.value.marketTier || 0} 阶` },
+  { label: '势力驻点', value: factionsHere.value.length ? factionsHere.value.map(f => f.name).join('、') : '暂无' },
+  { label: '地头归属', value: territoryHolder.value },
+  { label: '门路深浅', value: `${Math.round(territory.value?.playerInfluence || 0)}` },
+])
 
 const activeRealm = computed(() => {
   const realmId = (selected.value as any).realmId

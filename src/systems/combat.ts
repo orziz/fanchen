@@ -1,6 +1,6 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
-import { MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES, ITEMS, LOCATION_MAP, ACTION_META, getItem } from '@/config'
+import { MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES, ITEMS, LOCATION_MAP, ACTION_META, FACTION_MAP, getItem } from '@/config'
 import { clamp, randomFloat, randomInt, sample, uid, round } from '@/utils'
 import { revivePlayer, checkRankGrowth } from './player'
 import type { EnemyState } from '@/types/game'
@@ -97,6 +97,51 @@ export function challengeRealm(realmId: string) {
   g.combat.autoBattle = true; g.combat.playerEffects = g.combat.playerEffects || { burn: 0, guard: 0, chill: 0 }
   addCombatHistory(`你踏入${realm.name}，${enemy.name}自深处现身。`, 'warn')
   ctx.appendLog(`你闯入${realm.name}，与${enemy.name}正面相逢。`, 'warn')
+}
+
+export function startPursuitEncounter(factionId: string, source = 'travel') {
+  const ctx = getContext()
+  const g = ctx.game
+  const faction = FACTION_MAP.get(factionId)
+  const location = ctx.getCurrentLocation()
+  if (!faction || g.combat.currentEnemy) return g.combat.currentEnemy
+
+  const pursuitTemplateByType: Record<string, { name: string; baseHp: number; basePower: number; baseQi: number }> = {
+    court: { name: '缉拿差吏', baseHp: 86, basePower: 14, baseQi: 20 },
+    bureau: { name: '转运司巡缉', baseHp: 92, basePower: 15, baseQi: 24 },
+    garrison: { name: '军府缉骑', baseHp: 102, basePower: 17, baseQi: 22 },
+  }
+  const pursuitTemplate = pursuitTemplateByType[faction.type] || { name: '门路追兵', baseHp: 80, basePower: 13, baseQi: 18 }
+  const playerRank = g.player.rankIndex
+  const enemy = buildEnemyFromTemplate({
+    id: `pursuit-${faction.id}`,
+    name: pursuitTemplate.name,
+    baseHp: pursuitTemplate.baseHp + playerRank * 20 + location.danger * 8,
+    basePower: pursuitTemplate.basePower + playerRank * 3.2 + location.danger * 1.1,
+    baseQi: pursuitTemplate.baseQi + playerRank * 4,
+    rewards: { money: 16 + playerRank * 4, cultivation: 4 + playerRank * 1.1 },
+    lootTypes: [],
+  }, {
+    boss: false,
+    regionId: location.id,
+    danger: location.danger + 1,
+  })
+
+  enemy.rewards.reputation = 0
+  enemy.rewardItemIds = []
+  enemy.lootTypes = []
+  if (faction.type === 'court') enemy.crit += 0.03
+  if (faction.type === 'bureau') enemy.qiBurn += 2
+  if (faction.type === 'garrison') enemy.defense += 0.06
+
+  g.combat.history = []
+  g.combat.currentEnemy = enemy
+  g.combat.autoBattle = true
+  g.combat.playerEffects = g.combat.playerEffects || { burn: 0, guard: 0, chill: 0 }
+  g.player.action = 'combat'
+  addCombatHistory(`你被${faction.name}的人马当场拦下，${enemy.name}已逼到近前。`, 'warn')
+  ctx.appendLog(`你在${location.name}${source === 'travel' ? '行路' : '活动'}时撞上了${faction.name}的追缉。`, 'warn')
+  return enemy
 }
 
 function getHealingItem() {

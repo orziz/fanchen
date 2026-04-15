@@ -48,7 +48,7 @@ import { useGameStore } from '@/stores/game'
 import { RANKS, LOCATION_MAP, FACTION_MAP } from '@/config'
 import { formatNumber } from '@/utils'
 import { getRoleLabel } from '@/composables/useUIHelpers'
-import { useWindows } from '@/composables/useWindows'
+import { useStage } from '@/composables/useStage'
 import {
   visitNpc, recruitDisciple, recruitFactionMember,
   becomeMasterBond, becomePartner, declareRival,
@@ -56,7 +56,7 @@ import {
 
 const store = useGameStore()
 const { npcs, player, selectedLocationId } = storeToRefs(store)
-const { openWindow } = useWindows()
+const { setTab } = useStage()
 
 const sortedNpcs = computed(() =>
   [...npcs.value].sort((a, b) => getRelation(b.id).affinity - getRelation(a.id).affinity)
@@ -75,7 +75,8 @@ function doFocus(id: string) {
   const npc = store.getNpc(id)
   if (npc) {
     selectedLocationId.value = npc.locationId
-    openWindow('map')
+    store.appendLog(`山河图已标出${npc.name}所在的${getLocationName(npc.locationId)}。`, 'action')
+    setTab('map')
   }
 }
 function doRecruit(id: string) { recruitDisciple(id) }

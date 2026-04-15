@@ -63,8 +63,8 @@ const manualActions = computed(() => {
     {
       key: s ? 'sect' : 'affiliation',
       label: s ? '处理宗门事务' : aff ? '查看门内事务' : '去投门路',
-      desc: s ? '去处理山门、弟子和传功。' : aff ? '去处理当前门路。' : '先去势力页找个落脚点。',
-      theme: s ? '理山门' : '看门路',
+      desc: s ? '去处理宗门、弟子和传功。' : aff ? '去处理当前门路。' : '先去势力页找个落脚点。',
+      theme: s ? '理宗门' : '看门路',
     },
   ]
 })

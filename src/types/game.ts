@@ -72,6 +72,8 @@ export interface PlayerState {
   inventory: InventoryEntry[]; equipment: Equipment
   affiliationId: string | null; affiliationRank: number
   factionStanding: Record<string, number>; regionStanding: Record<string, number>
+  factionCooldowns: Record<string, number>
+  wantedByFactionId: string | null; wantedUntilDay: number
   relations: Record<string, RelationState>
   masterId: string | null; partnerId: string | null; rivalIds: string[]
   affiliationTasks: SectMission[]; affiliationTaskDay: number

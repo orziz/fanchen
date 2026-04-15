@@ -34,6 +34,7 @@ let nextId = 0
 function badgeLabel(type: string) {
   if (type === 'warn') return '提示'
   if (type === 'loot') return '收获'
+  if (type === 'action') return '动作'
   return '消息'
 }
 

@@ -1,4 +1,7 @@
-export const SAVE_KEY = 'fan-chen-li-dao-save-v4'
+export const SAVE_KEY = 'fanchen_save'
+export const LEGACY_SAVE_KEYS = ['fan-chen-li-dao-save-v4'] as const
+export const WINDOW_LAYOUT_KEY = `${SAVE_KEY}-window-layout-v2`
+export const LEGACY_WINDOW_LAYOUT_KEYS = LEGACY_SAVE_KEYS.map(key => `${key}-window-layout-v2`)
 export const AUTO_SAVE_INTERVAL = 45000
 export const MAX_LOG = 120
 
@@ -11,11 +14,11 @@ export const LOOP_INTERVALS: Record<number, number> = {
 }
 
 export const SPEED_OPTIONS = [
-  { value: 0.5, label: '半速' },
-  { value: 1, label: '常速' },
-  { value: 2, label: '双速' },
-  { value: 4, label: '四倍速' },
-  { value: 10, label: '十倍速' },
+  { value: 0.5, label: '0.5x' },
+  { value: 1, label: '1x' },
+  { value: 2, label: '2x' },
+  { value: 4, label: '4x' },
+  { value: 10, label: '10x' },
 ] as const
 
 export const TIME_LABELS = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'] as const
@@ -68,6 +71,7 @@ export interface ActionMeta {
 }
 
 export const ACTION_META: Record<string, ActionMeta> = {
+  rest: { label: '调息回元', cost: {}, reward: { hp: 18, qi: 16, stamina: 20 } },
   meditate: { label: '静坐养气', cost: { stamina: 2, qi: 0 }, reward: { cultivation: 1.2, qi: 3, breakthrough: 0.3 } },
   train: { label: '练体打熬', cost: { stamina: 4, qi: 0 }, reward: { cultivation: 0.8, power: 0.25, hp: 0.6 } },
   hunt: { label: '低阶历练', cost: { stamina: 6, qi: 2 }, reward: { money: 4, cultivation: 0.6, reputation: 0.1, encounter: 0.45 } },

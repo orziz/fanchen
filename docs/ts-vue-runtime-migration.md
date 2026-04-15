@@ -11,8 +11,8 @@
 - 构建后产物落在 dist 目录。
 - 双击 dist/index.html 时，不依赖本地 server，也能正常进入游戏。
 - 新入口负责页面骨架与运行时启动，页面不再依赖顺序脚本注入链。
-- 当前玩法源码全部归入 src/runtime 并被打进统一 bundle，发布目录不再暴露 dist/scripts 与 game.js 这类旧式运行时入口。
-- 当前 runtime 已整体迁入 TypeScript 源码树；后续演进重点转为显式接口与 Vue 面板收束，而不再是语言层过渡问题。
+- 当前玩法源码全部归入 src/config、src/stores、src/systems、src/components 与 src/styles，并被打进统一 bundle，发布目录不再暴露 dist/scripts 与 game.js 这类旧式运行时入口。
+- 旧 runtime 目录已经彻底退场；后续演进重点转为显式接口、界面打磨与玩法扩展，而不再是语言层过渡问题。
 
 ## 硬约束
 
@@ -61,16 +61,16 @@
 - 负责启动时的加载态、错误态和重试入口。
 - 负责后续把单个窗口或页签改写成原生 Vue 组件。
 
-### 2. Runtime Bootstrap
+### 2. App Bootstrap
 
-- 由 src/runtime/bootstrap.ts 静态导入运行时源码模块。
-- Vue 外壳挂载完成后，直接触发 window.ShanHai.initialize() 进入游戏主循环。
-- 启动态只负责呈现源码运行时的启动状态，不再承担脚本链装配职责。
+- 由 src/main.ts 启动 Vue 应用并导入统一样式入口。
+- Vue 外壳挂载完成后，由 Pinia、composables 和 systems 接管游戏状态与交互。
+- 启动态只负责呈现应用的启动状态，不再承担旧脚本链装配职责。
 
-### 3. Runtime Source Tree
+### 3. Domain Source Tree
 
-- src/runtime/app、config、systems、ui 继续承载经营、战斗、社交、宗门、地图等玩法系统。
-- 这些模块已经整体迁入 TS 源码树，不再以 JS 脚本目录形式存在。
+- src/config、src/stores、src/systems、src/components 与 src/styles 共同承载经营、战斗、社交、宗门、地图等玩法系统。
+- 这些模块已经整体迁入 TS + Vue 源码树，不再保留独立 runtime 目录。
 - dist 只保留 classic bundle 与样式资源，不再复制旧脚本目录作为对外运行入口。
 
 ## 未来演进边界

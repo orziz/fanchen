@@ -52,6 +52,7 @@ export function describeItemEffect(item: ItemData | null | undefined) {
     charisma: '魅力', breakthrough: '突破火候', breakthroughRate: '突破率',
     cultivation: '修炼加成', realmSense: '秘境感应', sectTeaching: '传功效率',
     sectPrestige: '宗门威望', romance: '情缘', reputation: '声望',
+    assetFarm: '可置办田产', assetWorkshop: '可经营工坊', assetShop: '可置办铺面',
   }
   return Object.entries(item.effect as Record<string, number | undefined>)
     .filter(([, v]) => v)

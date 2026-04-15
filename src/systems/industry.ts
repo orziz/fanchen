@@ -1,7 +1,7 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
 import { LOCATION_MAP, PROPERTY_DEFS, PROPERTY_MAP, FACTIONS, FACTION_MAP, CROPS, CROP_MAP, CRAFT_RECIPES, RECIPE_MAP, getItem } from '@/config'
-import { uid, clamp } from '@/utils'
+import { uid, clamp, round } from '@/utils'
 import { isTradeHubLocation, getGovernmentOfficeName, getPlayerTerritoryModifier, adjustFactionStanding } from './social'
 import type { AssetState } from '@/types/game'
 
@@ -164,7 +164,7 @@ export function getGovernmentContractIssues(kind: string): string[] {
   const ctx = getContext(); const offer = getGovernmentContractOffers().find(e => e.kind === kind)
   if (!offer) return ['当前没有官府出售这类契约。']
   const issues: string[] = []; const standing = ctx.getRegionStanding()
-  if (standing < offer.standingNeed) issues.push(`地区声望不足，还差${(offer.standingNeed - standing).toFixed(1)}`)
+  if (standing < offer.standingNeed) issues.push(`地区声望不足，还差${round(offer.standingNeed - standing, 1)}`)
   if (ctx.game.player.money < offer.price) issues.push(`灵石不足，还差${offer.price - ctx.game.player.money}`)
   return issues
 }

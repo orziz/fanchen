@@ -1,0 +1,384 @@
+.command-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.command-layout.refined {
+  gap: 16px;
+}
+
+.command-hub {
+  align-content: start;
+}
+
+.command-hero {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border-radius: calc(var(--radius-lg) + 2px);
+  overflow: hidden;
+  background: var(--card-soft);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.command-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -60px -80px auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(70, 130, 180, 0.08), transparent 68%);
+}
+
+.command-hero-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(220px, 0.75fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.command-hero-title {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 36px);
+}
+
+.command-chip-row,
+.command-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.command-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  background: var(--card);
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.command-chip.active,
+.command-chip.good {
+  color: var(--gold-bright);
+  border-color: rgba(179, 133, 43, 0.18);
+  background: rgba(179, 133, 43, 0.08);
+}
+
+.command-chip.steady {
+  color: var(--jade);
+  background: rgba(66, 126, 97, 0.08);
+  border-color: rgba(66, 126, 97, 0.18);
+}
+
+.command-chip.warn {
+  color: var(--cinnabar);
+  background: rgba(180, 74, 66, 0.08);
+  border-color: rgba(180, 74, 66, 0.18);
+}
+
+.command-core-grid,
+.command-reading-grid,
+.mode-grid,
+.quick-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.command-core-grid {
+  grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+  gap: 16px;
+}
+
+.command-reading-grid {
+  grid-template-columns: 1fr;
+  align-self: stretch;
+}
+
+.command-reading-card {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px dashed var(--line);
+  background: var(--card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.command-reading-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+
+.command-reading-card strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-main);
+  font-size: 22px;
+}
+
+.command-reading-card p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.command-section {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 18px;
+  border-radius: calc(var(--radius-lg) + 2px);
+  border: 1px dotted var(--border);
+  background: var(--card-soft);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.command-mode-grid,
+.command-strategy-stack {
+  grid-template-columns: 1fr;
+}
+
+.refined-actions,
+.command-action-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mode-button-card,
+.action-button-card {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-height: 96px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  text-align: left;
+  border-color: var(--line);
+  background: var(--card);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mode-button-card:hover,
+.action-button-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.command-strategy-card,
+.command-action-card {
+  border-radius: 20px;
+  padding: 16px 18px;
+  border-color: rgba(0, 0, 0, 0.08);
+  background: var(--card);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.command-strategy-card:hover,
+.command-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+.command-strategy-card {
+  min-height: 0;
+  gap: 8px;
+}
+
+.mode-button-card.active {
+  box-shadow: inset 0 0 0 1px rgba(179, 133, 43, 0.4);
+  background: rgba(179, 133, 43, 0.05);
+}
+
+.command-strategy-card.active {
+  border-color: rgba(179, 133, 43, 0.4);
+  background: var(--card-soft);
+}
+
+.command-strategy-card.recommended:not(.active) {
+  border-color: rgba(66, 126, 97, 0.3);
+}
+
+.command-strategy-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.command-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.command-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-dim);
+  border: 1px dotted rgba(0, 0, 0, 0.15);
+  background: var(--card-soft);
+}
+
+.command-pill.current {
+  color: var(--gold-bright);
+  border-color: rgba(179, 133, 43, 0.3);
+  background: rgba(179, 133, 43, 0.08);
+}
+
+.command-pill.recommended {
+  color: var(--jade);
+  border-color: rgba(66, 126, 97, 0.3);
+  background: rgba(66, 126, 97, 0.08);
+}
+
+.mode-button-card strong,
+.action-button-card strong {
+  font-size: 15px;
+}
+
+.command-strategy-card strong,
+.command-action-card strong {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.mode-button-card span,
+.action-button-card span {
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.command-action-section {
+  background:
+    radial-gradient(circle at top right, rgba(70, 130, 180, 0.05), transparent 32%),
+    var(--card-soft);
+  border: 1px dotted var(--border);
+  border-radius: calc(var(--radius-lg) + 2px);
+  padding: 18px;
+}
+
+.command-action-card {
+  position: relative;
+  min-height: 112px;
+  gap: 8px;
+  justify-content: start;
+  overflow: hidden;
+}
+
+.command-action-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -20px -20px auto;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179, 133, 43, 0.05), transparent 66%);
+  pointer-events: none;
+}
+
+.command-action-theme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: var(--gold-bright);
+  background: rgba(179, 133, 43, 0.08);
+  border: 1px dotted rgba(0, 0, 0, 0.2);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.command-footnote {
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--line);
+  background: var(--card);
+}
+
+.command-footnote strong {
+  color: var(--text-main);
+  font-size: 16px;
+}
+
+.command-footnote span {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.command-footnote.manual {
+  border-color: rgba(70, 130, 180, 0.4);
+  background: rgba(70, 130, 180, 0.05);
+}
+
+.pin-card-command .command-hero-top,
+.pin-card-command .command-core-grid {
+  grid-template-columns: 1fr;
+}
+
+.pin-card-command .command-hero {
+  padding: 18px;
+}
+
+.pin-card-command .command-hero-title {
+  font-size: clamp(24px, 2.6vw, 28px);
+}
+
+.pin-card-command .command-reading-card strong {
+  font-size: 18px;
+}
+
+.pin-card-command .command-chip-row {
+  gap: 8px;
+}
+
+.pin-card-command .command-hero,
+.pin-card-command .command-section,
+.pin-card-command .command-reading-card,
+.pin-card-command .mode-button-card,
+.pin-card-command .command-strategy-card,
+.pin-card-command .command-footnote {
+  border-color: rgba(179, 133, 43, 0.2);
+  background: linear-gradient(180deg, rgba(247, 240, 228, 0.98), rgba(236, 227, 210, 0.92));
+  box-shadow: 0 8px 18px rgba(129, 103, 63, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.pin-card-command .command-section {
+  background:
+    radial-gradient(circle at top right, rgba(70, 130, 180, 0.04), transparent 28%),
+    linear-gradient(180deg, rgba(247, 241, 230, 0.97), rgba(235, 227, 211, 0.92));
+}
+
+.pin-card-command .command-chip,
+.pin-card-command .command-pill {
+  border-color: rgba(179, 133, 43, 0.2);
+  background: rgba(251, 245, 235, 0.92);
+}
+
+.pin-card-command .command-footnote.manual {
+  background: linear-gradient(180deg, rgba(235, 243, 248, 0.92), rgba(229, 238, 244, 0.88));
+}
+
+.pin-card-command .command-chip,
+.pin-card-command .command-pill,
+.pin-card-command .command-action-theme {
+  white-space: nowrap;
+}
