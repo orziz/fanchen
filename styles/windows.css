@@ -126,6 +126,28 @@
   gap: 12px;
 }
 
+.map-stage .window-toolbar {
+  align-items: center;
+}
+
+.map-toolbar-tools,
+.map-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.map-zoom-pill {
+  padding: 10px 14px;
+}
+
+.map-zoom-pill strong {
+  min-width: 52px;
+  text-align: right;
+}
+
 .window-toolbar h3 {
   font-size: 22px;
 }
@@ -157,11 +179,21 @@
   aspect-ratio: 2 / 1;
 }
 
+.canvas-shell.is-panning {
+  cursor: grabbing;
+}
+
 #worldMap {
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 2 / 1;
+  cursor: grab;
+  touch-action: none;
+}
+
+.canvas-shell.is-panning #worldMap {
+  cursor: grabbing;
 }
 
 .canvas-overlay {

@@ -9,6 +9,41 @@
     return Math.max(0, Math.min(100, Math.round((value / max) * 100)));
   }
 
+  function getCurrentFocusSummary(game, activeRealm, activeTradeRun) {
+    if (activeTradeRun) return `跑商·${activeTradeRun.destinationName}`;
+    if (activeRealm) return `秘境·${activeRealm.name}`;
+    if (game.player.hp < game.player.maxHp * 0.42 || game.player.qi < game.player.maxQi * 0.34) return "调息回稳";
+    if (game.player.breakthrough >= app.getNextBreakthroughNeed() * 0.85) return "可试冲关";
+    return "平稳推进";
+  }
+
+  function getCurrentRouteSummary(game, affiliation, sect) {
+    if (affiliation) return affiliation.name;
+    if (sect) return sect.name;
+    return "尚未投势";
+  }
+
+  function getManualActions(game, sect, affiliation) {
+    return [
+      { key: "meditate", label: "手动修炼", desc: "静坐一轮，补修为与真气。", theme: "补修为" },
+      { key: "breakthrough", label: "主动冲关", desc: "火候够了就立刻试破境。", theme: "抢关口" },
+      { key: "quest", label: "追查机缘", desc: "跑一趟差事，碰碰风闻与奇遇。", theme: "探风闻" },
+      {
+        key: "trade",
+        label: game.player.tradeRun ? (app.getCurrentLocation().id === game.player.tradeRun.destinationId ? "交割货队" : "继续跑商") : "顺手做买卖",
+        desc: game.player.tradeRun ? `${game.player.tradeRun.originName}到${game.player.tradeRun.destinationName}的货路还在跑。` : "跑一笔货，快进一轮营生。",
+        theme: "滚营生",
+      },
+      { key: "rest", label: "短暂调息", desc: "先把状态拉回安全线。", theme: "回状态" },
+      {
+        key: sect ? "sect" : "affiliation",
+        label: sect ? "处理宗门事务" : affiliation ? "查看门内事务" : "去投门路",
+        desc: sect ? "去处理山门、弟子和传功。" : affiliation ? "去处理当前门路。" : "先去势力页找个落脚点。",
+        theme: sect ? "理山门" : "看门路",
+      },
+    ];
+  }
+
   function getCommandRecommendation(game, location, activeRealm, affiliation, sect, assetCount) {
     const breakthroughNeed = app.getNextBreakthroughNeed();
     const breakthroughPercent = getPercent(game.player.breakthrough, breakthroughNeed);
@@ -16,7 +51,7 @@
     if (activeRealm) {
       return {
         title: `${activeRealm.name}现世，当前先决定去不去。`,
-        desc: `异象已经挂到台面上。现在更适合切到敢闯的节奏，或者先手动探一轮风向，别继续按平时慢吞吞地磨。`,
+        desc: `异象压城，正是探风闯局的时候。要么放胆外出，要么先试一趟风声，别把机会磨过去。`,
         preferredMode: "adventure",
         actions: [
           { label: "切为外出闯荡", attrs: 'data-mode="adventure"', style: "primary" },
@@ -28,7 +63,7 @@
     if (game.player.hp < game.player.maxHp * 0.42 || game.player.qi < game.player.maxQi * 0.34 || game.player.stamina < game.player.maxStamina * 0.3) {
       return {
         title: "根基偏虚，先收手回息。",
-        desc: "现在继续硬顶收益不高，先调息把气血、真气和体力拉回安全线，再谈闯荡或冲关。",
+        desc: "此时强撑只会伤身，先把气血、真气和体力拉稳，再谈闯荡和冲关。",
         preferredMode: "cultivation",
         actions: [
           { label: "立即短暂调息", attrs: 'data-quick-action="rest"', style: "primary" },
@@ -76,7 +111,7 @@
     if (game.player.mode === "manual") {
       return {
         title: "当前为手动操作，世界会走，你不再自动出手。",
-        desc: "这一档最适合你想自己掌每一步的时候。记得经常在这里下达手动修炼、跑商或追查机缘。",
+        desc: "你亲自盯局时，修炼、跑商和追查都得自己开口。",
         preferredMode: "manual",
         actions: [
           { label: "手动修炼一轮", attrs: 'data-quick-action="meditate"', style: "primary" },
@@ -87,7 +122,7 @@
 
     return {
       title: `当前策略偏向“${app.getModeLabel(game.player.mode)}”，按局势稳步推进。`,
-      desc: `你现在落脚${location.name}，灵气${location.aura}，险度${location.danger}。下方直接切策略，或者穿插几次手动操作把局势往你想要的方向推。`,
+      desc: `你落脚${location.name}，灵气${location.aura}，险度${location.danger}。可顺势稳推，也可临时改换门路，把局势拧到自己手里。`,
       preferredMode: game.player.mode === "manual" ? "balanced" : game.player.mode,
       actions: [
         { label: game.player.mode === "balanced" ? "手动追查机缘" : `切为${app.getModeLabel(game.player.mode === "manual" ? "balanced" : game.player.mode)}`, attrs: game.player.mode === "balanced" ? 'data-quick-action="quest"' : `data-mode="${game.player.mode === "manual" ? "balanced" : game.player.mode}"`, style: "primary" },
@@ -98,10 +133,15 @@
 
   function renderTopBar() {
     const game = app.getGame();
+    const activeRealm = game.world.realm.activeRealmId ? app.getRealm(game.world.realm.activeRealmId) : null;
+    const activeTradeRun = app.getActiveTradeRun?.();
+    const affiliation = app.getCurrentAffiliation?.();
     dom.dayLabel.textContent = String(game.world.day);
     dom.timeLabel.textContent = TIME_LABELS[game.world.hour];
     dom.reputationLabel.textContent = formatNumber(game.player.reputation);
     dom.saveStateLabel.textContent = state.saveState;
+    if (dom.heroFocusLabel) dom.heroFocusLabel.textContent = getCurrentFocusSummary(game, activeRealm, activeTradeRun);
+    if (dom.heroRouteLabel) dom.heroRouteLabel.textContent = getCurrentRouteSummary(game, affiliation, game.player.sect);
     dom.currentLocationLabel.textContent = app.getCurrentLocation().name;
     dom.modeLabel.textContent = app.getModeLabel(game.player.mode);
     dom.actionLabel.textContent = ACTION_META[game.player.action]?.label || game.player.action;
@@ -176,36 +216,14 @@
     const staminaPercent = getPercent(game.player.stamina, game.player.maxStamina);
     const breakthroughNeed = app.getNextBreakthroughNeed();
     const breakthroughPercent = getPercent(game.player.breakthrough, breakthroughNeed);
-    const actionThemes = {
-      meditate: "补修为",
-      breakthrough: "抢关口",
-      quest: "探风闻",
-      trade: "滚营生",
-      rest: "回状态",
-      sect: "理山门",
-      affiliation: "看门路",
-    };
 
     if (dom.openCommandButton) {
       dom.openCommandButton.textContent = currentMode?.label || game.player.mode;
-      dom.openCommandButton.title = `当前挂机策略：${currentMode?.label || game.player.mode}，点击打开策略与手动操作`;
+      dom.openCommandButton.title = `当前挂机策略：${currentMode?.label || game.player.mode}，点击打开策略盘`;
       dom.openCommandButton.classList.toggle("active", commandOpen);
     }
 
     if (!dom.commandDetail) return;
-
-    const actions = [
-      { key: "meditate", label: "手动修炼", desc: "静坐一轮，补修为与真气。" },
-      { key: "breakthrough", label: "主动冲关", desc: "火候够了就立刻试破境。" },
-      { key: "quest", label: "追查机缘", desc: "跑一趟差事，碰碰风闻与奇遇。" },
-      { key: "trade", label: "顺手做买卖", desc: "跑一笔货，快进一轮营生。" },
-      { key: "rest", label: "短暂调息", desc: "先把状态拉回安全线。" },
-      {
-        key: sect ? "sect" : "affiliation",
-        label: sect ? "处理宗门事务" : affiliation ? "查看门内事务" : "去投门路",
-        desc: sect ? "去处理山门、弟子和传功。" : affiliation ? "去处理当前门路。" : "先去势力页找个落脚点。",
-      },
-    ];
 
     dom.commandDetail.innerHTML = `
       <div class="command-layout refined command-hub">
@@ -241,63 +259,36 @@
             <span class="command-chip ${location.danger >= 6 ? "warn" : location.danger >= 4 ? "steady" : "good"}">险度 ${location.danger}</span>
             <span class="command-chip ${activeRealm ? "active" : ""}">${activeRealm ? `${activeRealm.name}现世` : game.world.omen}</span>
           </div>
-          <div class="command-hero-actions">
-            ${recommendation.actions.map((action) => `
-              <button class="control-button ${action.style === "primary" ? "primary" : "ghost"}" ${action.attrs}>${action.label}</button>
-            `).join("")}
-          </div>
         </section>
 
-        <div class="command-core-grid">
-          <section class="command-section standout">
-            <div class="section-head compact">
-              <div>
-                <p class="section-kicker">挂机策略</p>
-                <h3>现在走哪条路</h3>
-              </div>
-              <span class="tag">推荐：${app.getModeLabel(recommendation.preferredMode || game.player.mode)}</span>
+        <section class="command-section standout">
+          <div class="section-head compact">
+            <div>
+              <p class="section-kicker">挂机策略</p>
+              <h3>今日主路</h3>
             </div>
-            <p class="panel-intro compact">先定主策略，手动操作只拿来补关键节点，不要两边都做成半截。</p>
-            <div class="mode-grid command-mode-grid command-strategy-stack">
-              ${tables.MODE_OPTIONS.map((mode) => `
-                <button class="mode-button mode-button-card command-strategy-card ${mode.id === game.player.mode ? "active" : ""} ${mode.id === recommendation.preferredMode ? "recommended" : ""}" data-mode="${mode.id}" title="${mode.desc}">
-                  <div class="command-strategy-meta">
-                    <strong>${mode.label}</strong>
-                    <span class="command-badge-row">
-                      ${mode.id === game.player.mode ? '<span class="command-pill current">当前</span>' : ""}
-                      ${mode.id === recommendation.preferredMode ? '<span class="command-pill recommended">局势推荐</span>' : ""}
-                    </span>
-                  </div>
-                  <span>${mode.desc}</span>
-                </button>
-              `).join("")}
-            </div>
-            <div class="command-footnote ${game.player.mode === "manual" ? "manual" : ""}">
-              <strong>${game.player.mode === "manual" ? "手动操作已接管" : `当前自动遵循“${currentMode?.label || game.player.mode}”`}</strong>
-              <span>${game.player.mode === "manual" ? "世界仍会照常流转，但不会替你自动修炼、跑商或接差事。" : "如果局势变了，直接在这里切策略，不必回主界面找控件。"}</span>
-            </div>
-          </section>
-
-          <section class="command-section command-action-section">
-            <div class="section-head compact">
-              <div>
-                <p class="section-kicker">手动操作</p>
-                <h3>要你亲自点火的节点</h3>
-              </div>
-              <span class="tag">即时生效</span>
-            </div>
-            <p class="panel-intro compact">这些动作只执行一次，不会改掉自动循环，适合临门一脚。</p>
-            <div class="quick-actions action-grid refined-actions command-action-grid">
-              ${actions.map((action) => `
-                <button class="mini-button action-button-card command-action-card" data-quick-action="${action.key}">
-                  <span class="command-action-theme">${actionThemes[action.key] || "即时"}</span>
-                  <strong>${action.label}</strong>
-                  <span>${action.desc}</span>
-                </button>
-              `).join("")}
-            </div>
-          </section>
-        </div>
+            <span class="tag">推荐：${app.getModeLabel(recommendation.preferredMode || game.player.mode)}</span>
+          </div>
+          <p class="panel-intro compact">此处只定长线门路，短手动作仍归你临机掌握。</p>
+          <div class="mode-grid command-mode-grid command-strategy-stack">
+            ${tables.MODE_OPTIONS.map((mode) => `
+              <button class="mode-button mode-button-card command-strategy-card ${mode.id === game.player.mode ? "active" : ""} ${mode.id === recommendation.preferredMode ? "recommended" : ""}" data-mode="${mode.id}" title="${mode.desc}">
+                <div class="command-strategy-meta">
+                  <strong>${mode.label}</strong>
+                  <span class="command-badge-row">
+                    ${mode.id === game.player.mode ? '<span class="command-pill current">当前</span>' : ""}
+                    ${mode.id === recommendation.preferredMode ? '<span class="command-pill recommended">局势推荐</span>' : ""}
+                  </span>
+                </div>
+                <span>${mode.desc}</span>
+              </button>
+            `).join("")}
+          </div>
+          <div class="command-footnote ${game.player.mode === "manual" ? "manual" : ""}">
+            <strong>${game.player.mode === "manual" ? "手动操作已接管" : `当前自动遵循“${currentMode?.label || game.player.mode}”`}</strong>
+            <span>${game.player.mode === "manual" ? "世界仍会照常流转，但不会替你自动修炼、跑商或接差事。" : "局势一变，就立刻改换门路，别让人和货空耗在路上。"}</span>
+          </div>
+        </section>
       </div>
     `;
   }
@@ -353,6 +344,7 @@
             <div class="summary-box"><span>击退强敌</span><strong>${formatNumber(game.player.stats.enemiesDefeated)}</strong></div>
             <div class="summary-box"><span>斩落首领</span><strong>${formatNumber(game.player.stats.bossKills)}</strong></div>
             <div class="summary-box"><span>成交买卖</span><strong>${formatNumber(game.player.stats.tradesCompleted)}</strong></div>
+            <div class="summary-box"><span>跑商趟数</span><strong>${formatNumber(game.player.stats.tradeRoutesCompleted)}</strong></div>
             <div class="summary-box"><span>完成机缘</span><strong>${formatNumber(game.player.stats.questsFinished)}</strong></div>
             <div class="summary-box"><span>拍得奇珍</span><strong>${formatNumber(game.player.stats.auctionsWon)}</strong></div>
             <div class="summary-box"><span>传功次数</span><strong>${formatNumber(game.player.stats.disciplesTaught)}</strong></div>
@@ -360,7 +352,6 @@
             <div class="summary-box"><span>收成总量</span><strong>${formatNumber(game.player.stats.cropsHarvested)}</strong></div>
             <div class="summary-box"><span>打造物件</span><strong>${formatNumber(game.player.stats.craftedItems)}</strong></div>
             <div class="summary-box"><span>铺面收账</span><strong>${formatNumber(game.player.stats.shopCollections)}</strong></div>
-            <div class="summary-box"><span>闭关调息</span><strong>${formatNumber(game.player.stats.meditationSessions)}</strong></div>
             <div class="summary-box"><span>当前灵石</span><strong>${formatNumber(game.player.money)}</strong></div>
           </div>
         </div>
@@ -370,40 +361,37 @@
 
   function renderDockPanel() {
     const game = app.getGame();
-    const activeRealm = game.world.realm.activeRealmId ? app.getRealm(game.world.realm.activeRealmId) : null;
-    const latestLog = game.log[0];
+    const activeTradeRun = app.getActiveTradeRun?.();
     const affiliation = app.getCurrentAffiliation?.();
-    const commandOpen = app.ensureWindowState("command").open;
-    const mapOpen = app.ensureWindowState("map").open;
-    const journalOpen = app.ensureWindowState("journal").open;
-    const profileOpen = app.ensureWindowState("profile").open;
+    const manualActions = getManualActions(game, game.player.sect, affiliation);
 
     dom.dockPanel.innerHTML = `
       <div class="dock-layout">
         <div class="section-head compact">
           <div>
-            <p class="section-kicker">案头</p>
-            <h2>掌局台</h2>
+            <p class="section-kicker">即时</p>
+            <h2>手动操作</h2>
           </div>
-          <div class="inline-list">
-            <button class="control-button ghost ${commandOpen ? "active" : ""}" data-open-window="command">${app.getModeLabel(game.player.mode)}</button>
-            <button class="control-button ghost ${mapOpen ? "active" : ""}" data-open-window="map">山河图</button>
-            <button class="control-button ghost ${journalOpen ? "active" : ""}" data-open-window="journal">江湖纪事</button>
-            <button class="control-button ghost ${profileOpen ? "active" : ""}" data-open-window="profile">人物簿</button>
-          </div>
+          <span class="tag">不改自动循环</span>
         </div>
 
-        <div class="summary-grid compact-grid">
-          <div class="summary-box"><span>最新风闻</span><strong>${latestLog ? latestLog.stamp : "暂无"}</strong></div>
-          <div class="summary-box"><span>活跃秘境</span><strong>${activeRealm ? activeRealm.name : "未现世"}</strong></div>
-          <div class="summary-box"><span>当前门路</span><strong>${affiliation ? affiliation.name : "尚未投势"}</strong></div>
-          <div class="summary-box"><span>名下产业</span><strong>${game.player.assets.farms.length + game.player.assets.workshops.length + game.player.assets.shops.length}</strong></div>
+        <div class="quick-actions command-action-grid">
+          ${manualActions.map((action) => `
+            <button class="mini-button action-button-card command-action-card" data-quick-action="${action.key}">
+              <span class="command-action-theme">${action.theme}</span>
+              <strong>${action.label}</strong>
+              <span>${action.desc}</span>
+            </button>
+          `).join("")}
         </div>
 
-        <div class="dock-callout ${activeRealm ? "standout" : ""}">
-          <p class="section-kicker">当前焦点</p>
-          <p class="item-meta">${activeRealm ? `${activeRealm.name}已在${LOCATION_MAP[activeRealm.locationId].name}现世。` : latestLog ? latestLog.text : "继续游历，等待新的异象与情报。"}</p>
-          ${activeRealm ? `<div class="item-actions"><button class="item-button" data-focus-realm="${activeRealm.id}">聚焦秘境地点</button></div>` : ""}
+        <div class="dock-callout ${activeTradeRun ? "standout" : ""}">
+          <p class="section-kicker">操作说明</p>
+          <p class="item-meta">这些动作都只执行一次，不会改掉长期挂机策略。想换长期节奏，去右侧打开策略盘。</p>
+          <div class="item-actions">
+            <button class="item-button" data-open-window="command">打开策略盘</button>
+            ${!affiliation && !game.player.sect ? `<button class="item-button" data-switch-tab="sect">去找一条门路</button>` : activeTradeRun ? `<button class="item-button" data-continue-trade-run="1">${game.player.locationId === activeTradeRun.destinationId ? "交割货队" : `继续前往${activeTradeRun.destinationName}`}</button>` : ""}
+          </div>
         </div>
       </div>
     `;

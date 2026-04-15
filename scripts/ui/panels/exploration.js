@@ -13,12 +13,21 @@
     const residents = game.npcs.filter((npc) => npc.locationId === selected.id).slice(0, 5);
     const activeRealm = game.world.realm.activeRealmId === selected.realmId ? app.getRealm(selected.realmId) : null;
     const factionsHere = FACTIONS.filter((faction) => selected.factionIds?.includes(faction.id));
+    const territory = app.getTerritoryState?.(selected.id);
+    const playerFaction = app.getPlayerFaction?.();
+    const territoryHolder = territory
+      ? territory.controllerId === playerFaction?.id
+        ? playerFaction.name
+        : app.getFaction(territory.controllerId)?.name || "散户地头"
+      : "暂无";
     const industryHints = [
       selected.tags.includes("starter") ? "适合白手起家" : null,
       selected.tags.includes("town") ? "可置办田产或铺面" : null,
       selected.tags.includes("forge") ? "可经营工坊" : null,
       selected.tags.includes("market") || selected.tags.includes("port") ? "适合行商开铺" : null,
-      selected.tags.includes("sect") ? "有宗门产业门路" : null,
+      selected.tags.includes("court") ? "可买官契、办路引" : null,
+      selected.tags.includes("pass") ? "适合跑长线商路" : null,
+      selected.tags.includes("sect") ? "有行院与修行门路" : null,
     ].filter(Boolean);
     const travelReason = isCurrent ? "你已经在此地。" : reachable ? "可直接前往。" : "当前地脉尚未打通，暂时去不了这里。";
 
@@ -42,6 +51,8 @@
           <div class="world-card"><span>特产</span><strong>${selected.resource}</strong></div>
           <div class="world-card"><span>市集层级</span><strong>${selected.marketTier || 0} 阶</strong></div>
           <div class="world-card"><span>势力驻点</span><strong>${factionsHere.length ? factionsHere.map((faction) => faction.name).join("、") : "暂无"}</strong></div>
+          <div class="world-card"><span>地头归属</span><strong>${territoryHolder}</strong></div>
+          <div class="world-card"><span>你在此地的门路</span><strong>${Math.round(territory?.playerInfluence || 0)}</strong></div>
         </div>
 
         ${activeRealm ? `
@@ -85,12 +96,20 @@
       const isPlayerHere = game.player.locationId === location.id;
       const realmHere = activeRealm && activeRealm.locationId === location.id;
       const factionsHere = FACTIONS.filter((faction) => location.factionIds?.includes(faction.id));
+      const territory = app.getTerritoryState?.(location.id);
+      const playerFaction = app.getPlayerFaction?.();
+      const territoryHolder = territory
+        ? territory.controllerId === playerFaction?.id
+          ? playerFaction.name
+          : app.getFaction(territory.controllerId)?.name || "散户地头"
+        : "暂无";
       return `
         <div class="world-card ${realmHere ? "standout" : ""}">
           <span>${location.name}</span>
           <strong>${location.region}</strong>
           <p class="item-meta">灵气 ${location.aura}，风险 ${location.danger}，市集 ${location.marketTier || 0} 阶，商货总值 ${formatNumber(stockValue)}，当前停留 NPC ${residents}</p>
           <p class="item-meta">势力：${factionsHere.length ? factionsHere.map((faction) => faction.name).join("、") : "暂无驻点"}</p>
+          <p class="item-meta">地头：${territoryHolder} · 你的门路 ${Math.round(territory?.playerInfluence || 0)}</p>
           <div class="item-actions">
             <button class="item-button" data-focus-location="${location.id}">查看地图</button>
             <button class="item-button" data-world-travel="${location.id}" ${app.getGuardAttrs(!isPlayerHere, isPlayerHere ? "你已经在此地。" : "可以启程前往。")}>${isPlayerHere ? "你在此地" : `前往${location.short}`}</button>
@@ -106,7 +125,8 @@
         <div class="summary-box"><span>今日天候</span><strong>${game.world.weather}</strong></div>
         <div class="summary-box"><span>异象征兆</span><strong>${game.world.omen}</strong></div>
         <div class="summary-box"><span>商帮好感</span><strong>${round(game.world.factionFavor.merchants, 1)}</strong></div>
-        <div class="summary-box"><span>宗门风评</span><strong>${round(game.world.factionFavor.sect, 1)}</strong></div>
+        <div class="summary-box"><span>朝廷声望</span><strong>${round(game.world.factionFavor.court, 1)}</strong></div>
+        <div class="summary-box"><span>本地声望</span><strong>${round(app.getRegionStanding(game.player.locationId), 1)}</strong></div>
         <div class="summary-box"><span>现存势力</span><strong>${FACTIONS.length}</strong></div>
         <div class="summary-box"><span>活跃地点</span><strong>${LOCATIONS.length}</strong></div>
       </div>

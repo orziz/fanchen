@@ -1,7 +1,94 @@
 (() => {
   const app = window.ShanHai;
-  const { tables, dom, runtime } = app;
+  const { tables, dom, runtime, utils } = app;
   const { LOCATIONS, LOCATION_MAP } = tables;
+  const { clamp } = utils;
+  const VIEW_MARGIN_X = 132;
+  const VIEW_MARGIN_Y = 108;
+  const MIN_SCALE = 0.72;
+  const MAX_SCALE = 1.92;
+  const PAN_PADDING = 54;
+
+  function getCanvasMetrics() {
+    const canvas = dom.mapCanvas;
+    return {
+      width: canvas?.width || 1440,
+      height: canvas?.height || 720,
+    };
+  }
+
+  function getViewportBounds() {
+    return LOCATIONS.reduce((bounds, location) => ({
+      minX: Math.min(bounds.minX, location.x),
+      maxX: Math.max(bounds.maxX, location.x),
+      minY: Math.min(bounds.minY, location.y),
+      maxY: Math.max(bounds.maxY, location.y),
+    }), {
+      minX: Number.POSITIVE_INFINITY,
+      maxX: Number.NEGATIVE_INFINITY,
+      minY: Number.POSITIVE_INFINITY,
+      maxY: Number.NEGATIVE_INFINITY,
+    });
+  }
+
+  function clampViewport(viewport) {
+    const { width, height } = getCanvasMetrics();
+    const scaledWidth = width * viewport.scale;
+    const scaledHeight = height * viewport.scale;
+
+    if (scaledWidth <= width) {
+      viewport.offsetX = (width - scaledWidth) / 2;
+    } else {
+      viewport.offsetX = clamp(viewport.offsetX, width - scaledWidth - PAN_PADDING, PAN_PADDING);
+    }
+
+    if (scaledHeight <= height) {
+      viewport.offsetY = (height - scaledHeight) / 2;
+    } else {
+      viewport.offsetY = clamp(viewport.offsetY, height - scaledHeight - PAN_PADDING, PAN_PADDING);
+    }
+
+    return viewport;
+  }
+
+  function getDefaultViewport() {
+    const { width, height } = getCanvasMetrics();
+    const bounds = getViewportBounds();
+    const contentWidth = bounds.maxX - bounds.minX + VIEW_MARGIN_X * 2;
+    const contentHeight = bounds.maxY - bounds.minY + VIEW_MARGIN_Y * 2;
+    const fitScale = clamp(Math.min(width / contentWidth, height / contentHeight), MIN_SCALE, 1);
+    const viewport = {
+      scale: fitScale,
+      minScale: MIN_SCALE,
+      maxScale: MAX_SCALE,
+      offsetX: (width - contentWidth * fitScale) / 2 - (bounds.minX - VIEW_MARGIN_X) * fitScale,
+      offsetY: (height - contentHeight * fitScale) / 2 - (bounds.minY - VIEW_MARGIN_Y) * fitScale,
+    };
+    return clampViewport(viewport);
+  }
+
+  function ensureMapViewport() {
+    if (!runtime.mapViewport) {
+      runtime.mapViewport = getDefaultViewport();
+    }
+    runtime.mapViewport.minScale = MIN_SCALE;
+    runtime.mapViewport.maxScale = MAX_SCALE;
+    return clampViewport(runtime.mapViewport);
+  }
+
+  function syncMapZoomLabel() {
+    if (!dom.mapZoomLabel) return;
+    dom.mapZoomLabel.textContent = `${Math.round(ensureMapViewport().scale * 100)}%`;
+  }
+
+  function drawWorldBackdrop(context, width, height) {
+    const gradient = context.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, "#35504a");
+    gradient.addColorStop(0.4, "#203a34");
+    gradient.addColorStop(1, "#0d1714");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, width, height);
+  }
 
   function drawMapTexture(context) {
     if (!runtime.mapTexture) {
@@ -94,29 +181,99 @@
     context.restore();
   }
 
+  function canvasPointToWorld(canvasX, canvasY) {
+    const viewport = ensureMapViewport();
+    return {
+      x: (canvasX - viewport.offsetX) / viewport.scale,
+      y: (canvasY - viewport.offsetY) / viewport.scale,
+    };
+  }
+
+  function getCanvasPointFromEvent(event) {
+    const canvas = dom.mapCanvas;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: ((event.clientX - rect.left) / rect.width) * canvas.width,
+      y: ((event.clientY - rect.top) / rect.height) * canvas.height,
+    };
+  }
+
+  function getWorldPointFromEvent(event) {
+    const point = getCanvasPointFromEvent(event);
+    return point ? canvasPointToWorld(point.x, point.y) : null;
+  }
+
+  function centerMapOn(locationId, options = {}) {
+    const location = LOCATION_MAP[locationId];
+    if (!location) return;
+    const viewport = ensureMapViewport();
+    const { width, height } = getCanvasMetrics();
+    const scale = clamp(options.scale ?? viewport.scale, viewport.minScale, viewport.maxScale);
+    viewport.scale = scale;
+    viewport.offsetX = width / 2 - location.x * scale;
+    viewport.offsetY = height / 2 - location.y * scale;
+    clampViewport(viewport);
+    syncMapZoomLabel();
+    if (options.render !== false) {
+      renderMap();
+    }
+  }
+
+  function resetMapViewport() {
+    runtime.mapViewport = getDefaultViewport();
+    syncMapZoomLabel();
+    renderMap();
+  }
+
+  function zoomMap(factor, anchorX, anchorY) {
+    const viewport = ensureMapViewport();
+    const { width, height } = getCanvasMetrics();
+    const nextScale = clamp(viewport.scale * factor, viewport.minScale, viewport.maxScale);
+    const focusX = anchorX ?? width / 2;
+    const focusY = anchorY ?? height / 2;
+    const worldX = (focusX - viewport.offsetX) / viewport.scale;
+    const worldY = (focusY - viewport.offsetY) / viewport.scale;
+
+    viewport.scale = nextScale;
+    viewport.offsetX = focusX - worldX * nextScale;
+    viewport.offsetY = focusY - worldY * nextScale;
+    clampViewport(viewport);
+    syncMapZoomLabel();
+    renderMap();
+  }
+
   function renderMap() {
     const canvas = dom.mapCanvas;
     if (!canvas) return;
     const context = canvas.getContext("2d");
     const selected = app.getSelectedLocation();
     const current = app.getCurrentLocation();
+    const viewport = ensureMapViewport();
 
     context.clearRect(0, 0, canvas.width, canvas.height);
+    drawWorldBackdrop(context, canvas.width, canvas.height);
 
-    const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, "#35504a");
-    gradient.addColorStop(0.4, "#203a34");
-    gradient.addColorStop(1, "#0d1714");
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
+    context.save();
+    context.translate(viewport.offsetX, viewport.offsetY);
+    context.scale(viewport.scale, viewport.scale);
+    drawWorldBackdrop(context, canvas.width, canvas.height);
     drawMapTexture(context);
     drawRoutes(context);
     drawLocationNodes(context, selected, current, app.getGame().world.realm.activeRealmId);
     drawPlayerTrail(context, current);
+    context.restore();
+    syncMapZoomLabel();
   }
 
   Object.assign(app, {
+    ensureMapViewport,
+    clampMapViewport: clampViewport,
+    getCanvasPointFromEvent,
+    getMapWorldPointFromEvent: getWorldPointFromEvent,
+    focusMapOnLocation: centerMapOn,
+    resetMapViewport,
+    zoomMap,
     renderMap,
     drawMapTexture,
     drawRoutes,

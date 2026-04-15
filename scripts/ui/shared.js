@@ -24,6 +24,17 @@
     sect: "门内事务",
   };
 
+  const FACTION_TYPE_LABELS = {
+    village: "乡社",
+    society: "行社",
+    guild: "商帮",
+    escort: "镖局",
+    court: "官府",
+    bureau: "转运司",
+    garrison: "军府",
+    order: "行院",
+  };
+
   function renderSpeedButtons() {
     if (!dom.speedSwitch) return;
     Array.from(dom.speedSwitch.querySelectorAll(".speed-button")).forEach((button) => {
@@ -43,6 +54,10 @@
       partner: "道侣",
       rival: "仇敌",
     }[role || "none"];
+  }
+
+  function getFactionTypeLabel(type) {
+    return FACTION_TYPE_LABELS[type] || "势力";
   }
 
   function getMarketBiasLabel(type) {
@@ -126,6 +141,7 @@
     renderSpeedButtons,
     getModeLabel,
     getRoleLabel,
+    getFactionTypeLabel,
     getMarketBiasLabel,
     getUnlockLabel,
     formatUnlockLabels,

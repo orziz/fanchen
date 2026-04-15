@@ -1,10 +1,10 @@
 ﻿@media (max-width: 1380px) {
   .hero {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
   }
 
-  .hero-copy {
-    grid-column: 1 / -1;
+  .hero-side {
+    justify-items: stretch;
   }
 
   .workbench-head {
@@ -28,9 +28,14 @@
     justify-content: flex-start;
   }
 
-  .hero-action-row,
+  .hero-status,
+  .hero-context-row {
+    justify-content: flex-start;
+  }
+
+  .hero-top-row,
   .hero-speed-row,
-  .hero-speed-row .speed-switch {
+  .hero-context-row {
     width: 100%;
   }
 
@@ -40,6 +45,11 @@
 }
 
 @media (max-width: 1120px) {
+  .hero-status {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
   .desktop-layout {
     grid-template-columns: 300px 1fr;
   }
@@ -89,5 +99,40 @@
 
   .industry-stack {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .hero-top-row {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-status,
+  .hero-action-row,
+  .hero-speed-row,
+  .hero-context-row {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .hero-speed-row .speed-switch {
+    width: 100%;
+  }
+
+  .hero-speed-row {
+    align-items: flex-start;
+  }
+
+  .hero-context-row {
+    flex: 1 1 100%;
+  }
+
+  .speed-switch {
+    justify-content: space-between;
+  }
+
+  .status-pill.context-pill {
+    flex-basis: 100%;
   }
 }

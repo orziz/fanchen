@@ -13,32 +13,44 @@
       <div class="hero-copy">
         <p class="eyebrow">离线原生修真经营</p>
         <h1>凡尘立道录</h1>
-        <p class="subtitle">从寒门凡人起步，在乡社、工盟、商帮与山门之间挣门路、攒产业、熬境界，决定自己是继续寄身门墙，还是另立一脉。</p>
+        <p class="subtitle">从寒门凡人起步，在乡社、商帮、官府与行院之间挣门路、跑商路、攒产业，再决定自己是继续借势而起，还是另立唯一的山门。</p>
       </div>
-      <div class="hero-status">
-        <div class="status-pill">
-          <span>第</span>
-          <strong id="dayLabel">1</strong>
-          <span>日</span>
-        </div>
-        <div class="status-pill">
-          <span id="timeLabel">子时</span>
-        </div>
-        <div class="status-pill">
-          <span>声望</span>
-          <strong id="reputationLabel">0</strong>
-        </div>
-        <div class="status-pill accent">
-          <span id="saveStateLabel">未存档</span>
-        </div>
-      </div>
-      <div class="hero-actions">
-        <div class="hero-action-row">
-          <button class="control-button primary" id="saveButton">手动存档</button>
-          <button class="control-button" id="loadButton">读取存档</button>
-          <button class="control-button" id="newGameButton">重开此世</button>
+      <div class="hero-side">
+        <div class="hero-top-row">
+          <div class="hero-status">
+            <div class="status-pill">
+              <span>第</span>
+              <strong id="dayLabel">1</strong>
+              <span>日</span>
+            </div>
+            <div class="status-pill">
+              <span id="timeLabel">子时</span>
+            </div>
+            <div class="status-pill">
+              <span>声望</span>
+              <strong id="reputationLabel">0</strong>
+            </div>
+            <div class="status-pill accent">
+              <span id="saveStateLabel">未存档</span>
+            </div>
+          </div>
+          <div class="hero-action-row">
+            <button class="control-button primary" id="saveButton">手动存档</button>
+            <button class="control-button" id="loadButton">读取存档</button>
+            <button class="control-button" id="newGameButton">重开此世</button>
+          </div>
         </div>
         <div class="hero-speed-row">
+          <div class="hero-context-row">
+            <div class="status-pill context-pill">
+              <span>当前焦点</span>
+              <strong id="heroFocusLabel">平稳推进</strong>
+            </div>
+            <div class="status-pill context-pill">
+              <span>当前门路</span>
+              <strong id="heroRouteLabel">尚未投势</strong>
+            </div>
+          </div>
           <div class="speed-switch" id="speedSwitch">
             <button class="speed-button" data-speed="0.5">半速</button>
             <button class="speed-button active" data-speed="1">常速</button>
@@ -61,7 +73,7 @@
           <div>
             <p class="section-kicker">行程总览</p>
             <h2>凡尘谋局台</h2>
-            <p class="workbench-subtitle">先看行囊、营生与门路，再决定是远游九州、闯秘境，还是记下今日风闻。</p>
+            <p class="workbench-subtitle">先看行囊、商路、门路与官契，再决定是远游九州、闯秘境，还是把今天这一趟生意做透。</p>
           </div>
           <div class="workbench-tools">
             <div class="tool-row">
@@ -130,10 +142,21 @@
           <div class="window-toolbar">
             <div>
               <p class="section-kicker">远观九州</p>
-              <h3>点击节点查看详情，再决定是否前往</h3>
+              <h3>点击节点看详情，拖拽平移，滚轮缩放</h3>
+            </div>
+            <div class="map-toolbar-tools">
+              <div class="map-toolbar-actions">
+                <div class="status-pill map-zoom-pill">
+                  <span>缩放</span>
+                  <strong id="mapZoomLabel">100%</strong>
+                </div>
+                <button class="control-button ghost" data-map-zoom="out">缩小</button>
+                <button class="control-button ghost" data-map-reset="true">重置视野</button>
+                <button class="control-button ghost" data-map-zoom="in">放大</button>
+              </div>
             </div>
           </div>
-          <div class="canvas-shell">
+          <div class="canvas-shell" id="mapCanvasShell">
             <canvas id="worldMap" width="1440" height="720"></canvas>
             <div class="canvas-overlay">
               <div class="overlay-stat">
@@ -202,7 +225,7 @@
       <div class="window-header" data-window-handle="command">
         <div>
           <p class="section-kicker">挂机策略</p>
-          <h2>谋局令</h2>
+          <h2>策略盘</h2>
         </div>
         <div class="window-actions">
           <button class="control-button ghost" data-window-action="minimize" data-window-id="command">最小化</button>
@@ -228,13 +251,25 @@
   <script src="scripts/config/combat.js" defer></script>
   <script src="scripts/config/events.js" defer></script>
   <script src="scripts/systems/state.js" defer></script>
+  <script src="scripts/systems/state-factories.js" defer></script>
+  <script src="scripts/systems/state-hydration.js" defer></script>
+  <script src="scripts/systems/state-accessors.js" defer></script>
   <script src="scripts/systems/player.js" defer></script>
   <script src="scripts/systems/combat.js" defer></script>
   <script src="scripts/systems/social.js" defer></script>
+  <script src="scripts/systems/world-trade.js" defer></script>
+  <script src="scripts/systems/world-auction.js" defer></script>
+  <script src="scripts/systems/world-npcs.js" defer></script>
   <script src="scripts/systems/world.js" defer></script>
+  <script src="scripts/systems/industry-core.js" defer></script>
+  <script src="scripts/systems/industry-orders.js" defer></script>
+  <script src="scripts/systems/industry-operations.js" defer></script>
   <script src="scripts/systems/industry.js" defer></script>
   <script src="scripts/ui/shared.js" defer></script>
   <script src="scripts/ui/windows.js" defer></script>
+  <script src="scripts/ui/interactions-core.js" defer></script>
+  <script src="scripts/ui/interactions-panels.js" defer></script>
+  <script src="scripts/ui/interactions-map.js" defer></script>
   <script src="scripts/ui/interactions.js" defer></script>
   <script src="scripts/ui/panels/layout.js" defer></script>
   <script src="scripts/ui/panels/exploration.js" defer></script>

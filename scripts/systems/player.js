@@ -102,6 +102,8 @@
         stock: 0,
         pendingIncome: 0,
         level: 1,
+        managerNpcId: null,
+        automationTargetId: null,
       };
       collection.push(asset);
       created.push(asset.label);
@@ -339,6 +341,7 @@
     removeItemFromInventory(itemId, 1);
     game.player.money += price;
     game.player.stats.tradesCompleted += 1;
+    app.adjustRegionStanding?.(location.id, 0.4);
     appendLog(`你将${item.name}出售给${location.name}商人，获得${price}灵石。`, "info");
     rerender();
   }

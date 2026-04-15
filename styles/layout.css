@@ -13,9 +13,9 @@
 .hero {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(360px, 1.45fr) auto auto;
+  grid-template-columns: minmax(360px, 1.1fr) minmax(760px, 0.9fr);
   gap: 18px;
-  align-items: center;
+  align-items: start;
   padding: 22px 24px;
   overflow: hidden;
 }
@@ -35,26 +35,56 @@
   line-height: 1.05;
 }
 
-.hero-status,
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+.hero-side {
+  display: grid;
+  min-width: 0;
+  justify-items: end;
   gap: 10px;
 }
 
-.hero-actions {
+.hero-top-row {
+  width: 100%;
   display: grid;
-  justify-items: end;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
 }
 
 .hero-action-row,
 .hero-speed-row {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: 10px;
+  width: 100%;
+}
+
+.hero-action-row {
+  width: auto;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.hero-speed-row {
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+
+.hero-context-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
 }
 
 .status-pill {
@@ -78,8 +108,27 @@
   color: var(--jade);
 }
 
+.status-pill.context-pill {
+  min-width: 0;
+  flex: 0 1 220px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 18px;
+}
+
+.status-pill.context-pill span,
+.status-pill.context-pill strong {
+  white-space: nowrap;
+}
+
+.status-pill.context-pill strong {
+  font-size: 16px;
+}
+
 .speed-switch {
   display: inline-flex;
+  flex: 0 0 auto;
   padding: 4px;
   gap: 4px;
   flex-wrap: wrap;

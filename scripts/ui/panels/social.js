@@ -93,6 +93,61 @@
     `;
   }
 
+  function renderTaskCards(tasks, options) {
+    if (!tasks.length) {
+      return `<div class="empty-state">${options.emptyText}</div>`;
+    }
+    return tasks.map((task) => {
+      const canComplete = options.canComplete(task.id);
+      return `
+        <div class="item-card">
+          <div class="item-top">
+            <div>
+              <h3 class="item-title">${task.title}</h3>
+              <p class="item-meta">${task.desc}</p>
+            </div>
+            <span class="rarity uncommon">${options.badge(task)}</span>
+          </div>
+          <p class="item-meta">${options.reward(task)}</p>
+          <div class="item-actions">
+            <button class="item-button" ${options.attr}="${task.id}" ${app.getGuardAttrs(canComplete, options.explain(task.id))}>${canComplete ? options.actionText : "查看条件"}</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderTerritoryCards(entries) {
+    if (!entries.length) {
+      return `<div class="empty-state">眼下还没有踩稳的地盘，先去市镇、关口和港埠伸手。</div>`;
+    }
+    return entries.map((entry) => {
+      const canAct = entry.isControlled ? app.canStabilizeTerritory?.(entry.locationId) : app.canLaunchTerritoryCampaign?.(entry.locationId);
+      const explain = entry.isControlled ? app.explainStabilizeTerritory?.(entry.locationId) : app.explainTerritoryCampaign?.(entry.locationId);
+      return `
+        <div class="item-card ${entry.isControlled ? "standout" : ""}">
+          <div class="item-top">
+            <div>
+              <h3 class="item-title">${entry.location.name}</h3>
+              <p class="item-meta">${entry.location.region} · ${entry.controllerName}${entry.isControlled ? "在此坐镇" : "把着这条线"}</p>
+            </div>
+            <span class="rarity ${entry.isControlled ? "rare" : "uncommon"}">${entry.isControlled ? "已控" : "可争"}</span>
+          </div>
+          <p class="item-meta">你在此地的门路深浅 ${Math.round(entry.playerInfluence)}/100，地头稳度 ${Math.round(entry.stability)}。</p>
+          <div class="inline-list">
+            <span class="trait-chip">灵气 ${entry.location.aura}</span>
+            <span class="trait-chip">市集 ${entry.location.marketTier || 0} 阶</span>
+            <span class="trait-chip">险度 ${entry.location.danger}</span>
+          </div>
+          <div class="item-actions">
+            <button class="item-button" ${entry.isControlled ? `data-stabilize-territory="${entry.locationId}"` : `data-campaign-territory="${entry.locationId}"`} ${app.getGuardAttrs(canAct, explain || "" )}>${entry.isControlled ? "压稳地盘" : "出手争路"}</button>
+            <button class="item-button" data-focus-location="${entry.locationId}">看地势</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
   function renderNpcPanel() {
     const game = app.getGame();
     const cards = game.npcs
@@ -134,6 +189,7 @@
               <button class="npc-button" data-visit-npc="${npc.id}">拜访</button>
               <button class="npc-button" data-focus-npc="${npc.id}">查看所在地点</button>
               <button class="npc-button" data-recruit-npc="${npc.id}" ${app.getGuardAttrs(app.canRecruitDisciple(npc.id), app.explainRecruitDisciple(npc.id))}>${app.canRecruitDisciple(npc.id) ? "收为弟子" : "查看收徒条件"}</button>
+              <button class="npc-button" data-recruit-faction-member="${npc.id}" ${app.getGuardAttrs(app.canRecruitFactionMember?.(npc.id), app.explainRecruitFactionMember?.(npc.id) || "需先建立自家势力。")}>${app.canRecruitFactionMember?.(npc.id) ? "招入自家势力" : "查看招募条件"}</button>
               <button class="npc-button" data-master-npc="${npc.id}" ${app.getGuardAttrs(app.canBecomeMaster(npc.id), app.explainMasterBond(npc.id))}>${app.canBecomeMaster(npc.id) ? "拜其为师" : "查看拜师条件"}</button>
               <button class="npc-button" data-partner-npc="${npc.id}" ${app.getGuardAttrs(app.canBecomePartner(npc.id), app.explainPartnerBond(npc.id))}>${app.canBecomePartner(npc.id) ? "结为道侣" : "查看结缘条件"}</button>
               <button class="npc-button" data-rival-npc="${npc.id}">立为仇敌</button>
@@ -143,7 +199,7 @@
       }).join("");
 
     dom.npcPanel.innerHTML = `
-      <p class="panel-intro">每个 NPC 都有独立人格、财富、行动和关系曲线。他们会自己游历、做买卖、抢拍，也会因为你的行为成为弟子、师长、道侣或仇敌。</p>
+      <p class="panel-intro">江湖人各有性情、家底和打算。你能与他们结交、结仇、收徒，也能把合适的人拉进自家门路。</p>
       <div class="npc-grid">${cards}</div>
     `;
   }
@@ -152,6 +208,12 @@
     const game = app.getGame();
     const sect = game.player.sect;
     const affiliation = app.getCurrentAffiliation?.();
+    const playerFaction = app.getPlayerFaction?.();
+    const affiliationTasks = affiliation ? app.refreshAffiliationTasks?.() || [] : [];
+    const playerFactionMissions = playerFaction ? app.refreshPlayerFactionMissions?.() || [] : [];
+    const sectMissions = sect ? app.refreshSectMissions?.() || [] : [];
+    const territoryEntries = playerFaction ? app.getPlayerFactionTerritoryTargets?.() || [] : [];
+    const hasBanner = Boolean(app.findInventoryEntry("sect-banner"));
 
     const factionCards = FACTIONS.map((faction) => {
       const joined = affiliation?.id === faction.id;
@@ -163,7 +225,7 @@
               <h3 class="npc-name">${faction.name}</h3>
               <p class="npc-meta">${faction.desc}</p>
             </div>
-            <span class="trait-chip">${faction.type === "sect" ? "宗门" : "势力"}</span>
+            <span class="trait-chip">${app.getFactionTypeLabel(faction.type)}</span>
           </div>
           <p class="npc-meta">所在：${LOCATION_MAP[faction.locationId]?.name || faction.locationId} · 可开：${app.formatUnlockLabels(faction.unlocks)}</p>
           <p class="npc-meta">入门条件：境界 ${app.getRankData(faction.joinRequirement.rankIndex).name}，声望 ${faction.joinRequirement.reputation}，灵石 ${faction.joinRequirement.money}</p>
@@ -174,100 +236,180 @@
       `;
     }).join("");
 
-    if (!sect) {
-      const hasBanner = Boolean(app.findInventoryEntry("sect-banner"));
-      dom.sectPanel.innerHTML = `
-        <p class="panel-intro">这一页先处理“投门路”而不是“直接开宗”。先加入现有势力，解锁产业和资源，再谈自立山门。</p>
+    const affiliationTaskCards = affiliation
+      ? renderTaskCards(affiliationTasks, {
+          emptyText: "今天这方势力还没有新的差使。",
+          canComplete: (taskId) => app.canCompleteAffiliationTask(taskId),
+          explain: (taskId) => app.explainAffiliationTask(taskId),
+          badge: (task) => `声望 +${round(task.rewardReputation, 1)}`,
+          reward: (task) => `酬劳 ${task.rewardMoney} 灵石，势力声望 +${round(task.rewardStanding, 1)}，地区声望 +${round(task.rewardRegion, 1)}`,
+          attr: 'data-complete-affiliation-task',
+          actionText: '完成差使',
+        })
+      : `<div class="empty-state">先投一家势力，才会有正式差使可做。</div>`;
+
+    const playerFactionSection = playerFaction
+      ? `
         <div class="summary-grid">
-          <div class="summary-box"><span>当前归属</span><strong>${affiliation ? affiliation.name : "无"}</strong></div>
-          <div class="summary-box"><span>门内身份</span><strong>${affiliation ? affiliation.titles[game.player.affiliationRank] : "白身"}</strong></div>
-          <div class="summary-box"><span>门内贡献</span><strong>${affiliation ? round(game.player.factionStanding[affiliation.id] || 0, 1) : 0}</strong></div>
-          <div class="summary-box"><span>自立山门资格</span><strong>${hasBanner ? "有旗幡" : "未备旗幡"}</strong></div>
+          <div class="summary-box"><span>自家势力</span><strong>${playerFaction.name}</strong></div>
+          <div class="summary-box"><span>势力等级</span><strong>${playerFaction.level}</strong></div>
+          <div class="summary-box"><span>地盘影响</span><strong>${round(playerFaction.influence, 1)}</strong></div>
+          <div class="summary-box"><span>势力金库</span><strong>${formatNumber(playerFaction.treasury)}</strong></div>
+          <div class="summary-box"><span>补给</span><strong>${formatNumber(playerFaction.supplies)}</strong></div>
+          <div class="summary-box"><span>总人手</span><strong>${app.getPlayerFactionTotalCrew?.(playerFaction) || 0}</strong></div>
+          <div class="summary-box"><span>骨干成员</span><strong>${playerFaction.members.length}</strong></div>
+          <div class="summary-box"><span>总堂口</span><strong>${LOCATION_MAP[playerFaction.headquartersLocationId]?.name || playerFaction.headquartersLocationId}</strong></div>
+          <div class="summary-box"><span>已控地盘</span><strong>${(app.getPlayerFactionTerritories?.() || []).filter((entry) => entry.isControlled).length}</strong></div>
         </div>
-        <h3 class="subsection-title">可投势力</h3>
-        <div class="npc-grid">${factionCards}</div>
-        <h3 class="subsection-title">自立山门</h3>
+        <div class="world-grid">
+          ${Object.entries(app.PLAYER_FACTION_BRANCHES || {}).map(([key, branch]) => {
+            const level = playerFaction.branches[key] || 0;
+            const cost = branch.baseCost * (level + 1);
+            return `
+              <div class="world-card">
+                <span>${branch.label}</span>
+                <strong>${level} 级</strong>
+                <p class="item-meta">${branch.desc}</p>
+                <div class="item-actions"><button class="item-button" data-upgrade-faction-branch="${key}">扩张 ${cost} 灵石</button></div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+        <h3 class="subsection-title">地盘与商线</h3>
+        <div class="inventory-grid industry-stack">${renderTerritoryCards(territoryEntries)}</div>
+        <h3 class="subsection-title">自家势力任务</h3>
+        <div class="inventory-grid industry-stack">
+          ${renderTaskCards(playerFactionMissions, {
+            emptyText: "今天这摊子暂时没有新增差事。",
+            canComplete: (taskId) => app.canCompletePlayerFactionMission(taskId),
+            explain: (taskId) => app.explainPlayerFactionMission(taskId),
+            badge: (task) => `势力威望 +${round(task.rewardPrestige || 0, 1)}`,
+            reward: (task) => `影响 +${round(task.rewardInfluence || 0, 1)}${task.rewardTreasury ? `，金库 +${task.rewardTreasury}` : ""}${task.rewardSupplies ? `，补给 +${task.rewardSupplies}` : ""}`,
+            attr: 'data-complete-player-faction-mission',
+            actionText: '推动势力事务',
+          })}
+        </div>
+      `
+      : `
         <div class="combat-card standout">
-          <p class="auction-meta">需求：至少筑基、声望 68、灵石 3800、立宗旗幡 1。当前：境界 ${app.getRankData(game.player.rankIndex).name}、声望 ${formatNumber(game.player.reputation)}、灵石 ${formatNumber(game.player.money)}、旗幡 ${hasBanner ? "已备" : "未备"}。</p>
+          <p class="auction-meta">你可以另拉一张自己的江湖网络，和外部势力、宗门并行运转。需求：声望 22、灵石 900、至少练力境。</p>
+          <div class="auction-actions">
+            <button class="item-button" data-create-player-faction="1" ${app.getGuardAttrs(app.canCreatePlayerFaction?.(), app.explainCreatePlayerFaction?.() || "条件不足")}>${app.canCreatePlayerFaction?.() ? "拉起自家势力" : "查看创建条件"}</button>
+          </div>
+        </div>
+      `;
+
+    const sectSection = sect
+      ? (() => {
+          const buildingCards = Object.entries(SECT_BUILDINGS).map(([key, building]) => {
+            const level = sect.buildings[key] || 0;
+            const cost = building.baseCost * (level + 1);
+            return `
+              <div class="world-card">
+                <span>${building.label}</span>
+                <strong>${level} 级</strong>
+                <p class="item-meta">${building.desc}</p>
+                <div class="item-actions"><button class="item-button" data-upgrade-building="${key}">升级 ${cost} 灵石</button></div>
+              </div>
+            `;
+          }).join("");
+
+          const disciples = sect.disciples.length
+            ? sect.disciples.map((npcId) => {
+                const npc = app.getNpc(npcId);
+                const currentTeaching = sect.teachings.find((entry) => entry.npcId === npcId);
+                if (!npc) return "";
+                return `
+                  <div class="npc-card">
+                    <div class="npc-top">
+                      <div>
+                        <h3 class="npc-name">${npc.name}</h3>
+                        <p class="npc-meta">${npc.profession || npc.title} · ${app.getRankData(npc.rankIndex).name}</p>
+                      </div>
+                      <span class="trait-chip">修为 ${formatNumber(npc.cultivation)}</span>
+                    </div>
+                    <p class="npc-meta">最近动向：${npc.lastEvent}</p>
+                    <p class="npc-meta">当前传功：${currentTeaching ? `${app.getItem(currentTeaching.manualId)?.name || "未知功法"} · 进度 ${round(currentTeaching.progress, 1)}` : "尚未安排"}</p>
+                    <div class="teaching-actions">
+                      ${sect.manualLibrary.length ? sect.manualLibrary.map((manualId) => `<button class="npc-button" data-teach-npc="${npc.id}" data-manual-id="${manualId}">传授${app.getItem(manualId)?.name || "功法"}</button>`).join("") : `<span class="muted">藏经阁暂无可传功法</span>`}
+                    </div>
+                  </div>
+                `;
+              }).join("")
+            : `<div class="empty-state">门下暂无亲传弟子，先去江湖中收人。</div>`;
+
+          const library = sect.manualLibrary.length
+            ? sect.manualLibrary.map((manualId) => {
+                const item = app.getItem(manualId);
+                return `
+                  <div class="item-card">
+                    <div class="item-top">
+                      <div>
+                        <h3 class="item-title">${item?.name || manualId}</h3>
+                        <p class="item-meta">${item?.desc || "已收入藏经阁。"}</p>
+                      </div>
+                      <span class="rarity ${item ? RARITY_META[item.rarity].color : "common"}">${item ? RARITY_META[item.rarity].label : "功法"}</span>
+                    </div>
+                    <p class="item-meta">${item ? app.describeItemEffect(item) : ""}</p>
+                  </div>
+                `;
+              }).join("")
+            : `<div class="empty-state">藏经阁尚无功法，可先从行囊中收入秘籍。</div>`;
+
+          return `
+            <div class="summary-grid">
+              <div class="summary-box"><span>宗门名称</span><strong>${sect.name}</strong></div>
+              <div class="summary-box"><span>宗门等级</span><strong>${sect.level}</strong></div>
+              <div class="summary-box"><span>威望</span><strong>${formatNumber(sect.prestige)}</strong></div>
+              <div class="summary-box"><span>府库</span><strong>${formatNumber(sect.treasury)}</strong></div>
+              <div class="summary-box"><span>粮草</span><strong>${formatNumber(sect.food)}</strong></div>
+              <div class="summary-box"><span>亲传弟子</span><strong>${sect.disciples.length}</strong></div>
+              <div class="summary-box"><span>外门弟子</span><strong>${sect.outerDisciples || 0}</strong></div>
+              <div class="summary-box"><span>本地声望</span><strong>${round(app.getRegionStanding(game.player.locationId), 1)}</strong></div>
+            </div>
+            <h3 class="subsection-title">宗门任务</h3>
+            <div class="inventory-grid industry-stack">
+              ${renderTaskCards(sectMissions, {
+                emptyText: "今天门中暂无额外差使。",
+                canComplete: (taskId) => app.canCompleteSectMission(taskId),
+                explain: (taskId) => app.explainSectMission(taskId),
+                badge: (task) => `宗门威望 +${round(task.rewardPrestige || 0, 1)}`,
+                reward: (task) => `府库 +${task.rewardTreasury || 0}${task.rewardFood ? `，粮草 +${task.rewardFood}` : ""}${task.rewardReputation ? `，声望 +${round(task.rewardReputation, 1)}` : ""}`,
+                attr: 'data-complete-sect-mission',
+                actionText: '处理宗门差使',
+              })}
+            </div>
+            <h3 class="subsection-title">山门建筑</h3>
+            <div class="world-grid">${buildingCards}</div>
+            <h3 class="subsection-title">藏经阁</h3>
+            <div class="inventory-grid">${library}</div>
+            <h3 class="subsection-title">门下弟子</h3>
+            <div class="npc-grid">${disciples}</div>
+          `;
+        })()
+      : `
+        <div class="combat-card standout">
+          <p class="auction-meta">宗门是你独占的一脉山门。需求：至少筑基、声望 68、灵石 3800、立宗旗幡 1。当前：境界 ${app.getRankData(game.player.rankIndex).name}、声望 ${formatNumber(game.player.reputation)}、灵石 ${formatNumber(game.player.money)}、旗幡 ${hasBanner ? "已备" : "未备"}。</p>
           <div class="auction-actions"><button class="item-button" data-create-sect="1">另立山门</button></div>
         </div>
       `;
-      return;
-    }
-
-    const buildingCards = Object.entries(SECT_BUILDINGS).map(([key, building]) => {
-      const level = sect.buildings[key] || 0;
-      const cost = building.baseCost * (level + 1);
-      return `
-        <div class="world-card">
-          <span>${building.label}</span>
-          <strong>${level} 级</strong>
-          <p class="item-meta">${building.desc}</p>
-          <div class="item-actions"><button class="item-button" data-upgrade-building="${key}">升级 ${cost} 灵石</button></div>
-        </div>
-      `;
-    }).join("");
-
-    const disciples = sect.disciples.length
-      ? sect.disciples.map((npcId) => {
-          const npc = app.getNpc(npcId);
-          const currentTeaching = sect.teachings.find((entry) => entry.npcId === npcId);
-          if (!npc) return "";
-          return `
-            <div class="npc-card">
-              <div class="npc-top">
-                <div>
-                  <h3 class="npc-name">${npc.name}</h3>
-                  <p class="npc-meta">${npc.profession || npc.title} · ${app.getRankData(npc.rankIndex).name}</p>
-                </div>
-                <span class="trait-chip">修为 ${formatNumber(npc.cultivation)}</span>
-              </div>
-              <p class="npc-meta">最近动向：${npc.lastEvent}</p>
-              <p class="npc-meta">当前传功：${currentTeaching ? `${app.getItem(currentTeaching.manualId)?.name || "未知功法"} · 进度 ${round(currentTeaching.progress, 1)}` : "尚未安排"}</p>
-              <div class="teaching-actions">
-                ${sect.manualLibrary.length ? sect.manualLibrary.map((manualId) => `<button class="npc-button" data-teach-npc="${npc.id}" data-manual-id="${manualId}">传授${app.getItem(manualId)?.name || "功法"}</button>`).join("") : `<span class="muted">藏经阁暂无可传功法</span>`}
-              </div>
-            </div>
-          `;
-        }).join("")
-      : `<div class="empty-state">门下暂无弟子，先在江湖中积攒威望和人脉。</div>`;
-
-    const library = sect.manualLibrary.length
-      ? sect.manualLibrary.map((manualId) => {
-          const item = app.getItem(manualId);
-          return `
-            <div class="item-card">
-              <div class="item-top">
-                <div>
-                  <h3 class="item-title">${item?.name || manualId}</h3>
-                  <p class="item-meta">${item?.desc || "已收入藏经阁。"}</p>
-                </div>
-                <span class="rarity ${item ? RARITY_META[item.rarity].color : "common"}">${item ? RARITY_META[item.rarity].label : "功法"}</span>
-              </div>
-              <p class="item-meta">${item ? app.describeItemEffect(item) : ""}</p>
-            </div>
-          `;
-        }).join("")
-      : `<div class="empty-state">藏经阁尚无功法，可从行囊中把秘籍收入宗门。</div>`;
 
     dom.sectPanel.innerHTML = `
-      <p class="panel-intro">你已经跨过“投门路”阶段，进入了真正的宗门经营。产业、弟子和传功都能逐步挂靠到自己的山门下。</p>
+      <p class="panel-intro">江湖门路分三脉：外部势力是你的身位，自家势力是你铺开的盘子，宗门则是你独占的一脉根基。</p>
       <div class="summary-grid">
-        <div class="summary-box"><span>宗门名称</span><strong>${sect.name}</strong></div>
-        <div class="summary-box"><span>宗门等级</span><strong>${sect.level}</strong></div>
-        <div class="summary-box"><span>威望</span><strong>${formatNumber(sect.prestige)}</strong></div>
-        <div class="summary-box"><span>府库</span><strong>${formatNumber(sect.treasury)}</strong></div>
-        <div class="summary-box"><span>粮草</span><strong>${formatNumber(sect.food)}</strong></div>
-        <div class="summary-box"><span>门下弟子</span><strong>${sect.disciples.length}</strong></div>
+        <div class="summary-box"><span>当前势力</span><strong>${affiliation ? affiliation.name : "无"}</strong></div>
+        <div class="summary-box"><span>江湖身份</span><strong>${affiliation ? affiliation.titles[game.player.affiliationRank] : "白身"}</strong></div>
+        <div class="summary-box"><span>本地声望</span><strong>${round(app.getRegionStanding(game.player.locationId), 1)}</strong></div>
+        <div class="summary-box"><span>任务完成</span><strong>${game.player.stats.affiliationTasksCompleted + game.player.stats.factionTasksCompleted + game.player.stats.sectTasksCompleted}</strong></div>
       </div>
       <h3 class="subsection-title">可投势力</h3>
       <div class="npc-grid">${factionCards}</div>
-      <h3 class="subsection-title">山门建筑</h3>
-      <div class="world-grid">${buildingCards}</div>
-      <h3 class="subsection-title">藏经阁</h3>
-      <div class="inventory-grid">${library}</div>
-      <h3 class="subsection-title">门下弟子</h3>
-      <div class="npc-grid">${disciples}</div>
+      <h3 class="subsection-title">势力差使</h3>
+      <div class="inventory-grid industry-stack">${affiliationTaskCards}</div>
+      <h3 class="subsection-title">自家势力</h3>
+      ${playerFactionSection}
+      <h3 class="subsection-title">宗门</h3>
+      ${sectSection}
     `;
   }
 
