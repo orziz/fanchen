@@ -1,0 +1,243 @@
+.app-shell {
+  position: relative;
+  z-index: 1;
+  width: 100vw;
+  height: 100vh;
+  padding: 16px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(240px, 1.1fr) minmax(400px, 0.9fr);
+  gap: 18px;
+  align-items: start;
+  padding: 22px 24px;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top right, rgba(242, 214, 162, 0.16), transparent 32%),
+    linear-gradient(120deg, transparent 25%, rgba(125, 178, 200, 0.06) 60%, transparent 100%);
+  pointer-events: none;
+}
+
+.hero h1 {
+  font-size: clamp(34px, 4vw, 56px);
+  line-height: 1.05;
+}
+
+.hero-side {
+  display: grid;
+  min-width: 0;
+  justify-items: end;
+  gap: 10px;
+}
+
+.hero-top-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.hero-action-row,
+.hero-speed-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+.hero-action-row {
+  width: auto;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.hero-speed-row {
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+
+.hero-context-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  background: rgba(237, 229, 204, 0.08);
+  color: var(--text-dim);
+  border: 1px solid rgba(237, 229, 204, 0.08);
+}
+
+.status-pill strong {
+  color: var(--text-main);
+  font-size: 18px;
+}
+
+.status-pill.accent {
+  background: rgba(127, 178, 148, 0.12);
+  color: var(--jade);
+}
+
+.status-pill.context-pill {
+  min-width: 0;
+  flex: 0 1 220px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 18px;
+}
+
+.status-pill.context-pill span,
+.status-pill.context-pill strong {
+  white-space: nowrap;
+}
+
+.status-pill.context-pill strong {
+  font-size: 16px;
+}
+
+.speed-switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 4px;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.speed-button {
+  padding: 8px 14px;
+}
+
+.desktop-layout {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+  gap: 16px;
+  overflow: hidden;
+}
+
+.sidebar-stack {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(260px, 0.82fr);
+  gap: 16px;
+}
+
+.panel-card,
+.workbench {
+  min-height: 0;
+}
+
+.panel-card {
+  padding: 20px;
+  overflow: auto;
+}
+
+.workbench {
+  padding: 20px;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  overflow: hidden;
+}
+
+.workbench-command-panel {
+  margin-bottom: 14px;
+}
+
+.workbench-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.workbench-head h2 {
+  font-size: 30px;
+}
+
+.workbench-tools {
+  min-width: 320px;
+  display: grid;
+  gap: 12px;
+  justify-items: end;
+}
+
+.status-console {
+  width: min(100%, 520px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tool-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.tab-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tab-button {
+  padding-inline: 18px;
+}
+
+.tab-panels {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tab-panel,
+.panel-card {
+  scrollbar-gutter: stable;
+}
+
+.tab-panel {
+  display: none;
+  height: 100%;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.tab-panel.active {
+  display: block;
+}

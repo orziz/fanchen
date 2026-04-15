@@ -2,10 +2,10 @@
   "version": 1,
   "skills": {
     "odai": {
-      "source": "orziz/AISKills",
+      "source": "orziz/AISkills",
       "ref": "odai",
       "sourceType": "github",
-      "computedHash": "7540a006ff741533fb6fe5e4ff4c03e33f97dc3ef102e2db1536e5cd2186ed3e"
+      "computedHash": "d93f3d50f1420e03daef658bc3c4ea1f384eab7439ce558ee607111a57fdb4cf"
     }
   }
 }

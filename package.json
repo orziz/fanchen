@@ -1,0 +1,23 @@
+{
+  "name": "fanchen-lidaolu",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "dev:release": "vite build --watch",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pinia": "^3.0.4",
+    "pixi.js": "^8.18.1",
+    "vue": "3.5.32"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.6",
+    "@vue/compiler-sfc": "3.5.32",
+    "typescript": "5.9.3",
+    "vite": "8.0.8"
+  }
+}

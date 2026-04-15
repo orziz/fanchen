@@ -1,0 +1,52 @@
+export interface ItemData {
+  id: string
+  name: string
+  type: string
+  rarity: string
+  tier: number
+  minRankIndex: number
+  baseValue: number
+  desc: string
+  effect: Record<string, number>
+}
+
+export const ITEMS: ItemData[] = [
+  { id: 'mist-herb', name: '雾心草', type: 'herb', rarity: 'common', tier: 0, minRankIndex: 0, baseValue: 16, desc: '路边就能采到的草药，晒干后能卖几个铜灵。', effect: { qi: 4 } },
+  { id: 'spirit-grain', name: '粗灵米', type: 'grain', rarity: 'common', tier: 0, minRankIndex: 0, baseValue: 10, desc: '最常见的口粮，凡人和低阶修士都吃得起。', effect: { stamina: 8 } },
+  { id: 'timber', name: '杂木料', type: 'wood', rarity: 'common', tier: 0, minRankIndex: 0, baseValue: 12, desc: '修棚、做农具和制粗器最常用的木料。', effect: {} },
+  { id: 'scrap-iron', name: '废铁料', type: 'ore', rarity: 'common', tier: 0, minRankIndex: 0, baseValue: 18, desc: '回炉后可再利用，是低阶工坊的起家材料。', effect: {} },
+  { id: 'cloth-roll', name: '粗布卷', type: 'cloth', rarity: 'common', tier: 0, minRankIndex: 0, baseValue: 14, desc: '做衣裳、护具和摊布都用得上。', effect: {} },
+  { id: 'seed-grain', name: '谷种包', type: 'seed', rarity: 'common', tier: 0, minRankIndex: 0, baseValue: 6, desc: '适合在自家小田里种一季粗灵米。', effect: {} },
+  { id: 'seed-herb', name: '药种包', type: 'seed', rarity: 'common', tier: 0, minRankIndex: 0, baseValue: 12, desc: '培育低阶药草的种子，见效慢但稳定。', effect: {} },
+  { id: 'wood-spear', name: '木柄短枪', type: 'weapon', rarity: 'common', tier: 0, minRankIndex: 0, baseValue: 52, desc: '木匠和小作坊都做得出来的防身兵器。', effect: { power: 1.4 } },
+  { id: 'hide-jerkin', name: '皮护短褂', type: 'armor', rarity: 'common', tier: 0, minRankIndex: 0, baseValue: 56, desc: '猎户常穿的护身衣物，比空手上山强得多。', effect: { hp: 10, stamina: 4 } },
+  { id: 'iron-sand', name: '精铁砂', type: 'ore', rarity: 'uncommon', tier: 1, minRankIndex: 1, baseValue: 48, desc: '学徒铁匠最想要的材料，可以打出正经兵器。', effect: {} },
+  { id: 'beast-hide', name: '兽皮', type: 'leather', rarity: 'uncommon', tier: 1, minRankIndex: 0, baseValue: 46, desc: '从低阶野兽身上剥下，可做皮具和甲片。', effect: {} },
+  { id: 'herb-paste', name: '草膏', type: 'pill', rarity: 'uncommon', tier: 1, minRankIndex: 0, baseValue: 60, desc: '乡医就能调制的外敷药，能缓缓回气回血。', effect: { hp: 10, qi: 4 } },
+  { id: 'apprentice-manual', name: '养气入门诀', type: 'manual', rarity: 'uncommon', tier: 1, minRankIndex: 1, baseValue: 120, desc: '最基础的修行功课，多见于外门与学徒传承。', effect: { cultivation: 0.04, insight: 1 } },
+  { id: 'farm-deed', name: '薄田地契', type: 'deed', rarity: 'uncommon', tier: 1, minRankIndex: 0, baseValue: 260, desc: '购得之后可以把一小块田挂到自己名下。', effect: { assetFarm: 1 } },
+  { id: 'workshop-permit', name: '工坊牌照', type: 'permit', rarity: 'uncommon', tier: 1, minRankIndex: 1, baseValue: 340, desc: '拿着它才有资格在城镇里经营自己的小作坊。', effect: { assetWorkshop: 1 } },
+  { id: 'shop-deed', name: '铺面契书', type: 'deed', rarity: 'rare', tier: 2, minRankIndex: 1, baseValue: 620, desc: '一份正经铺契，可以把门面或货摊记到自己名下。', effect: { assetShop: 1 } },
+  { id: 'iron-sword', name: '精铁剑', type: 'weapon', rarity: 'uncommon', tier: 1, minRankIndex: 1, baseValue: 160, desc: '出自正经铁匠手里的精铁兵器，已经能上台面。', effect: { power: 3.2 } },
+  { id: 'guard-armor', name: '护院铁甲', type: 'armor', rarity: 'uncommon', tier: 1, minRankIndex: 1, baseValue: 180, desc: '镶铁的护甲，适合长期看店、押货和行路。', effect: { hp: 18 } },
+  { id: 'jade-spring', name: '灵泉丸', type: 'pill', rarity: 'rare', tier: 2, minRankIndex: 2, baseValue: 540, desc: '宗门药房才会稳定出售的回气药。', effect: { hp: 12, qi: 14 } },
+  { id: 'tide-amber', name: '潮纹琥珀', type: 'relic', rarity: 'rare', tier: 2, minRankIndex: 2, baseValue: 680, desc: '港口商会常把它当压箱底的好货。', effect: { reputation: 1 } },
+  { id: 'cold-crystal', name: '寒晶', type: 'ice', rarity: 'rare', tier: 3, minRankIndex: 2, baseValue: 720, desc: '能稳固心神的稀罕材料，低境修士不可多得。', effect: { breakthrough: 8 } },
+  { id: 'manual-breath', name: '归息法', type: 'manual', rarity: 'rare', tier: 2, minRankIndex: 2, baseValue: 980, desc: '正规门派才会拿来培养内门弟子的法门。', effect: { cultivation: 0.08, insight: 3 } },
+  { id: 'wind-sword', name: '流风剑', type: 'weapon', rarity: 'rare', tier: 3, minRankIndex: 3, baseValue: 1500, desc: '轻灵剑器，已有真正修士兵刃的样子。', effect: { power: 6 } },
+  { id: 'stone-armor', name: '镇岳甲', type: 'armor', rarity: 'rare', tier: 3, minRankIndex: 3, baseValue: 1360, desc: '厚重如山的护甲，普通凡人根本用不起。', effect: { hp: 34 } },
+  { id: 'compass-realm', name: '秘境罗盘', type: 'tool', rarity: 'rare', tier: 3, minRankIndex: 3, baseValue: 1800, desc: '唯有中阶修士才有资格拿它追踪秘境门户。', effect: { realmSense: 1 } },
+  { id: 'flame-sand', name: '赤焰砂', type: 'fire', rarity: 'epic', tier: 4, minRankIndex: 4, baseValue: 2400, desc: '高阶淬器材料，普通市井根本见不到。', effect: { power: 1.8 } },
+  { id: 'star-scroll', name: '陨星残卷', type: 'scroll', rarity: 'epic', tier: 4, minRankIndex: 4, baseValue: 3200, desc: '只有秘境和大宗拍卖才会流出的残卷。', effect: { insight: 4, breakthrough: 12 } },
+  { id: 'manual-sect', name: '授业总谱', type: 'manual', rarity: 'epic', tier: 4, minRankIndex: 4, baseValue: 3800, desc: '可大幅提升宗门传功效率，不可能在凡俗市面出现。', effect: { sectTeaching: 0.18, charisma: 1 } },
+  { id: 'bond-token', name: '同心玉佩', type: 'token', rarity: 'epic', tier: 4, minRankIndex: 4, baseValue: 2600, desc: '多在宗门高层或世家联姻时流转。', effect: { romance: 5, charisma: 1 } },
+  { id: 'sect-banner', name: '立宗旗幡', type: 'sect', rarity: 'rare', tier: 3, minRankIndex: 4, baseValue: 2200, desc: '想开宗立派，至少得先有资格和名器。', effect: { sectPrestige: 6 } },
+  { id: 'manual-sun', name: '赤阳心法', type: 'manual', rarity: 'legendary', tier: 6, minRankIndex: 5, baseValue: 18000, desc: '真正的天品传承，只会出现在顶级秘境或宗门重库。', effect: { cultivation: 0.12, insight: 6 } },
+  { id: 'manual-moon', name: '太阴御神诀', type: 'manual', rarity: 'legendary', tier: 6, minRankIndex: 5, baseValue: 19000, desc: '极罕的心法，不可能让凡人随便摸到。', effect: { breakthroughRate: 0.08, charisma: 4 } },
+]
+
+export const ITEM_MAP = new Map(ITEMS.map((item) => [item.id, item]))
+
+export function getItem(itemId: string): ItemData | undefined {
+  return ITEM_MAP.get(itemId)
+}
