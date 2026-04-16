@@ -1,36 +1,32 @@
 <template>
   <div class="profile-sheet">
-    <section class="item-card profile-card profile-card-hero">
-      <div class="item-top profile-hero-top">
-        <div>
-          <p class="section-kicker">人物概览</p>
-          <h3 class="item-title">{{ player.name }}</h3>
-          <p class="item-meta">{{ player.title }} · {{ rankData.name }} · {{ currentLocation.name }}</p>
-        </div>
-        <span class="rarity uncommon">声望 {{ formatNumber(player.reputation) }}</span>
-      </div>
-      <div class="profile-chip-row">
-        <span class="trait-chip">战力 {{ round(playerPower) }}</span>
-        <span class="trait-chip">悟性 {{ round(playerInsight) }}</span>
-        <span class="trait-chip">魅力 {{ round(playerCharisma) }}</span>
-        <span class="trait-chip">灵石 {{ formatNumber(player.money) }}</span>
-      </div>
+    <UiPanelCard as="section" tone="item" class-name="profile-card profile-card-hero">
+      <UiCardHeader kicker="人物概览" :title="player.name" title-class="item-title" head-class="profile-hero-top">
+        <template #aside>
+          <UiPill variant="rarity" tone="uncommon">声望 {{ formatNumber(player.reputation) }}</UiPill>
+        </template>
+      </UiCardHeader>
+      <p class="item-meta">{{ player.title }} · {{ rankData.name }} · {{ currentLocation.name }}</p>
+      <UiPillRow class-name="profile-chip-row">
+        <UiPill variant="trait">战力 {{ round(playerPower) }}</UiPill>
+        <UiPill variant="trait">悟性 {{ round(playerInsight) }}</UiPill>
+        <UiPill variant="trait">魅力 {{ round(playerCharisma) }}</UiPill>
+        <UiPill variant="trait">灵石 {{ formatNumber(player.money) }}</UiPill>
+      </UiPillRow>
       <div class="profile-fact-grid">
         <div class="profile-fact"><span>当前归属</span><strong>{{ affiliationLabel }}</strong></div>
         <div class="profile-fact"><span>当前营生</span><strong>农 {{ round(player.skills.farming) }} / 工 {{ round(player.skills.crafting) }} / 商 {{ round(player.skills.trading) }}</strong></div>
         <div class="profile-fact"><span>当前所在地</span><strong>{{ currentLocation.name }}</strong></div>
         <div class="profile-fact"><span>师承谱系</span><strong>{{ lineageText }}</strong></div>
       </div>
-    </section>
+    </UiPanelCard>
 
-    <section class="item-card profile-card">
-      <div class="item-top">
-        <div>
-          <p class="section-kicker">关系脉络</p>
-          <h3 class="item-title">门路与传承</h3>
-        </div>
-        <span class="rarity rare">关系 {{ relationCount }}</span>
-      </div>
+    <UiPanelCard as="section" tone="item" class-name="profile-card">
+      <UiCardHeader kicker="关系脉络" title="门路与传承" title-class="item-title">
+        <template #aside>
+          <UiPill variant="rarity" tone="rare">关系 {{ relationCount }}</UiPill>
+        </template>
+      </UiCardHeader>
       <div class="profile-fact-grid">
         <div class="profile-fact"><span>恩师</span><strong>{{ master ? master.name : '尚未拜得师门' }}</strong></div>
         <div class="profile-fact"><span>道侣</span><strong>{{ partner ? partner.name : '暂无道侣' }}</strong></div>
@@ -38,24 +34,11 @@
         <div class="profile-fact"><span>名下产业</span><strong>{{ assetCount }}</strong></div>
       </div>
       <p class="item-meta profile-note">{{ discipleText }}</p>
-    </section>
+    </UiPanelCard>
 
     <section class="profile-records">
       <h3 class="subsection-title profile-records-title">个人记录</h3>
-      <div class="summary-grid profile-summary-grid">
-        <div class="summary-box"><span>击退强敌</span><strong>{{ formatNumber(player.stats.enemiesDefeated) }}</strong></div>
-        <div class="summary-box"><span>斩落首领</span><strong>{{ formatNumber(player.stats.bossKills) }}</strong></div>
-        <div class="summary-box"><span>成交买卖</span><strong>{{ formatNumber(player.stats.tradesCompleted) }}</strong></div>
-        <div class="summary-box"><span>跑商趟数</span><strong>{{ formatNumber(player.stats.tradeRoutesCompleted) }}</strong></div>
-        <div class="summary-box"><span>完成机缘</span><strong>{{ formatNumber(player.stats.questsFinished) }}</strong></div>
-        <div class="summary-box"><span>拍得奇珍</span><strong>{{ formatNumber(player.stats.auctionsWon) }}</strong></div>
-        <div class="summary-box"><span>传功次数</span><strong>{{ formatNumber(player.stats.disciplesTaught) }}</strong></div>
-        <div class="summary-box"><span>名下产业</span><strong>{{ assetCount }}</strong></div>
-        <div class="summary-box"><span>收成总量</span><strong>{{ formatNumber(player.stats.cropsHarvested) }}</strong></div>
-        <div class="summary-box"><span>打造物件</span><strong>{{ formatNumber(player.stats.craftedItems) }}</strong></div>
-        <div class="summary-box"><span>铺面收账</span><strong>{{ formatNumber(player.stats.shopCollections) }}</strong></div>
-        <div class="summary-box"><span>当前灵石</span><strong>{{ formatNumber(player.money) }}</strong></div>
-      </div>
+      <UiMetricGrid :items="profileRecordItems" class-name="profile-summary-grid" />
     </section>
   </div>
 </template>
@@ -65,6 +48,11 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { formatNumber, round } from '@/utils'
+import UiCardHeader from '@/components/ui/UiCardHeader.vue'
+import UiMetricGrid from '@/components/ui/UiMetricGrid.vue'
+import UiPanelCard from '@/components/ui/UiPanelCard.vue'
+import UiPill from '@/components/ui/UiPill.vue'
+import UiPillRow from '@/components/ui/UiPillRow.vue'
 
 const store = useGameStore()
 const { player, currentLocation, rankData, currentAffiliation, playerPower, playerInsight, playerCharisma, sect } = storeToRefs(store)
@@ -99,4 +87,19 @@ const discipleText = computed(() =>
 const assetCount = computed(() =>
   player.value.assets.farms.length + player.value.assets.workshops.length + player.value.assets.shops.length
 )
+
+const profileRecordItems = computed(() => [
+  { label: '击退强敌', value: formatNumber(player.value.stats.enemiesDefeated) },
+  { label: '斩落首领', value: formatNumber(player.value.stats.bossKills) },
+  { label: '成交买卖', value: formatNumber(player.value.stats.tradesCompleted) },
+  { label: '跑商趟数', value: formatNumber(player.value.stats.tradeRoutesCompleted) },
+  { label: '完成机缘', value: formatNumber(player.value.stats.questsFinished) },
+  { label: '拍得奇珍', value: formatNumber(player.value.stats.auctionsWon) },
+  { label: '传功次数', value: formatNumber(player.value.stats.disciplesTaught) },
+  { label: '名下产业', value: assetCount.value },
+  { label: '收成总量', value: formatNumber(player.value.stats.cropsHarvested) },
+  { label: '打造物件', value: formatNumber(player.value.stats.craftedItems) },
+  { label: '铺面收账', value: formatNumber(player.value.stats.shopCollections) },
+  { label: '当前灵石', value: formatNumber(player.value.money) },
+])
 </script>

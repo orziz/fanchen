@@ -299,6 +299,11 @@ body.dragging-window * {
   gap: 8px;
 }
 
+.ui-pill-row,
+.ui-action-group {
+  min-width: 0;
+}
+
 .standout {
   border-color: rgba(179, 133, 43, 0.2);
   background:

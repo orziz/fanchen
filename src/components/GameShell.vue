@@ -27,6 +27,8 @@
       <!-- 底部导航 Dock -->
       <GameDock />
 
+      <StoryOverlay />
+
       <!-- 全局提示 -->
       <ToastStack />
     </div>
@@ -40,6 +42,7 @@ import GameWorkbench from './GameWorkbench.vue'
 import GameDock from './GameDock.vue'
 import PinRail from './PinRail.vue'
 import PlayerPanel from './PlayerPanel.vue'
+import StoryOverlay from './StoryOverlay.vue'
 import ToastStack from './ToastStack.vue'
 import InventoryPanel from './panels/InventoryPanel.vue'
 

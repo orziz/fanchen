@@ -54,6 +54,16 @@ export interface PlayerFactionState {
   missions: SectMission[]; missionDay: number; eventCooldown: number
 }
 
+export interface TravelPlanState {
+  route: string[]
+  destinationId: string
+  destinationName: string
+  nextIndex: number
+  startedDay: number
+  pendingAction: string | null
+  pausedReason: string | null
+}
+
 /* ─── Trade Run ─── */
 export interface TradeRun {
   id: string; originId: string; originName: string; destinationId: string; destinationName: string
@@ -79,6 +89,7 @@ export interface PlayerState {
   affiliationTasks: SectMission[]; affiliationTaskDay: number
   sect: SectState | null; playerFaction: PlayerFactionState | null
   tradeRun: TradeRun | null; assets: PlayerAssets; skills: PlayerSkills; stats: PlayerStats
+  travelPlan: TravelPlanState | null
 }
 
 /* ─── NPC ─── */
@@ -97,6 +108,7 @@ export interface NpcState {
   age: number; ageProgress: number; lifeStage: string; lifespan: number; alive: boolean
   birthDay: number; sectId: string | null; factionId: string | null; factionRank: number
   relation: RelationState; partnerId: string | null; masterId: string | null; apprenticeIds: string[]
+  travelPlan: TravelPlanState | null
 }
 
 /* ─── Combat ─── */
@@ -142,6 +154,40 @@ export interface AuctionListing {
 
 export interface LogEntry { stamp: string; text: string; type: string }
 
+export interface StoryBindings {
+  npcId: string | null
+  locationId: string | null
+}
+
+export interface StoryProgressEntry {
+  status: 'idle' | 'active' | 'completed'
+  seenNodeIds: string[]
+  triggerCount: number
+  lastNodeId: string | null
+}
+
+export interface StoryHistoryEntry {
+  storyId: string
+  progressKey: string
+  nodeId: string
+  title: string
+  speaker: string
+  text: string
+  day: number
+  hour: number
+}
+
+export interface StoryState {
+  activeStoryId: string | null
+  activeNodeId: string | null
+  activeProgressKey: string | null
+  presentation: 'overlay' | 'rail' | 'embedded' | null
+  bindings: StoryBindings
+  progress: Record<string, StoryProgressEntry>
+  flags: Record<string, boolean>
+  history: StoryHistoryEntry[]
+}
+
 export interface WorldState {
   day: number; hour: number; subStep: number; weather: string; omen: string
   factionFavor: FactionFavor; factions: Record<string, WorldFactionEntry>
@@ -166,6 +212,7 @@ export interface GameState {
   auction: AuctionListing[]
   world: WorldState
   combat: CombatState
+  story: StoryState
   migrationFlags: MigrationFlags
   log: LogEntry[]
   lastSavedAt: number | null

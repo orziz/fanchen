@@ -1,33 +1,31 @@
 <template>
   <section class="card panel-card dock-card">
     <div class="dock-layout">
-      <div class="section-head compact">
-        <div>
-          <p class="section-kicker">即时</p>
-          <h2>手动操作</h2>
-        </div>
-        <span class="tag">不改自动循环</span>
-      </div>
+      <UiCardHeader kicker="即时" title="手动操作" title-tag="h2" head-class="section-head compact">
+        <template #aside>
+          <UiPill variant="tag">不改自动循环</UiPill>
+        </template>
+      </UiCardHeader>
 
-      <div class="quick-actions command-action-grid">
-        <button
+      <UiActionGroup variant="quick" class-name="command-action-grid">
+        <UiActionCardButton
           v-for="action in manualActions"
           :key="action.key"
-          class="mini-button action-button-card command-action-card"
+          button-class="command-action-card"
+          theme-class="command-action-theme"
+          :theme="action.theme"
+          :title="action.label"
+          :description="action.desc"
           @click="runQuickAction(action.key)"
-        >
-          <span class="command-action-theme">{{ action.theme }}</span>
-          <strong>{{ action.label }}</strong>
-          <span>{{ action.desc }}</span>
-        </button>
-      </div>
+        />
+      </UiActionGroup>
 
       <div class="dock-callout">
         <p class="section-kicker">操作说明</p>
         <p class="item-meta">这些动作都只执行一次，不会改掉长期挂机策略。想换长期节奏，去右侧打开策略盘。</p>
-        <div class="item-actions">
+        <UiActionGroup>
           <button class="item-button" @click="openWindow('command')">打开策略盘</button>
-        </div>
+        </UiActionGroup>
       </div>
     </div>
   </section>
@@ -40,6 +38,10 @@ import { useGameStore } from '@/stores/game'
 import { useWindows } from '@/composables/useWindows'
 import { setMode, attemptBreakthrough } from '@/systems/player'
 import { performAction } from '@/systems/world'
+import UiActionCardButton from '@/components/ui/UiActionCardButton.vue'
+import UiActionGroup from '@/components/ui/UiActionGroup.vue'
+import UiCardHeader from '@/components/ui/UiCardHeader.vue'
+import UiPill from '@/components/ui/UiPill.vue'
 
 const store = useGameStore()
 const { player, currentAffiliation, sect } = storeToRefs(store)

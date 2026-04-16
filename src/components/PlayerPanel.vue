@@ -9,24 +9,15 @@
             {{ player.title }}，现居{{ currentLocation.name }}{{ sect ? `，掌${sect.name}` : currentAffiliation ? `，隶属${currentAffiliation.name}` : '，尚无门路' }}
           </p>
         </div>
-        <div class="inline-list">
-          <span class="tag">境界 {{ rankData.name }}</span>
-          <span class="tag">灵石 {{ formatNumber(player.money) }}</span>
-          <span class="tag">悟性 {{ round(playerInsight) }}</span>
-          <span class="tag">战力 {{ round(playerPower) }}</span>
-        </div>
+        <UiPillRow>
+          <UiPill variant="tag">境界 {{ rankData.name }}</UiPill>
+          <UiPill variant="tag">灵石 {{ formatNumber(player.money) }}</UiPill>
+          <UiPill variant="tag">悟性 {{ round(playerInsight) }}</UiPill>
+          <UiPill variant="tag">战力 {{ round(playerPower) }}</UiPill>
+        </UiPillRow>
       </div>
 
-      <div class="badge-row">
-        <div class="status-badge">
-          <span class="micro-label">当前地点灵气</span>
-          <strong>{{ currentLocation.aura }}</strong>
-        </div>
-        <div class="status-badge">
-          <span class="micro-label">世界异象</span>
-          <strong>{{ world.omen }}</strong>
-        </div>
-      </div>
+      <UiMetricGrid variant="badge" :items="badgeItems" />
 
       <div class="meter-stack">
         <MeterBar label="气血" :value="player.hp" :max="player.maxHp" class-name="hp" />
@@ -36,25 +27,39 @@
         <MeterBar label="修为积累" :value="player.cultivation" :max="nextBreakthroughNeed" />
       </div>
 
-      <div class="stat-grid">
-        <div class="stat-box"><span>魅力</span><strong>{{ round(playerCharisma) }}</strong></div>
-        <div class="stat-box"><span>突破率</span><strong>{{ Math.round((player.breakthroughRate || 0.55) * 100) }}%</strong></div>
-        <div class="stat-box"><span>修炼加成</span><strong>{{ Math.round((1 + (player.cultivationBonus || 0)) * 100) }}%</strong></div>
-        <div class="stat-box"><span>江湖归属</span><strong>{{ sect ? sect.name : currentAffiliation ? currentAffiliation.titles[player.affiliationRank] : '白身' }}</strong></div>
-      </div>
+      <UiMetricGrid variant="stat" :items="statItems" />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { formatNumber, round } from '@/utils'
 import MeterBar from './MeterBar.vue'
+import UiMetricGrid from '@/components/ui/UiMetricGrid.vue'
+import UiPill from '@/components/ui/UiPill.vue'
+import UiPillRow from '@/components/ui/UiPillRow.vue'
 
 const store = useGameStore()
 const {
   player, world, currentLocation, rankData, nextBreakthroughNeed,
   playerPower, playerInsight, playerCharisma, currentAffiliation, sect,
 } = storeToRefs(store)
+
+const badgeItems = computed(() => [
+  { label: '当前地点灵气', value: currentLocation.value.aura },
+  { label: '世界异象', value: world.value.omen },
+])
+
+const statItems = computed(() => [
+  { label: '魅力', value: round(playerCharisma.value) },
+  { label: '突破率', value: `${Math.round((player.value.breakthroughRate || 0.55) * 100)}%` },
+  { label: '修炼加成', value: `${Math.round((1 + (player.value.cultivationBonus || 0)) * 100)}%` },
+  {
+    label: '江湖归属',
+    value: sect.value ? sect.value.name : currentAffiliation.value ? currentAffiliation.value.titles[player.value.affiliationRank] : '白身',
+  },
+])
 </script>

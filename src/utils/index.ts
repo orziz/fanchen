@@ -73,7 +73,11 @@ export function buildMapTexture(): MapTexture {
 
 import { LOCATION_MAP } from '@/config'
 
-export function findRoute(startId: string, endId: string): string[] | null {
+export interface FindRouteOptions {
+  canTraverse?: (fromId: string, toId: string, nextPath: string[]) => boolean
+}
+
+export function findRoute(startId: string, endId: string, options: FindRouteOptions = {}): string[] | null {
   if (startId === endId) return [startId]
   const queue: string[][] = [[startId]]
   const visited = new Set([startId])
@@ -85,6 +89,7 @@ export function findRoute(startId: string, endId: string): string[] | null {
     for (const neighborId of location.neighbors) {
       if (visited.has(neighborId)) continue
       const nextPath = [...path, neighborId]
+      if (options.canTraverse && !options.canTraverse(last, neighborId, nextPath)) continue
       if (neighborId === endId) return nextPath
       visited.add(neighborId)
       queue.push(nextPath)

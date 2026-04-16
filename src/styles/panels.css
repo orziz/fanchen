@@ -16,22 +16,27 @@
 
 .badge-row,
 .stat-grid,
-.summary-grid {
+.summary-grid,
+.ui-metric-grid {
   display: grid;
   gap: 12px;
 }
 
-.badge-row {
+.badge-row,
+.ui-metric-grid--badge {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .stat-grid,
-.summary-grid {
+.summary-grid,
+.ui-metric-grid--stat,
+.ui-metric-grid--summary {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .stat-box,
 .summary-box,
+.ui-metric-grid__item,
 .location-card,
 .item-card,
 .market-card,
@@ -63,7 +68,8 @@
 .item-card,
 .market-card,
 .auction-card,
-.npc-card {
+.npc-card,
+.ui-metric-grid__item {
   padding: 16px;
 }
 
@@ -74,6 +80,7 @@
 .market-card,
 .auction-card,
 .npc-card {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -83,7 +90,8 @@
 .stat-box span,
 .summary-box span,
 .world-card span,
-.micro-label {
+.micro-label,
+.ui-metric-grid__label {
   display: block;
   font-size: 13px;
   color: var(--text-faint);
@@ -92,9 +100,25 @@
 
 .stat-box strong,
 .summary-box strong,
-.world-card strong {
+.world-card strong,
+.ui-metric-grid__value {
   font-size: 20px;
   color: var(--gold-bright);
+}
+
+.ui-metric-grid__item {
+  min-width: 0;
+}
+
+.ui-metric-grid--badge .ui-metric-grid__item {
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--card-soft);
+}
+
+.ui-metric-grid--badge .ui-metric-grid__value {
+  font-size: 18px;
+  color: var(--text-main);
 }
 
 .status-badge {
@@ -241,26 +265,92 @@
 .location-top,
 .item-top,
 .market-top,
-.location-top,
-.item-top,
-.market-top,
 .auction-top,
 .npc-top,
-.combat-top {
+.combat-top,
+.world-card-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 14px;
+  flex-wrap: wrap;
 }
 
-.location-top > div,
-.item-top > div,
-.market-top > div,
-.auction-top > div,
-.npc-top > div,
-.combat-top > div {
+.ui-card-head {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ui-card-head__body {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.ui-card-head__body--stacked {
+  flex-direction: column;
+  gap: 8px;
+}
+
+.location-top > div:first-child,
+.item-top > div:first-child,
+.market-top > div:first-child,
+.auction-top > div:first-child,
+.npc-top > div:first-child,
+.combat-top > div:first-child,
+.world-card-head > div:first-child,
+.ui-card-head__main {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.ui-card-head__kicker {
+  min-width: 0;
+}
+
+.location-top > div:first-child > .section-kicker,
+.item-top > div:first-child > .section-kicker,
+.market-top > div:first-child > .section-kicker,
+.auction-top > div:first-child > .section-kicker,
+.npc-top > div:first-child > .section-kicker,
+.combat-top > div:first-child > .section-kicker,
+.world-card-head > div:first-child > .section-kicker,
+.ui-card-head__kicker {
+  margin-bottom: 0;
+}
+
+.location-top > :not(div:first-child),
+.item-top > :not(div:first-child),
+.market-top > :not(div:first-child),
+.auction-top > :not(div:first-child),
+.npc-top > :not(div:first-child),
+.combat-top > :not(div:first-child),
+.world-card-head > :not(div:first-child),
+.ui-card-head__aside {
+  flex: 0 1 auto;
+  margin-left: auto;
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.ui-card-head__title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--text-main);
+}
+
+.ui-card-head__body--stacked .ui-card-head__aside {
+  margin-left: 0;
+  width: 100%;
+}
+
+.ui-card-head__body--stacked .world-card-status,
+.ui-card-head__body--stacked .sect-faction-status {
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
 .location-title,
@@ -336,13 +426,6 @@
   font-size: 22px;
 }
 
-.world-card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 14px;
-}
-
 .world-card-title {
   margin: 0;
   font-size: 22px;
@@ -403,7 +486,6 @@
 }
 
 .sect-faction-status {
-  margin-left: auto;
   justify-content: flex-end;
   max-width: 100%;
 }
@@ -413,6 +495,32 @@
   white-space: normal;
   line-height: 1.4;
   flex-shrink: 1;
+}
+
+@container (max-width: 340px) {
+  .location-top,
+  .item-top,
+  .market-top,
+  .auction-top,
+  .npc-top,
+  .combat-top,
+  .world-card-head {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .location-top > :not(div:first-child),
+  .item-top > :not(div:first-child),
+  .market-top > :not(div:first-child),
+  .auction-top > :not(div:first-child),
+  .npc-top > :not(div:first-child),
+  .combat-top > :not(div:first-child),
+  .world-card-head > :not(div:first-child),
+  .ui-card-head__aside {
+    flex: 0 1 auto;
+    margin-left: 0;
+  }
 }
 
 .sect-faction-card .cooldown-chip,

@@ -126,9 +126,9 @@ export function consumeItem(itemId: string) {
     if (item.effect.stamina) ctx.adjustResource('stamina', item.effect.stamina, 'maxStamina')
     if (item.effect.reputation) p.reputation += item.effect.reputation
     if (item.effect.breakthrough) p.breakthrough += item.effect.breakthrough
-    if (item.effect.power) p.power += item.effect.power * 0.12
-    if (item.effect.insight) p.insight += item.effect.insight * 0.1
-    if (item.effect.charisma) p.charisma += item.effect.charisma * 0.1
+    if (item.effect.power) p.power += item.effect.power
+    if (item.effect.insight) p.insight += item.effect.insight
+    if (item.effect.charisma) p.charisma += item.effect.charisma
     ctx.appendLog(`你使用了${item.name}。`, 'info')
   }
   ctx.updateDerivedStats()

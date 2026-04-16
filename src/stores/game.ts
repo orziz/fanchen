@@ -5,6 +5,7 @@ import type {
   InventoryEntry, RelationState, LogEntry, MarketListing, AuctionListing,
   AssetState, EnemyState, PlayerEffects, CombatHistoryEntry, CombatLastResult,
   SectState, PlayerFactionState, TradeRun, TerritoryEntry, IndustryOrder,
+  StoryState, StoryHistoryEntry, StoryProgressEntry,
 } from '@/types/game'
 import {
   RANKS, ITEMS, LOCATIONS, LOCATION_MAP, FACTIONS, FACTION_MAP,
@@ -92,6 +93,7 @@ function createInitialPlayer(): PlayerState {
     masterId: null, partnerId: null, rivalIds: [],
     affiliationTasks: [], affiliationTaskDay: 0,
     sect: null, playerFaction: null, tradeRun: null,
+    travelPlan: null,
     assets: { farms: [], workshops: [], shops: [] },
     skills: { farming: 0, crafting: 0, trading: 0 },
     stats: {
@@ -169,6 +171,7 @@ function createNPC(index: number): NpcState {
     sectId: factionId && FACTIONS.find(f => f.id === factionId)?.type === 'sect' ? factionId : null,
     factionId, factionRank: factionId ? randomInt(0, 1) : 0,
     relation: createRelationState(), partnerId: null, masterId: null, apprenticeIds: [],
+    travelPlan: null,
   }
 }
 
@@ -242,6 +245,19 @@ function createInitialCombat(): CombatState {
   }
 }
 
+function createInitialStory(): StoryState {
+  return {
+    activeStoryId: null,
+    activeNodeId: null,
+    activeProgressKey: null,
+    presentation: null,
+    bindings: { npcId: null, locationId: null },
+    progress: {},
+    flags: {},
+    history: [],
+  }
+}
+
 function createGameState(): GameState {
   return {
     player: createInitialPlayer(),
@@ -250,6 +266,7 @@ function createGameState(): GameState {
     auction: createAuctionListings(randomInt(4, 6)),
     world: createInitialWorld(),
     combat: createInitialCombat(),
+    story: createInitialStory(),
     migrationFlags: { deedRefundPatchApplied: false },
     log: [], lastSavedAt: null,
   }
@@ -264,6 +281,13 @@ function hydrateGameState(raw: Partial<GameState> = {}): GameState {
   const rawPF = raw.player?.playerFaction
   const defaultSect = rawSect ? createInitialSect(rawSect.name || '') : null
   const defaultPF = rawPF ? createInitialPlayerFaction(rawPF.name || '') : null
+  const rawStoryProgress = raw.story?.progress || {}
+  const storyProgressDefaults: StoryProgressEntry = {
+    status: 'idle',
+    seenNodeIds: [],
+    triggerCount: 0,
+    lastNodeId: null,
+  }
 
   const game: GameState = {
     ...fresh, ...raw,
@@ -279,6 +303,7 @@ function hydrateGameState(raw: Partial<GameState> = {}): GameState {
       affiliationTasks: Array.isArray(raw.player?.affiliationTasks) ? raw.player!.affiliationTasks : [],
       affiliationTaskDay: raw.player?.affiliationTaskDay || 0,
       tradeRun: raw.player?.tradeRun || null,
+      travelPlan: raw.player?.travelPlan || null,
       sect: rawSect ? { ...defaultSect!, ...rawSect, buildings: { ...defaultSect!.buildings, ...(rawSect.buildings || {}) } } : null,
       playerFaction: rawPF ? {
         ...defaultPF!, ...rawPF,
@@ -294,6 +319,31 @@ function hydrateGameState(raw: Partial<GameState> = {}): GameState {
       realm: { ...fresh.world.realm, ...(raw.world?.realm || {}) },
     },
     combat: { ...fresh.combat, ...(raw.combat || {}) },
+    story: {
+      ...fresh.story, ...(raw.story || {}),
+      bindings: { ...fresh.story.bindings, ...(raw.story?.bindings || {}) },
+      progress: Object.fromEntries(
+        Object.entries(rawStoryProgress).map(([key, value]) => {
+          const entry = value as Partial<StoryProgressEntry> | undefined
+          return [key, {
+            ...storyProgressDefaults,
+            ...(entry || {}),
+            seenNodeIds: ensureArray<string>(entry?.seenNodeIds),
+          }]
+        }),
+      ),
+      flags: { ...fresh.story.flags, ...(raw.story?.flags || {}) },
+      history: ensureArray<StoryHistoryEntry>(raw.story?.history).slice(0, 24).map(entry => ({
+        storyId: entry.storyId || '',
+        progressKey: entry.progressKey || entry.storyId || '',
+        nodeId: entry.nodeId || '',
+        title: entry.title || '未命名剧情',
+        speaker: entry.speaker || '',
+        text: entry.text || '',
+        day: Number(entry.day) || 0,
+        hour: Number(entry.hour) || 0,
+      })),
+    },
     market: raw.market || fresh.market,
     auction: raw.auction || fresh.auction,
     migrationFlags: { ...fresh.migrationFlags, ...(raw.migrationFlags || {}) },
@@ -302,6 +352,7 @@ function hydrateGameState(raw: Partial<GameState> = {}): GameState {
           ...createNPC(i + 80), ...npc,
           lifeEvents: ensureArray<string>(npc.lifeEvents).length ? npc.lifeEvents : [npc.lastEvent || '初入江湖'],
           relation: { ...createRelationState(), ...(npc.relation || {}) },
+          travelPlan: npc.travelPlan || null,
         }))
       : fresh.npcs,
     log: ensureArray<LogEntry>(raw.log).slice(0, MAX_LOG),
@@ -344,6 +395,7 @@ export const useGameStore = defineStore('game', () => {
   const market = computed(() => game.value.market)
   const auction = computed(() => game.value.auction)
   const log = computed(() => game.value.log)
+  const story = computed(() => game.value.story)
 
   const currentLocation = computed(() => LOCATION_MAP.get(player.value.locationId)!)
   const selectedLocation = computed(() => LOCATION_MAP.get(selectedLocationId.value) || currentLocation.value)
@@ -621,7 +673,7 @@ export const useGameStore = defineStore('game', () => {
     // event bus
     bus,
     // reactive getters (Vue components)
-    player, npcs, combat, world, market, auction, log,
+    player, npcs, combat, world, market, auction, log, story,
     currentLocation, selectedLocation, rankData, nextBreakthroughNeed,
     playerPower, playerInsight, playerCharisma,
     currentAffiliation, playerFaction, sect,

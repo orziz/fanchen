@@ -61,7 +61,7 @@ export interface GameContext {
   createMarketListings(location: { id: string; marketTier: number; marketBias: string; tags: string[] }): MarketListing[]
   createAuctionListings(amount: number, playerRankIndex?: number, playerReputation?: number): AuctionListing[]
   createInitialTerritories(): Record<string, TerritoryEntry>
-  findRoute(fromId: string, toId: string): string[]
+  findRoute(fromId: string, toId: string): string[] | null
 
   /* ─── Persistence ─── */
   saveGame(manual?: boolean): void

@@ -1,12 +1,13 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
+import type { PlayerState, TravelPlanState } from '@/types/game'
 import {
   LOCATION_MAP, LOCATIONS, TRAVEL_EVENT_TEMPLATES, ITEMS, TIME_LABELS,
-  ACTION_META, WORLD_EVENT_TEMPLATES,
+  ACTION_META, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
 } from '@/config'
-import { sample, randomInt, fillTemplate } from '@/utils'
+import { sample, randomInt, fillTemplate, findRoute as resolveRoute } from '@/utils'
 import { applyPassiveAction, attemptBreakthrough, revivePlayer } from './player'
-import { autoCombatTick, maybeStartEncounter, startEncounter, startPursuitEncounter } from './combat'
+import { autoCombatTick, maybeStartEncounter, startPursuitEncounter, challengeRealm } from './combat'
 import { advanceTradeRun, resolvePassiveTrade, isTradeHub, maybeStartBestTradeRun } from './trade'
 import { resolveAuctionVisit, resolveAuctionTurn, refreshMarketIfNeeded, maybeActivateRealm } from './auction'
 import { hasActiveFactionPursuit, processRelationshipTick, processSectTick, processPlayerFactionTick, processFactionStatusTick } from './social'
@@ -52,42 +53,299 @@ function maybeTriggerFactionPursuit(source: 'travel' | 'hunt' | 'quest') {
   return false
 }
 
-/* ─── Travel ─── */
+const YANPASS_CURFEW_HOURS = new Set([10, 11, 0, 1])
 
-export function travelTo(locationId: string) {
+interface TravelOptions {
+  advanceNow?: boolean
+  consumeTime?: boolean
+  pendingAction?: string | null
+  silent?: boolean
+}
+
+interface TravelPreview {
+  route: string[] | null
+  segments: number
+  viaIds: string[]
+  blockedReason: string | null
+  nextStopId: string | null
+}
+
+interface TravelAdvanceResult {
+  moved: boolean
+  arrived: boolean
+  waiting: boolean
+  pendingAction: string | null
+}
+
+function canUseYanpassFastTrack(player: PlayerState) {
+  return player.affiliationId === 'yanpass-escort'
+    || (player.factionStanding['yanpass-escort'] || 0) >= 6
+    || Boolean(player.tradeRun)
+    || Boolean(player.playerFaction?.branches.caravan)
+}
+
+function canEnterJadegate(player: PlayerState) {
+  return player.affiliationId === 'jadegate-courtyard'
+    || (player.factionStanding['jadegate-courtyard'] || 0) >= 12
+    || player.rankIndex >= 2
+    || player.reputation >= 16
+    || Boolean(player.sect)
+}
+
+function getPlayerTravelBlockReason(fromId: string, toId: string) {
+  const ctx = getContext()
+  const player = ctx.game.player
+  if (toId === 'yanpass' && YANPASS_CURFEW_HOURS.has(ctx.game.world.hour) && !canUseYanpassFastTrack(player)) {
+    return '雁回关夜里闭阖，没有边关门路或押货照验时会被拦在关外。'
+  }
+  if (toId === 'jadegate' && !canEnterJadegate(player)) {
+    return '玉阙行院只认引荐和名望，当前门路还不够硬。'
+  }
+  if (fromId === 'snowpeak' && toId === 'jadegate' && player.rankIndex < 1) {
+    return '寒魄峰往玉阙的山道灵压太重，至少得有练力底子。'
+  }
+  return null
+}
+
+function resolvePlayerRoute(startId: string, endId: string): TravelPreview {
+  const route = resolveRoute(startId, endId, {
+    canTraverse(fromId, toId) {
+      return !getPlayerTravelBlockReason(fromId, toId)
+    },
+  })
+  if (route) {
+    return {
+      route,
+      segments: Math.max(1, route.length - 1),
+      viaIds: route.slice(1, -1),
+      blockedReason: null,
+      nextStopId: route[1] || null,
+    }
+  }
+
+  const staticRoute = resolveRoute(startId, endId)
+  if (staticRoute) {
+    for (let index = 0; index < staticRoute.length - 1; index += 1) {
+      const reason = getPlayerTravelBlockReason(staticRoute[index], staticRoute[index + 1])
+      if (reason) {
+        return {
+          route: null,
+          segments: Math.max(1, staticRoute.length - 1),
+          viaIds: staticRoute.slice(1, -1),
+          blockedReason: reason,
+          nextStopId: staticRoute[index + 1] || null,
+        }
+      }
+    }
+  }
+
+  return {
+    route: null,
+    segments: 0,
+    viaIds: [],
+    blockedReason: null,
+    nextStopId: null,
+  }
+}
+
+function describeVia(viaIds: string[]) {
+  return viaIds.map(id => LOCATION_MAP.get(id)?.short || id).join('、')
+}
+
+function resolveArrivalAction(token: string) {
+  if (token.startsWith('realm:')) {
+    challengeRealm(token.slice('realm:'.length))
+    return
+  }
+  performAction(token)
+}
+
+function ensurePlayerTravelPlan(locationId: string, pendingAction: string | null = null, silent = false) {
   const ctx = getContext()
   const g = ctx.game
-  if (locationId === g.player.locationId) return
-  const current = ctx.getCurrentLocation()
-  const target = LOCATION_MAP.get(locationId)
-  if (!target) return
-  const path = ctx.findRoute(current.id, locationId)
-  if (!path) { ctx.appendLog(`从${current.name}无法直接前往${target.name}。`, 'warn'); return }
-  const segments = Math.max(1, path.length - 1)
-  const via = path.slice(1, -1).map(id => LOCATION_MAP.get(id)!.short).join('、')
-  g.player.locationId = locationId
-  g.player.action = sample(target.actions)
-  ctx.adjustResource('stamina', -6 * segments, 'maxStamina')
-  ctx.adjustResource('qi', -3 * segments, 'maxQi')
-  ctx.adjustRegionStanding(locationId, 0.3 + segments * 0.1)
-  ctx.selectedLocationId = locationId
-  bus.emit('state:location-changed', { locationId })
-  ctx.appendLog(via ? `你踏上旅途，经由${via}抵达${target.name}。` : `你踏上旅途，很快抵达了${target.name}。`, 'info')
-  for (let i = 0; i < segments; i++) {
-    if (Math.random() < 0.24 + segments * 0.04) triggerTravelEvent(target)
+  if (locationId === g.player.locationId) {
+    if (pendingAction) resolveArrivalAction(pendingAction)
+    return false
   }
+
+  const target = LOCATION_MAP.get(locationId)
+  const current = ctx.getCurrentLocation()
+  if (!target) return false
+
+  if (g.player.travelPlan?.destinationId === locationId) {
+    if (pendingAction) g.player.travelPlan.pendingAction = pendingAction
+    ctx.selectedLocationId = locationId
+    return true
+  }
+
+  const preview = resolvePlayerRoute(current.id, locationId)
+  if (!preview.route) {
+    if (!silent) {
+      const reason = preview.blockedReason || `从${current.name}当前没有门路赶到${target.name}。`
+      ctx.appendLog(reason, 'warn')
+    }
+    return false
+  }
+
+  g.player.travelPlan = {
+    route: preview.route,
+    destinationId: locationId,
+    destinationName: target.name,
+    nextIndex: 1,
+    startedDay: g.world.day,
+    pendingAction,
+    pausedReason: null,
+  }
+  ctx.selectedLocationId = locationId
+  if (!silent) {
+    const via = describeVia(preview.viaIds)
+    ctx.appendLog(via ? `你定下去${target.name}的路，准备经由${via}一路赶过去。` : `你朝${target.name}动身。`, 'info')
+  }
+  return true
+}
+
+function rebasePlayerTravelPlan(plan: TravelPlanState) {
+  return ensurePlayerTravelPlan(plan.destinationId, plan.pendingAction, true)
+}
+
+function advancePlayerTravelStep(): TravelAdvanceResult {
+  const ctx = getContext()
+  const g = ctx.game
+  const plan = g.player.travelPlan
+  if (!plan) {
+    return { moved: false, arrived: false, waiting: false, pendingAction: null }
+  }
+
+  const current = ctx.getCurrentLocation()
+  const expectedCurrentId = plan.route[Math.max(0, plan.nextIndex - 1)]
+  if (expectedCurrentId && expectedCurrentId !== current.id) {
+    const replanned = rebasePlayerTravelPlan(plan)
+    if (!replanned || !g.player.travelPlan) {
+      g.player.travelPlan = null
+      return { moved: false, arrived: false, waiting: false, pendingAction: null }
+    }
+  }
+
+  const activePlan = g.player.travelPlan
+  if (!activePlan) return { moved: false, arrived: false, waiting: false, pendingAction: null }
+  const nextStopId = activePlan.route[activePlan.nextIndex]
+  if (!nextStopId) {
+    const pendingAction = activePlan.pendingAction
+    g.player.travelPlan = null
+    return { moved: false, arrived: true, waiting: false, pendingAction }
+  }
+
+  const nextStop = LOCATION_MAP.get(nextStopId)
+  if (!nextStop) {
+    g.player.travelPlan = null
+    return { moved: false, arrived: false, waiting: false, pendingAction: null }
+  }
+
+  const blockedReason = getPlayerTravelBlockReason(current.id, nextStopId)
+  if (blockedReason) {
+    if (activePlan.pausedReason !== blockedReason) {
+      activePlan.pausedReason = blockedReason
+      ctx.appendLog(`你赶到${current.name}附近后被拦下，往${nextStop.name}的路暂时走不通。${blockedReason}`, 'warn')
+    }
+    g.player.action = 'travel'
+    return { moved: false, arrived: false, waiting: true, pendingAction: null }
+  }
+
+  activePlan.pausedReason = null
+  g.player.locationId = nextStopId
+  g.player.action = 'travel'
+  const travelStaminaCost = ACTION_META.travel?.cost?.stamina ?? 6
+  const travelQiCost = ACTION_META.travel?.cost?.qi ?? 3
+  ctx.adjustResource('stamina', -travelStaminaCost, 'maxStamina')
+  ctx.adjustResource('qi', -travelQiCost, 'maxQi')
+  ctx.adjustRegionStanding(nextStopId, 0.25)
+  bus.emit('state:location-changed', { locationId: nextStopId })
+
+  const eventChance = 0.16 + nextStop.danger * 0.04
+  if (Math.random() < eventChance) triggerTravelEvent(nextStop)
   maybeTriggerFactionPursuit('travel')
+
+  activePlan.nextIndex += 1
+  const arrived = activePlan.nextIndex >= activePlan.route.length
+  if (arrived) {
+    const pendingAction = activePlan.pendingAction
+    g.player.travelPlan = null
+    ctx.selectedLocationId = nextStopId
+    g.player.action = sample(nextStop.actions)
+    ctx.appendLog(`你沿着既定门路赶到${nextStop.name}。`, 'info')
+    return {
+      moved: true,
+      arrived: true,
+      waiting: false,
+      pendingAction: g.combat.currentEnemy ? null : pendingAction,
+    }
+  }
+
+  const remaining = activePlan.route.slice(activePlan.nextIndex).map(id => LOCATION_MAP.get(id)?.short || id).join('、')
+  ctx.appendLog(`你先赶到${nextStop.name}落脚，去${activePlan.destinationName}还得继续经${remaining}。`, 'info')
+  return { moved: true, arrived: false, waiting: false, pendingAction: null }
+}
+
+function consumePlayerTravelStep() {
+  const ctx = getContext()
+  const step = advancePlayerTravelStep()
+  if (!step.moved && !step.waiting && !step.arrived) return false
+  if (step.pendingAction) {
+    resolveArrivalAction(step.pendingAction)
+    return true
+  }
+  tickWorld()
+  return true
+}
+
+/* ─── Travel ─── */
+
+export function getTravelPreview(targetId: string, originId = getContext().game.player.locationId): TravelPreview {
+  if (targetId === originId) {
+    return { route: [originId], segments: 0, viaIds: [], blockedReason: null, nextStopId: null }
+  }
+  return resolvePlayerRoute(originId, targetId)
+}
+
+export function travelTo(locationId: string, options: TravelOptions = {}) {
+  const ctx = getContext()
+  const g = ctx.game
+  const pendingAction = options.pendingAction ?? null
+  if (locationId === g.player.locationId) {
+    if (pendingAction) resolveArrivalAction(pendingAction)
+    return false
+  }
+  const planned = ensurePlayerTravelPlan(locationId, pendingAction, options.silent)
+  if (!planned) return false
+  if (options.advanceNow === false) return true
+
+  const step = advancePlayerTravelStep()
+  if (!step.moved) return step.waiting
+  if (step.pendingAction) {
+    resolveArrivalAction(step.pendingAction)
+    return true
+  }
+  if (options.consumeTime !== false) tickWorld()
+  return true
 }
 
 export function travelAndAct(locationId: string, action: string) {
-  travelTo(locationId)
-  const ctx = getContext()
-  if (ctx.game.player.locationId === locationId && !ctx.game.combat.currentEnemy) performAction(action)
+  return travelTo(locationId, { pendingAction: action })
+}
+
+export function travelAndChallengeRealm(realmId: string) {
+  const realm = REALM_TEMPLATES.find(entry => entry.id === realmId)
+  if (!realm) return false
+  if (getContext().game.player.locationId === realm.locationId) {
+    challengeRealm(realmId)
+    return true
+  }
+  return travelTo(realm.locationId, { pendingAction: `realm:${realmId}` })
 }
 
 export function currentLocationCanReach(targetId: string): boolean {
   const ctx = getContext()
-  return Boolean(ctx.findRoute(ctx.getCurrentLocation().id, targetId))
+  return Boolean(resolvePlayerRoute(ctx.getCurrentLocation().id, targetId).route)
 }
 
 /* ─── Auto Action Choice ─── */
@@ -100,36 +358,52 @@ export function chooseAutoAction(): string | null {
 
   if (mode === 'manual') return null
   if (g.combat.currentEnemy) return g.combat.autoBattle ? 'combat' : null
+  if (g.player.travelPlan) return null
   if (g.player.hp < g.player.maxHp * 0.42 || g.player.qi < g.player.maxQi * 0.32 || g.player.stamina < g.player.maxStamina * 0.18) return 'rest'
   if (g.player.breakthrough >= ctx.getNextBreakthroughNeed() * 0.92 && location.actions.includes('breakthrough')) return 'breakthrough'
 
   if (mode === 'cultivation') {
     if (location.aura < 42 && Math.random() < 0.34) {
       const better = location.neighbors.map(id => LOCATION_MAP.get(id)!).sort((a, b) => b.aura - a.aura)[0]
-      if (better && better.aura > location.aura) travelTo(better.id)
+      if (better && better.aura > location.aura) {
+        travelTo(better.id, { advanceNow: false, consumeTime: false, silent: true })
+        return null
+      }
     }
     return location.actions.includes('meditate') ? 'meditate' : location.actions[0]
   }
   if (mode === 'merchant') {
     if (g.player.tradeRun) {
-      if (location.id !== g.player.tradeRun.destinationId) travelTo(g.player.tradeRun.destinationId)
+      if (location.id !== g.player.tradeRun.destinationId) {
+        travelTo(g.player.tradeRun.destinationId, { advanceNow: false, consumeTime: false, silent: true })
+        return null
+      }
       return 'trade'
     }
     if (!isTradeHub(location) && Math.random() < 0.42) {
       const target = ['anping', 'lantern', 'blackforge', 'reedbank', 'yanpass', 'yunze'].find(id => currentLocationCanReach(id))
-      if (target) travelTo(target)
+      if (target) {
+        travelTo(target, { advanceNow: false, consumeTime: false, silent: true })
+        return null
+      }
     }
     return location.actions.includes('trade') ? 'trade' : location.actions[0]
   }
   if (mode === 'adventure') {
     if (location.danger < 4 && Math.random() < 0.36) {
       const riskier = location.neighbors.map(id => LOCATION_MAP.get(id)!).sort((a, b) => b.danger - a.danger)[0]
-      if (riskier && riskier.danger > location.danger) travelTo(riskier.id)
+      if (riskier && riskier.danger > location.danger) {
+        travelTo(riskier.id, { advanceNow: false, consumeTime: false, silent: true })
+        return null
+      }
     }
     return location.actions.includes('quest') ? 'quest' : location.actions.includes('hunt') ? 'hunt' : location.actions[0]
   }
   if (mode === 'sect' && g.player.sect) {
-    if (!location.tags.includes('sect') && currentLocationCanReach('jadegate') && Math.random() < 0.3) travelTo('jadegate')
+    if (!location.tags.includes('sect') && currentLocationCanReach('jadegate') && Math.random() < 0.3) {
+      travelTo('jadegate', { advanceNow: false, consumeTime: false, silent: true })
+      return null
+    }
     return location.actions.includes('sect') ? 'sect' : 'meditate'
   }
   return ['meditate', 'trade', 'hunt', 'quest', 'train'].find(a => location.actions.includes(a)) || location.actions[0]
@@ -218,8 +492,16 @@ export function tickWorld() {
 export function gameStep() {
   const ctx = getContext()
   const g = ctx.game
+  if (g.player.travelPlan && !g.combat.currentEnemy && consumePlayerTravelStep()) {
+    if (g.player.hp <= 0) revivePlayer()
+    return
+  }
   const action = chooseAutoAction()
   if (!action) {
+    if (g.player.travelPlan && !g.combat.currentEnemy && consumePlayerTravelStep()) {
+      if (g.player.hp <= 0) revivePlayer()
+      return
+    }
     if (g.player.mode === 'manual') {
       tickWorld()
       if (g.player.hp <= 0) revivePlayer()

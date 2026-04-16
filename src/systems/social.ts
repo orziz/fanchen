@@ -6,6 +6,7 @@ import {
 } from '@/config'
 import { sample, clamp, round, uid, randomInt } from '@/utils'
 import type { RelationState, TerritoryEntry } from '@/types/game'
+import { tryStartNpcVisitStory } from './story'
 
 /* ═══════════════════ Constants ═══════════════════ */
 
@@ -189,6 +190,7 @@ export function visitNpc(npcId: string) {
   const ctx = getContext(); const g = ctx.game; const npc = ctx.getNpc(npcId); if (!npc) return
   const rel = ctx.ensurePlayerRelation(npcId)
   if (npc.locationId !== g.player.locationId) { ctx.appendLog(`${npc.name}目前在${LOCATION_MAP.get(npc.locationId)!.name}，暂时见不到。`, 'warn'); return }
+  if (tryStartNpcVisitStory(npcId)) return
   const attitude = rel.affinity > 20 ? '坦诚' : rel.affinity > 0 ? '平和' : '疏离'
   const cost = 10 + Math.max(0, rel.rivalry > 10 ? 8 : 0)
   if (g.player.money < cost) { ctx.appendLog('灵石不够备礼，对方并不想多聊。', 'warn'); return }

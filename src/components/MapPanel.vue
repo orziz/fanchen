@@ -5,7 +5,9 @@
         <div class="map-toolbar-copy">
           <p class="section-kicker">山河图</p>
           <h3>点击节点看详情，拖拽平移，滚轮缩放</h3>
-          <div class="map-overlay-bar">
+        </div>
+        <div class="map-toolbar-strip">
+          <div class="map-overlay-bar map-overlay-summary">
             <div class="overlay-stat">
               <span>当前地点</span>
               <strong>{{ currentLocation.name }}</strong>
@@ -19,16 +21,16 @@
               <strong>{{ ACTION_META[player.action]?.label || player.action }}</strong>
             </div>
           </div>
-        </div>
-        <div class="map-toolbar-tools">
-          <div class="map-zoom-pill overlay-stat">
-            <span>视图缩放</span>
-            <strong>{{ zoomLabel }}</strong>
-          </div>
-          <div class="map-toolbar-actions">
-            <button class="control-button" type="button" @click="handleZoom(-1)">缩小</button>
-            <button class="control-button" type="button" @click="handleZoom(1)">放大</button>
-            <button class="control-button ghost" type="button" @click="handleResetView">归中</button>
+          <div class="map-toolbar-tools">
+            <div class="map-zoom-pill overlay-stat">
+              <span>视图缩放</span>
+              <strong>{{ zoomLabel }}</strong>
+            </div>
+            <div class="map-toolbar-actions">
+              <button class="control-button" type="button" @click="handleZoom(-1)">缩小</button>
+              <button class="control-button" type="button" @click="handleZoom(1)">放大</button>
+              <button class="control-button ghost" type="button" @click="handleResetView">归中</button>
+            </div>
           </div>
         </div>
       </div>

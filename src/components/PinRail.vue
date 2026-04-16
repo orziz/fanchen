@@ -2,16 +2,14 @@
   <aside v-if="hasPinned" class="pin-rail">
     <!-- 江湖纪事 -->
     <div v-if="ws.journal.open" class="pin-card pin-card-journal">
-      <div class="pin-card-head">
-        <div>
-          <p class="section-kicker">风闻</p>
-          <h3>江湖纪事</h3>
-        </div>
-        <div class="pin-card-actions">
-          <button class="control-button ghost" type="button" @click="store.clearLog()">清空</button>
-          <button class="control-button ghost" type="button" @click="closeWindow('journal')">收</button>
-        </div>
-      </div>
+      <UiCardHeader kicker="风闻" title="江湖纪事" head-class="pin-card-head">
+        <template #aside>
+          <div class="pin-card-actions">
+            <button class="control-button ghost" type="button" @click="store.clearLog()">清空</button>
+            <button class="control-button ghost" type="button" @click="closeWindow('journal')">收</button>
+          </div>
+        </template>
+      </UiCardHeader>
       <div class="pin-card-body">
         <div class="log-list">
           <template v-if="log.length">
@@ -30,13 +28,11 @@
 
     <!-- 人物簿 -->
     <div v-if="ws.profile.open" class="pin-card pin-card-profile">
-      <div class="pin-card-head">
-        <div>
-          <p class="section-kicker">人物簿</p>
-          <h3>生平与记录</h3>
-        </div>
-        <button class="control-button ghost" type="button" @click="closeWindow('profile')">收</button>
-      </div>
+      <UiCardHeader kicker="人物簿" title="生平与记录" head-class="pin-card-head">
+        <template #aside>
+          <button class="control-button ghost" type="button" @click="closeWindow('profile')">收</button>
+        </template>
+      </UiCardHeader>
       <div class="pin-card-body">
         <ProfileDetail />
       </div>
@@ -44,15 +40,27 @@
 
     <!-- 策略盘 -->
     <div v-if="ws.command.open" class="pin-card pin-card-command">
-      <div class="pin-card-head">
-        <div>
-          <p class="section-kicker">挂机策略</p>
-          <h3>策略盘</h3>
-        </div>
-        <button class="control-button ghost" type="button" @click="closeWindow('command')">收</button>
-      </div>
+      <UiCardHeader kicker="挂机策略" title="策略盘" head-class="pin-card-head">
+        <template #aside>
+          <button class="control-button ghost" type="button" @click="closeWindow('command')">收</button>
+        </template>
+      </UiCardHeader>
       <div class="pin-card-body">
         <CommandDetail />
+      </div>
+    </div>
+
+    <div v-if="showStoryRail" class="pin-card pin-card-story">
+      <UiCardHeader kicker="剧情线" title="当前剧情" head-class="pin-card-head">
+        <template #aside>
+          <div class="pin-card-actions">
+            <button class="control-button ghost" type="button" @click="showStoryOverlay()">展开</button>
+            <button class="control-button ghost" type="button" @click="closeStory()">收</button>
+          </div>
+        </template>
+      </UiCardHeader>
+      <div class="pin-card-body pin-card-body--story">
+        <StoryScene compact />
       </div>
     </div>
   </aside>
@@ -65,12 +73,16 @@ import { useGameStore } from '@/stores/game'
 import { useWindows } from '@/composables/useWindows'
 import ProfileDetail from './ProfileDetail.vue'
 import CommandDetail from './CommandDetail.vue'
+import StoryScene from './StoryScene.vue'
+import UiCardHeader from '@/components/ui/UiCardHeader.vue'
+import { closeStory, showStoryOverlay } from '@/systems/story'
 
 const store = useGameStore()
-const { log } = storeToRefs(store)
+const { log, story } = storeToRefs(store)
 const { windows: ws, closeWindow } = useWindows()
 
-const hasPinned = computed(() => ws.journal.open || ws.profile.open || ws.command.open)
+const showStoryRail = computed(() => Boolean(story.value.activeStoryId) && story.value.presentation === 'rail')
+const hasPinned = computed(() => ws.journal.open || ws.profile.open || ws.command.open || showStoryRail.value)
 
 function getLogKindLabel(type: string) {
   if (type === 'warn') return '险讯'

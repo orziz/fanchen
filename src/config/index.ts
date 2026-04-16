@@ -32,3 +32,18 @@ export type { FactionData, PropertyDef, CropData, CraftRecipe, CraftInput } from
 
 export { WORLD_EVENT_TEMPLATES, TRAVEL_EVENT_TEMPLATES, SOCIAL_EVENT_TEMPLATES, SECT_EVENT_TEMPLATES } from './events'
 export type { WorldEventTemplate, TravelEventTemplate, SocialEventTemplate, SectEventTemplate } from './events'
+
+export { STORY_DEFINITIONS, STORY_MAP } from './story'
+export type {
+	StoryPresentationMode,
+	StoryBindingKey,
+	StorySpeakerMode,
+	StoryTriggerKind,
+	StoryTriggerScope,
+	StoryConditionSpec,
+	StoryEffectSpec,
+	StoryChoiceSpec,
+	StoryNodeSpec,
+	StoryTriggerSpec,
+	StoryDefinition,
+} from './story'

@@ -72,6 +72,7 @@ export interface ActionMeta {
 
 export const ACTION_META: Record<string, ActionMeta> = {
   rest: { label: '调息回元', cost: {}, reward: { hp: 18, qi: 16, stamina: 20 } },
+  travel: { label: '沿途赶路', cost: { stamina: 6, qi: 3 }, reward: {} },
   meditate: { label: '静坐养气', cost: { stamina: 2, qi: 0 }, reward: { cultivation: 1.2, qi: 3, breakthrough: 0.3 } },
   train: { label: '练体打熬', cost: { stamina: 4, qi: 0 }, reward: { cultivation: 0.8, power: 0.25, hp: 0.6 } },
   hunt: { label: '低阶历练', cost: { stamina: 6, qi: 2 }, reward: { money: 4, cultivation: 0.6, reputation: 0.1, encounter: 0.45 } },

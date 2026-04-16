@@ -1,5 +1,98 @@
 ﻿/* ═══════════════ V3 Responsive Breakpoints ═══════════════ */
 
+/* ── 中宽桌面：HUD / Dock 提前改双行，不再硬挤单行 ── */
+@media (max-width: 1480px) {
+  .hud-bar {
+    gap: 8px 12px;
+    padding: 8px 14px;
+    flex-wrap: wrap;
+    overflow-x: hidden;
+    white-space: normal;
+  }
+
+  .hud-identity {
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+
+  .hud-vitals {
+    flex: 1 1 360px;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .hud-resources,
+  .hud-world,
+  .hud-pins,
+  .hud-speed,
+  .hud-actions {
+    min-width: 0;
+  }
+
+  .hud-save-state { display: none; }
+
+  .hud-pins {
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+
+  .hud-actions {
+    margin-left: auto;
+  }
+
+  .hud-actions .control-button {
+    padding: 7px 12px;
+  }
+
+  .game-dock {
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+  }
+
+  .dock-tabs {
+    order: 1;
+    width: 100%;
+    flex: 1 1 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .dock-quick {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    padding-top: 8px;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dock-quick .dock-hotbar {
+    flex: 1 1 420px;
+    min-width: 0;
+  }
+
+  .dock-hotbar-state {
+    flex: 1 1 280px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .dock-hotbar-copy {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 1360px) {
+  .dock-tab-label-full { display: none; }
+  .dock-tab-label-short { display: inline; }
+  .dock-hotbar-location { display: none; }
+}
+
 /* ── 窄宽屏：缩紧间距 ── */
 @media (max-width: 1380px) {
   .hud-bar { gap: 10px; padding: 8px 14px; }
@@ -122,6 +215,8 @@
   .dock-hotbar-action,
   .dock-hotbar-divider { display: none; }
   .dock-hotbar-location { display: none; }
+  .map-toolbar-strip { flex-direction: column; align-items: stretch; }
+  .map-overlay-summary { width: 100%; }
   .map-toolbar-tools { width: 100%; justify-content: space-between; }
   .location-inline-tags { justify-content: flex-start; }
   .location-journey-card { grid-template-columns: 1fr; }

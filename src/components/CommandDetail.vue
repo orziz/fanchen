@@ -26,24 +26,22 @@
           </article>
         </div>
       </div>
-      <div class="command-chip-row">
-        <span class="command-chip active">当前策略：{{ currentModeLabel }}</span>
-        <span class="command-chip">落脚：{{ currentLocation.name }}</span>
-        <span class="command-chip">灵气 {{ currentLocation.aura }}</span>
-        <span :class="['command-chip', dangerClass]">险度 {{ currentLocation.danger }}</span>
-        <span :class="['command-chip', activeRealm ? 'active' : '']">{{ activeRealm ? `${activeRealm.name}现世` : world.omen }}</span>
-      </div>
+      <UiPillRow class-name="command-chip-row">
+        <UiPill variant="command-chip" tone="active">当前策略：{{ currentModeLabel }}</UiPill>
+        <UiPill variant="command-chip">落脚：{{ currentLocation.name }}</UiPill>
+        <UiPill variant="command-chip">灵气 {{ currentLocation.aura }}</UiPill>
+        <UiPill variant="command-chip" :tone="dangerClass">险度 {{ currentLocation.danger }}</UiPill>
+        <UiPill variant="command-chip" :tone="activeRealm ? 'active' : ''">{{ activeRealm ? `${activeRealm.name}现世` : world.omen }}</UiPill>
+      </UiPillRow>
     </section>
 
     <!-- Mode Selection -->
     <section class="command-section standout">
-      <div class="section-head compact">
-        <div>
-          <p class="section-kicker">挂机策略</p>
-          <h3>今日主路</h3>
-        </div>
-        <span class="tag">推荐：{{ getModeLabel(recommendation.preferredMode) }}</span>
-      </div>
+      <UiCardHeader kicker="挂机策略" title="今日主路" head-class="section-head compact">
+        <template #aside>
+          <UiPill variant="tag">推荐：{{ getModeLabel(recommendation.preferredMode) }}</UiPill>
+        </template>
+      </UiCardHeader>
       <p class="panel-intro compact">此处只定长线门路，短手动作仍归你临机掌握。</p>
       <div class="mode-grid command-mode-grid command-strategy-stack">
         <button
@@ -56,10 +54,10 @@
         >
           <div class="command-strategy-meta">
             <strong>{{ mode.label }}</strong>
-            <span class="command-badge-row">
-              <span v-if="mode.id === player.mode" class="command-pill current">当前</span>
-              <span v-if="mode.id === recommendation.preferredMode" class="command-pill recommended">局势推荐</span>
-            </span>
+            <UiPillRow as="span" class-name="command-badge-row">
+              <UiPill v-if="mode.id === player.mode" as="span" variant="command-pill" tone="current">当前</UiPill>
+              <UiPill v-if="mode.id === recommendation.preferredMode" as="span" variant="command-pill" tone="recommended">局势推荐</UiPill>
+            </UiPillRow>
           </div>
           <span>{{ mode.desc }}</span>
         </button>
@@ -69,6 +67,27 @@
         <span>{{ player.mode === 'manual' ? '世界仍会照常流转，但不会替你自动修炼、跑商或接差事。' : '局势一变，就立刻改换门路，别让人和货空耗在路上。' }}</span>
       </div>
     </section>
+
+    <section class="command-section command-action-section standout">
+      <UiCardHeader kicker="临机手动" title="谋局台手动操作" head-class="section-head compact">
+        <template #aside>
+          <UiPill variant="tag">{{ manualActionTag }}</UiPill>
+        </template>
+      </UiCardHeader>
+      <p class="panel-intro compact">{{ breakthroughHint }}</p>
+      <UiActionGroup variant="quick" class-name="command-action-grid">
+        <UiActionCardButton
+          v-for="action in manualActions"
+          :key="action.key"
+          button-class="command-action-card"
+          theme-class="command-action-theme"
+          :theme="action.theme"
+          :title="action.label"
+          :description="action.desc"
+          @click="runQuickAction(action.key)"
+        />
+      </UiActionGroup>
+    </section>
   </div>
 </template>
 
@@ -76,10 +95,16 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { MODE_OPTIONS, REALM_TEMPLATES } from '@/config'
+import { MODE_OPTIONS, REALM_TEMPLATES, RANKS } from '@/config'
 import { formatNumber } from '@/utils'
 import { getModeLabel } from '@/composables/useUIHelpers'
-import { setMode } from '@/systems/player'
+import { attemptBreakthrough, setMode } from '@/systems/player'
+import { performAction } from '@/systems/world'
+import UiActionCardButton from '@/components/ui/UiActionCardButton.vue'
+import UiActionGroup from '@/components/ui/UiActionGroup.vue'
+import UiCardHeader from '@/components/ui/UiCardHeader.vue'
+import UiPill from '@/components/ui/UiPill.vue'
+import UiPillRow from '@/components/ui/UiPillRow.vue'
 
 const store = useGameStore()
 const { player, world, currentLocation, currentAffiliation, sect, nextBreakthroughNeed } = storeToRefs(store)
@@ -118,6 +143,53 @@ const routeDesc = computed(() => {
   if (sect.value) return '已立宗门，可直接处理门内事务。'
   if (currentAffiliation.value) return `现为${currentAffiliation.value.titles[player.value.affiliationRank]}。`
   return `资产 ${assetCount.value} 处，仍需继续摸门路。`
+})
+
+const hasNextRank = computed(() => player.value.rankIndex < RANKS.length - 1)
+
+const breakthroughReady = computed(() =>
+  hasNextRank.value && player.value.breakthrough >= nextBreakthroughNeed.value * 0.85
+)
+
+const breakthroughHint = computed(() => {
+  if (!hasNextRank.value) return '你已站在当前境界尽头，手动冲关会提示继续温养根基。'
+  if (breakthroughReady.value) {
+    return `当前火候 ${breakthroughPercent.value}%，已过手动冲关线；所在地点灵气 ${currentLocation.value.aura} 会计入成败。`
+  }
+  return `当前火候 ${breakthroughPercent.value}%，到 85% 就能手动冲关；未到线时点下去也会给出明确提示。`
+})
+
+const manualActionTag = computed(() => {
+  if (breakthroughReady.value) return '可直接冲关'
+  if (player.value.mode === 'manual') return '手动接管中'
+  return '一次一发'
+})
+
+const manualActions = computed(() => {
+  const tradeRun = player.value.tradeRun
+  return [
+    { key: 'meditate', label: '手动修炼', desc: '静坐一轮，补修为与真气。', theme: '补修为' },
+    {
+      key: 'breakthrough',
+      label: '主动冲关',
+      desc: !hasNextRank.value
+        ? '当前境界已到头，只能继续温养根基。'
+        : breakthroughReady.value
+          ? `火候 ${breakthroughPercent.value}%，现在就能试破当前境界。`
+          : `当前火候 ${breakthroughPercent.value}%，建议到 85% 后再抢关。`,
+      theme: '抢关口',
+    },
+    { key: 'quest', label: '追查机缘', desc: '跑一趟差事，碰碰风闻与奇遇。', theme: '探风闻' },
+    {
+      key: 'trade',
+      label: tradeRun ? '继续跑商' : '顺手做买卖',
+      desc: tradeRun
+        ? `${tradeRun.originName}到${tradeRun.destinationName}的货路还在跑。`
+        : '跑一笔货，快进一轮营生。',
+      theme: '滚营生',
+    },
+    { key: 'rest', label: '短暂调息', desc: '先把状态拉回安全线。', theme: '回状态' },
+  ]
 })
 
 interface Recommendation {
@@ -186,4 +258,21 @@ const recommendation = computed<Recommendation>(() => {
     preferredMode: player.value.mode === 'manual' ? 'balanced' : player.value.mode,
   }
 })
+
+function runQuickAction(actionKey: string) {
+  if (actionKey === 'rest') {
+    store.adjustResource('hp', 18, 'maxHp')
+    store.adjustResource('qi', 16, 'maxQi')
+    store.adjustResource('stamina', 20, 'maxStamina')
+    store.appendLog('你暂时收束心神，运气回息。', 'info')
+    return
+  }
+
+  if (actionKey === 'breakthrough') {
+    attemptBreakthrough()
+    return
+  }
+
+  performAction(actionKey)
+}
 </script>

@@ -125,7 +125,13 @@ export function settleTradeRun(): boolean {
 export function advanceTradeRun(): 'none' | 'traveling' | 'settled' {
   const run = getActiveTradeRun()
   if (!run) return 'none'
-  if (getContext().game.player.locationId !== run.destinationId) { travelTo(run.destinationId); return 'traveling' }
+  if (getContext().game.player.locationId !== run.destinationId) {
+    travelTo(run.destinationId, { consumeTime: false })
+    if (getContext().game.player.locationId === run.destinationId) {
+      return settleTradeRun() ? 'settled' : 'traveling'
+    }
+    return 'traveling'
+  }
   return settleTradeRun() ? 'settled' : 'none'
 }
 

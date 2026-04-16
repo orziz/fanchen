@@ -4,73 +4,69 @@
   <!-- No enemy -->
   <template v-if="!enemy">
     <div class="combat-grid single">
-      <div v-if="activeRealm" class="combat-card standout">
-        <div class="combat-top">
-          <div>
-            <p class="section-kicker">活跃秘境</p>
-            <h3 class="combat-title">{{ activeRealm.name }}</h3>
-            <p class="combat-meta">{{ activeRealm.desc }}</p>
-          </div>
-          <span class="rarity epic">声望需求 {{ activeRealm.unlockRep }}</span>
-        </div>
+      <UiPanelCard v-if="activeRealm" tone="combat" standout>
+        <UiCardHeader kicker="活跃秘境" :title="activeRealm.name" title-class="combat-title">
+          <template #aside>
+            <UiPill variant="rarity" tone="epic">声望需求 {{ activeRealm.unlockRep }}</UiPill>
+          </template>
+        </UiCardHeader>
+        <p class="combat-meta">{{ activeRealm.desc }}</p>
         <p class="combat-meta">出现地点：{{ getLocationName(activeRealm.locationId) }}，首领：{{ activeRealm.boss.name }}</p>
-        <div class="combat-actions">
+        <UiActionGroup variant="combat">
           <button class="item-button" @click="doChallenge(activeRealm.id)">
             {{ player.locationId === activeRealm.locationId ? '立即挑战' : '赶赴并挑战' }}
           </button>
-        </div>
-      </div>
+        </UiActionGroup>
+      </UiPanelCard>
       <div v-else class="empty-state">当前没有活跃的首领秘境，继续游历与刷图，等待世界异象出现。</div>
-      <div v-if="combat.lastResult" class="combat-card">
+      <UiPanelCard v-if="combat.lastResult" tone="combat">
         <p class="section-kicker">最近战报</p>
         <h3 class="combat-title">{{ combat.lastResult.outcome === 'victory' ? '胜利' : '败退' }}</h3>
         <p class="combat-meta">对象：{{ combat.lastResult.enemy }}{{ combat.lastResult.boss ? ' · 首领' : '' }}</p>
-      </div>
+      </UiPanelCard>
     </div>
   </template>
 
   <!-- Active enemy -->
   <template v-else>
     <div class="combat-grid">
-      <div class="combat-card standout">
-        <div class="combat-top">
-          <div>
-            <p class="section-kicker">当前敌人</p>
-            <h3 class="combat-title">{{ enemy.name }}{{ enemy.boss ? ' · 首领' : '' }}</h3>
-            <p class="combat-meta">区域：{{ getLocationName(enemy.regionId) }}{{ enemy.realmId ? ` · 来自秘境` : '' }}</p>
-          </div>
-          <span :class="['rarity', enemy.boss ? 'legendary' : 'epic']">{{ enemy.boss ? '首领' : '遭遇战' }}</span>
-        </div>
+      <UiPanelCard tone="combat" standout>
+        <UiCardHeader :kicker="'当前敌人'" :title="`${enemy.name}${enemy.boss ? ' · 首领' : ''}`" title-class="combat-title">
+          <template #aside>
+            <UiPill variant="rarity" :tone="enemy.boss ? 'legendary' : 'epic'">{{ enemy.boss ? '首领' : '遭遇战' }}</UiPill>
+          </template>
+        </UiCardHeader>
+        <p class="combat-meta">区域：{{ getLocationName(enemy.regionId) }}{{ enemy.realmId ? ` · 来自秘境` : '' }}</p>
         <div class="meter-stack compact">
           <MeterBar label="敌方气血" :value="enemy.hp" :max="enemy.maxHp" class-name="hp" />
           <MeterBar label="敌方真气" :value="enemy.qi" :max="enemy.maxQi" class-name="qi" />
         </div>
-        <div class="inline-list">
-          <span class="tag">战力 {{ round(enemy.power) }}</span>
-          <span class="tag">闪避 {{ Math.round(enemy.dodge * 100) }}%</span>
-          <span class="tag">护甲 {{ Math.round(enemy.defense * 100) }}%</span>
-          <span class="tag">暴击 {{ Math.round(enemy.crit * 100) }}%</span>
-        </div>
-        <div class="inline-list affix-row">
+        <UiPillRow>
+          <UiPill variant="tag">战力 {{ round(enemy.power) }}</UiPill>
+          <UiPill variant="tag">闪避 {{ Math.round(enemy.dodge * 100) }}%</UiPill>
+          <UiPill variant="tag">护甲 {{ Math.round(enemy.defense * 100) }}%</UiPill>
+          <UiPill variant="tag">暴击 {{ Math.round(enemy.crit * 100) }}%</UiPill>
+        </UiPillRow>
+        <UiPillRow class-name="affix-row">
           <template v-if="enemy.affixIds.length">
-            <span v-for="affixId in enemy.affixIds" :key="affixId" class="trait-chip">{{ getAffixLabel(affixId) }}</span>
+            <UiPill v-for="affixId in enemy.affixIds" :key="affixId" variant="trait">{{ getAffixLabel(affixId) }}</UiPill>
           </template>
-          <span v-else class="trait-chip">无特殊词条</span>
-        </div>
+          <UiPill v-else variant="trait">无特殊词条</UiPill>
+        </UiPillRow>
         <p class="combat-meta">
           预计收益：灵石 {{ enemy.rewards.money }}，修为 {{ round(enemy.rewards.cultivation) }}，
           突破 {{ round(enemy.rewards.breakthrough) }}，声望 {{ round(enemy.rewards.reputation) }}
         </p>
-        <div class="combat-actions">
+        <UiActionGroup variant="combat">
           <button class="item-button" @click="doAction('attack')">普攻</button>
           <button class="item-button" @click="doAction('skill')">术法</button>
           <button class="item-button" @click="doAction('defend')">防守</button>
           <button class="item-button" @click="doAction('item')">用药</button>
           <button class="item-button" @click="doAction('flee')">脱战</button>
           <button class="item-button" @click="toggleAuto">{{ combat.autoBattle ? '关闭自动战斗' : '开启自动战斗' }}</button>
-        </div>
-      </div>
-      <div class="combat-card">
+        </UiActionGroup>
+      </UiPanelCard>
+      <UiPanelCard tone="combat">
         <p class="section-kicker">战斗记录</p>
         <div class="combat-history">
           <template v-if="combat.history.length">
@@ -80,7 +76,7 @@
           </template>
           <div v-else class="empty-state">战斗刚刚开始。</div>
         </div>
-      </div>
+      </UiPanelCard>
     </div>
   </template>
 </template>
@@ -91,10 +87,14 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { LOCATION_MAP, MONSTER_AFFIXES, REALM_TEMPLATES } from '@/config'
 import { round } from '@/utils'
-import { processBattleRound, challengeRealm } from '@/systems/combat'
-import { tickWorld } from '@/systems/world'
-import { travelTo } from '@/systems/world'
+import { processBattleRound } from '@/systems/combat'
+import { tickWorld, travelAndChallengeRealm } from '@/systems/world'
 import MeterBar from '../MeterBar.vue'
+import UiActionGroup from '@/components/ui/UiActionGroup.vue'
+import UiCardHeader from '@/components/ui/UiCardHeader.vue'
+import UiPanelCard from '@/components/ui/UiPanelCard.vue'
+import UiPill from '@/components/ui/UiPill.vue'
+import UiPillRow from '@/components/ui/UiPillRow.vue'
 
 const store = useGameStore()
 const { player, combat } = storeToRefs(store)
@@ -125,11 +125,6 @@ function toggleAuto() {
 }
 
 function doChallenge(realmId: string) {
-  const realm = REALM_TEMPLATES.find(r => r.id === realmId)
-  if (!realm) return
-  if (player.value.locationId !== realm.locationId) {
-    travelTo(realm.locationId)
-  }
-  challengeRealm(realmId)
+  travelAndChallengeRealm(realmId)
 }
 </script>

@@ -1,7 +1,7 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
 import { LOCATION_MAP, FACTION_MAP } from '@/config'
-import { sample, randomFloat, randomInt } from '@/utils'
+import { sample, randomFloat, randomInt, findRoute } from '@/utils'
 
 /* ─── Profession Pools ─── */
 
@@ -39,6 +39,114 @@ function refreshNpcLifeProfile(npc: any, force = false) {
   else if (npc.lifeStage === '少年') npc.action = sample(['train', 'trade', 'quest'])
 }
 
+const YANPASS_CURFEW_HOURS = new Set([10, 11, 0, 1])
+
+function canNpcUseYanpassFastTrack(npc: any) {
+  return npc.factionId === 'yanpass-escort' || npc.action === 'trade' || npc.wealth >= 220
+}
+
+function canNpcEnterJadegate(npc: any) {
+  return npc.factionId === 'jadegate-courtyard'
+    || npc.sectId === 'jadegate-courtyard'
+    || npc.rankIndex >= 2
+    || npc.cultivation >= 160
+    || npc.lifeStage === '老年'
+}
+
+function getNpcTravelBlockReason(npc: any, fromId: string, toId: string) {
+  const ctx = getContext()
+  if (toId === 'yanpass' && YANPASS_CURFEW_HOURS.has(ctx.game.world.hour) && !canNpcUseYanpassFastTrack(npc)) {
+    return '雁回关夜里闭阖，没有镖路门路时难以夜过关城。'
+  }
+  if (toId === 'jadegate' && !canNpcEnterJadegate(npc)) {
+    return '玉阙行院不会轻易放没有引荐的人进山。'
+  }
+  if (fromId === 'snowpeak' && toId === 'jadegate' && npc.rankIndex < 1) {
+    return '寒魄峰往玉阙的山道灵压太重，脚力不够会被劝退。'
+  }
+  return null
+}
+
+function planNpcTravel(npc: any, destinationId: string) {
+  if (!destinationId || destinationId === npc.locationId) return false
+  if (npc.travelPlan?.destinationId === destinationId) return true
+  const route = findRoute(npc.locationId, destinationId, {
+    canTraverse(fromId, toId) {
+      return !getNpcTravelBlockReason(npc, fromId, toId)
+    },
+  })
+  if (!route) {
+    npc.travelPlan = null
+    return false
+  }
+  npc.travelPlan = {
+    route,
+    destinationId,
+    destinationName: LOCATION_MAP.get(destinationId)?.name || destinationId,
+    nextIndex: 1,
+    startedDay: getContext().game.world.day,
+    pendingAction: null,
+    pausedReason: null,
+  }
+  return true
+}
+
+function advanceNpcTravelStep(npc: any) {
+  const plan = npc.travelPlan
+  if (!plan) return false
+
+  const current = LOCATION_MAP.get(npc.locationId)
+  if (!current) {
+    npc.travelPlan = null
+    return false
+  }
+
+  const expectedCurrentId = plan.route[Math.max(0, plan.nextIndex - 1)]
+  if (expectedCurrentId && expectedCurrentId !== npc.locationId) {
+    const replanned = planNpcTravel(npc, plan.destinationId)
+    if (!replanned || !npc.travelPlan) {
+      npc.travelPlan = null
+      return false
+    }
+  }
+
+  const activePlan = npc.travelPlan
+  if (!activePlan) return false
+  const nextStopId = activePlan.route[activePlan.nextIndex]
+  if (!nextStopId) {
+    npc.travelPlan = null
+    return false
+  }
+
+  const nextStop = LOCATION_MAP.get(nextStopId)
+  if (!nextStop) {
+    npc.travelPlan = null
+    return false
+  }
+
+  const blockedReason = getNpcTravelBlockReason(npc, current.id, nextStopId)
+  if (blockedReason) {
+    activePlan.pausedReason = blockedReason
+    npc.action = 'travel'
+    npc.lastEvent = `在${current.name}附近被关隘拦下`
+    return true
+  }
+
+  activePlan.pausedReason = null
+  npc.locationId = nextStopId
+  npc.action = 'travel'
+  activePlan.nextIndex += 1
+
+  if (activePlan.nextIndex >= activePlan.route.length) {
+    npc.travelPlan = null
+    npc.lastEvent = `抵达${nextStop.name}`
+    return true
+  }
+
+  npc.lastEvent = `沿路赶到${nextStop.name}`
+  return true
+}
+
 /* ─── Daily Life Tick ─── */
 
 export function processNpcLifeTick() {
@@ -73,10 +181,15 @@ export function processNpcLifeTick() {
         npc.lastEvent = `在${faction?.name || '门内'}升为${title}`
       }
       if (npc.lifeStage === '老年' && Math.random() < 0.24) {
-        npc.locationId = npc.homeId
-        refreshNpcLifeProfile(npc, true)
-        appendNpcLifeEvent(npc, `回到${LOCATION_MAP.get(npc.homeId)?.name || '故地'}安顿余生`)
-        npc.lastEvent = `回到${LOCATION_MAP.get(npc.homeId)?.name || '故地'}安顿余生`
+        if (npc.locationId !== npc.homeId && planNpcTravel(npc, npc.homeId)) {
+          refreshNpcLifeProfile(npc, true)
+          appendNpcLifeEvent(npc, `起意回到${LOCATION_MAP.get(npc.homeId)?.name || '故地'}安顿余生`)
+          npc.lastEvent = `正沿路回${LOCATION_MAP.get(npc.homeId)?.name || '故地'}`
+        } else if (npc.locationId === npc.homeId) {
+          refreshNpcLifeProfile(npc, true)
+          appendNpcLifeEvent(npc, `回到${LOCATION_MAP.get(npc.homeId)?.name || '故地'}安顿余生`)
+          npc.lastEvent = `回到${LOCATION_MAP.get(npc.homeId)?.name || '故地'}安顿余生`
+        }
       }
     }
     if (npc.age >= npc.lifespan && Math.random() < 0.34) {
@@ -145,12 +258,22 @@ export function runNpcAI() {
   g.npcs.forEach(npc => {
     npc.cooldown -= 1
     if (npc.cooldown > 0) return
+
+    if (npc.masterId === 'player' && g.player.sect && npc.locationId !== g.player.locationId) {
+      planNpcTravel(npc, g.player.locationId)
+    }
+
+    if (npc.travelPlan && advanceNpcTravelStep(npc)) {
+      if (Math.random() < 0.12) ctx.appendLog(`${npc.name}又有动作：${npc.lastEvent}。`, 'npc')
+      npc.cooldown = randomInt(1, 2)
+      return
+    }
+
     const current = LOCATION_MAP.get(npc.locationId)!
     let chosen = npc.action
 
     if (npc.masterId === 'player' && g.player.sect && Math.random() < 0.3) {
-      npc.locationId = g.player.locationId
-      npc.lastEvent = '赶来宗门听候安排'
+      npc.lastEvent = npc.locationId === g.player.locationId ? '赶来宗门听候安排' : '正沿路赶来宗门听候安排'
     } else if (Math.random() < (npc.lifeStage === '老年' ? 0.12 : npc.lifeStage === '少年' ? 0.32 : 0.26)) {
       npc.locationId = sample(current.neighbors)
       npc.lastEvent = `动身前往${LOCATION_MAP.get(npc.locationId)!.name}`

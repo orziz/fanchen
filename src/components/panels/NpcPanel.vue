@@ -1,43 +1,42 @@
 <template>
   <p class="panel-intro">江湖人各有性情、家底和打算。你能与他们结交、结仇、收徒，也能把合适的人拉进自家门路。</p>
   <div class="npc-grid">
-    <div v-for="npc in sortedNpcs" :key="npc.id" class="npc-card">
-      <div class="npc-top">
-        <div>
-          <h3 class="npc-name">{{ npc.name }}</h3>
-          <p class="npc-meta">{{ npc.title }} · {{ npc.profession || '江湖人' }} · {{ npc.personalityLabel }} · {{ getRankName(npc.rankIndex) }}</p>
-        </div>
-        <div class="inline-list">
-          <span class="trait-chip">身份 {{ getRoleLabel(getRelation(npc.id).role) }}</span>
-          <span class="trait-chip">财富 {{ formatNumber(npc.wealth) }}</span>
-        </div>
-      </div>
+    <UiPanelCard v-for="npc in sortedNpcs" :key="npc.id" tone="npc">
+      <UiCardHeader :title="npc.name" title-class="npc-name">
+        <template #aside>
+          <UiPillRow>
+            <UiPill variant="trait">身份 {{ getRoleLabel(getRelation(npc.id).role) }}</UiPill>
+            <UiPill variant="trait">财富 {{ formatNumber(npc.wealth) }}</UiPill>
+          </UiPillRow>
+        </template>
+      </UiCardHeader>
+      <p class="npc-meta">{{ npc.title }} · {{ npc.profession || '江湖人' }} · {{ npc.personalityLabel }} · {{ getRankName(npc.rankIndex) }}</p>
       <p class="npc-meta">{{ npc.personalityDesc }}</p>
       <p class="npc-meta">当前位置：{{ getLocationName(npc.locationId) }}，目标：{{ npc.goal }}，最近动向：{{ npc.lastEvent }}</p>
       <p class="npc-meta">人生阶段：{{ npc.lifeStage }} · {{ npc.age }} 岁{{ npc.factionId ? ` · 所属 ${getFactionName(npc.factionId)}` : ' · 尚无归属' }}</p>
       <p class="npc-meta">近年经历：{{ (npc.lifeEvents || []).slice(-2).join('；') || '暂无大事' }}</p>
-      <div class="inline-list">
-        <span class="trait-chip">好感 {{ getRelation(npc.id).affinity }}</span>
-        <span class="trait-chip">信任 {{ getRelation(npc.id).trust }}</span>
-        <span class="trait-chip">情缘 {{ getRelation(npc.id).romance }}</span>
-        <span class="trait-chip">仇怨 {{ getRelation(npc.id).rivalry }}</span>
-      </div>
-      <div class="inline-list">
-        <span class="trait-chip">贪念 {{ npc.mood.greed }}</span>
-        <span class="trait-chip">仁心 {{ npc.mood.kindness }}</span>
-        <span class="trait-chip">胆魄 {{ npc.mood.courage }}</span>
-        <span class="trait-chip">耐性 {{ npc.mood.patience }}</span>
-      </div>
-      <div class="npc-actions">
-        <button class="npc-button" @click="doVisit(npc.id)">拜访</button>
+      <UiPillRow>
+        <UiPill variant="trait">好感 {{ getRelation(npc.id).affinity }}</UiPill>
+        <UiPill variant="trait">信任 {{ getRelation(npc.id).trust }}</UiPill>
+        <UiPill variant="trait">情缘 {{ getRelation(npc.id).romance }}</UiPill>
+        <UiPill variant="trait">仇怨 {{ getRelation(npc.id).rivalry }}</UiPill>
+      </UiPillRow>
+      <UiPillRow>
+        <UiPill variant="trait">贪念 {{ npc.mood.greed }}</UiPill>
+        <UiPill variant="trait">仁心 {{ npc.mood.kindness }}</UiPill>
+        <UiPill variant="trait">胆魄 {{ npc.mood.courage }}</UiPill>
+        <UiPill variant="trait">耐性 {{ npc.mood.patience }}</UiPill>
+      </UiPillRow>
+      <UiActionGroup variant="npc">
+        <button class="npc-button" @click="doVisit(npc.id)">{{ getVisitLabel(npc.id) }}</button>
         <button class="npc-button" @click="doFocus(npc.id)">查看所在地点</button>
         <button class="npc-button" @click="doRecruit(npc.id)">收为弟子</button>
         <button class="npc-button" @click="doRecruitFaction(npc.id)">招入自家势力</button>
         <button class="npc-button" @click="doMaster(npc.id)">拜其为师</button>
         <button class="npc-button" @click="doPartner(npc.id)">结为道侣</button>
         <button class="npc-button" @click="doRival(npc.id)">立为仇敌</button>
-      </div>
-    </div>
+      </UiActionGroup>
+    </UiPanelCard>
   </div>
 </template>
 
@@ -53,6 +52,12 @@ import {
   visitNpc, recruitDisciple, recruitFactionMember,
   becomeMasterBond, becomePartner, declareRival,
 } from '@/systems/social'
+import { hasNpcVisitStory } from '@/systems/story'
+import UiActionGroup from '@/components/ui/UiActionGroup.vue'
+import UiCardHeader from '@/components/ui/UiCardHeader.vue'
+import UiPanelCard from '@/components/ui/UiPanelCard.vue'
+import UiPill from '@/components/ui/UiPill.vue'
+import UiPillRow from '@/components/ui/UiPillRow.vue'
 
 const store = useGameStore()
 const { npcs, player, selectedLocationId } = storeToRefs(store)
@@ -69,6 +74,7 @@ function getRelation(npcId: string) {
 function getRankName(idx: number) { return RANKS[Math.min(idx, RANKS.length - 1)].name }
 function getLocationName(id: string) { return LOCATION_MAP.get(id)?.name || id }
 function getFactionName(id: string) { return FACTION_MAP.get(id)?.name || '未知势力' }
+function getVisitLabel(id: string) { return hasNpcVisitStory(id) ? '对话' : '拜访' }
 
 function doVisit(id: string) { visitNpc(id) }
 function doFocus(id: string) {

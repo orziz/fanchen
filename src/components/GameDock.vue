@@ -47,10 +47,10 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useStage, STAGE_TABS } from '@/composables/useStage'
-import { ACTION_META, MODE_OPTIONS } from '@/config'
+import { ACTION_META, MODE_OPTIONS, RANKS, LOCATION_MAP } from '@/config'
 import { getModeLabel } from '@/composables/useUIHelpers'
 import { performAction } from '@/systems/world'
-import { setMode } from '@/systems/player'
+import { attemptBreakthrough, setMode } from '@/systems/player'
 
 const { activeTab, setTab } = useStage()
 const store = useGameStore()
@@ -83,10 +83,18 @@ const ACTION_TITLES: Record<string, string> = {
 
 const currentModeLabel = computed(() => getModeLabel(player.value.mode))
 const currentActionKey = computed(() => player.value.action || '')
-const currentActionLabel = computed(() => currentActionKey.value === 'combat'
-  ? '交战中'
-  : ACTION_META[currentActionKey.value]?.label || '未定行动')
-const currentLocationLabel = computed(() => currentLocation.value.name)
+const activeTravelPlan = computed(() => player.value.travelPlan)
+const currentActionLabel = computed(() => {
+  if (activeTravelPlan.value) return `赶往${activeTravelPlan.value.destinationName}`
+  return currentActionKey.value === 'combat'
+    ? '交战中'
+    : ACTION_META[currentActionKey.value]?.label || '未定行动'
+})
+const currentLocationLabel = computed(() => {
+  if (!activeTravelPlan.value) return currentLocation.value.name
+  const nextStopId = activeTravelPlan.value.route[activeTravelPlan.value.nextIndex]
+  return nextStopId ? `下一站 ${LOCATION_MAP.get(nextStopId)?.name || nextStopId}` : activeTravelPlan.value.destinationName
+})
 
 const nextModeId = computed(() => {
   const currentIndex = QUICK_MODE_OPTIONS.findIndex(mode => mode.id === player.value.mode)
@@ -96,10 +104,14 @@ const nextModeId = computed(() => {
 
 const nextModeLabel = computed(() => getModeLabel(nextModeId.value))
 
+const canManualBreakthrough = computed(() =>
+  player.value.rankIndex < RANKS.length - 1 && player.value.breakthrough >= store.nextBreakthroughNeed * 0.85
+)
+
 const manualActions = computed(() => {
   const actionKeys = new Set<string>(['rest', ...currentLocation.value.actions])
   if (player.value.tradeRun) actionKeys.add('trade')
-  if (player.value.breakthrough >= store.nextBreakthroughNeed * 0.75 && currentLocation.value.actions.includes('breakthrough')) {
+  if (canManualBreakthrough.value) {
     actionKeys.add('breakthrough')
   }
 
@@ -125,11 +137,7 @@ function cycleMode() {
 function performManualAction(actionKey: string) {
   if (actionKey === 'breakthrough') {
     player.value.action = 'breakthrough'
-    if (player.value.breakthrough >= store.nextBreakthroughNeed * 0.75) {
-      performAction('breakthrough')
-    } else {
-      store.appendLog('火候尚未到位，不宜强行冲关。', 'warn')
-    }
+    attemptBreakthrough()
     return
   }
 

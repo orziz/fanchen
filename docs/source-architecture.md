@@ -12,6 +12,7 @@
 
 - 放 Vue 组件。
 - 当前主要承载页面壳层、启动覆盖层和游戏 DOM 骨架。
+- `src/components/ui/` 放跨页面复用的 UI 基元；当前卡片体系基线见 `docs/ui-component-baseline.md`。
 
 ### src/composables
 

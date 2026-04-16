@@ -6,9 +6,9 @@
           <h3 class="location-title">{{ selected.name }}</h3>
           <p class="location-subtitle">{{ locationTypeLine }}</p>
         </div>
-        <div class="inline-list location-inline-tags">
-          <span v-for="tag in locationTags" :key="tag" class="tag">{{ tag }}</span>
-        </div>
+        <UiPillRow class-name="location-inline-tags">
+          <UiPill v-for="tag in locationTags" :key="tag" variant="tag">{{ tag }}</UiPill>
+        </UiPillRow>
         <p class="location-summary">{{ selected.desc }}</p>
       </section>
 
@@ -35,19 +35,17 @@
 
       <template v-if="activeRealm">
         <div class="divider"></div>
-        <div class="combat-card standout">
-          <div class="location-top">
-            <div>
-              <p class="section-kicker">首领秘境</p>
-              <h3 class="location-title">{{ activeRealm.name }}</h3>
-              <p class="location-meta">{{ activeRealm.desc }}</p>
-            </div>
-            <span class="rarity epic">声望需求 {{ activeRealm.unlockRep }}</span>
-          </div>
+        <UiPanelCard tone="combat" standout>
+          <UiCardHeader kicker="首领秘境" :title="activeRealm.name" title-class="location-title">
+            <template #aside>
+              <UiPill variant="rarity" tone="epic">声望需求 {{ activeRealm.unlockRep }}</UiPill>
+            </template>
+          </UiCardHeader>
+          <p class="location-meta">{{ activeRealm.desc }}</p>
           <div class="location-actions">
             <button class="item-button" @click="onChallengeRealm">{{ isCurrent ? '立即闯入秘境' : '先赶赴此地并挑战' }}</button>
           </div>
-        </div>
+        </UiPanelCard>
       </template>
 
       <div class="divider"></div>
@@ -57,10 +55,10 @@
             <p class="section-kicker">当地门路</p>
             <h3 class="location-section-title">可做事务</h3>
           </div>
-          <div class="inline-list">
-            <span v-for="action in selected.actions" :key="action" class="route-pill">{{ ACTION_META[action]?.label || action }}</span>
-            <span v-for="hint in industryHints" :key="hint" class="route-pill">{{ hint }}</span>
-          </div>
+          <UiPillRow>
+            <UiPill v-for="action in selected.actions" :key="action" variant="route">{{ ACTION_META[action]?.label || action }}</UiPill>
+            <UiPill v-for="hint in industryHints" :key="hint" variant="route">{{ hint }}</UiPill>
+          </UiPillRow>
         </div>
 
         <div class="location-actions location-actions-secondary">
@@ -90,27 +88,53 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { ACTION_META, FACTIONS, REALM_TEMPLATES } from '@/config'
+import { ACTION_META, FACTIONS, LOCATION_MAP, REALM_TEMPLATES } from '@/config'
 import { formatUnlockLabels } from '@/composables/useUIHelpers'
 import { getTerritoryState } from '@/systems/social'
-import { currentLocationCanReach, travelTo, travelAndAct, performAction, tickWorld } from '@/systems/world'
-import { challengeRealm } from '@/systems/combat'
+import { getTravelPreview, travelTo, travelAndAct, travelAndChallengeRealm, performAction } from '@/systems/world'
+import UiCardHeader from '@/components/ui/UiCardHeader.vue'
+import UiPanelCard from '@/components/ui/UiPanelCard.vue'
+import UiPill from '@/components/ui/UiPill.vue'
+import UiPillRow from '@/components/ui/UiPillRow.vue'
 
 const store = useGameStore()
 const { player, npcs, world, currentLocation, selectedLocation: selected } = storeToRefs(store)
 
+const travelPreview = computed(() => getTravelPreview(selected.value.id))
+const isTravelingHere = computed(() => player.value.travelPlan?.destinationId === selected.value.id)
 const isCurrent = computed(() => selected.value.id === currentLocation.value.id)
-const reachable = computed(() => isCurrent.value || currentLocationCanReach(selected.value.id))
+const reachable = computed(() => isCurrent.value || Boolean(travelPreview.value.route))
 const canTravel = computed(() => reachable.value && !isCurrent.value)
 const actionLabels = computed(() => selected.value.actions.map(action => ACTION_META[action]?.label || action).join('、'))
-const journeyTag = computed(() => isCurrent.value ? '所在地' : reachable.value ? '可前往' : '路径未通')
-const journeyTitle = computed(() => isCurrent.value ? '你已在此地' : reachable.value ? `前往${selected.value.name}` : '当前尚不可达')
+const journeyTag = computed(() => {
+  if (isCurrent.value) return '所在地'
+  if (isTravelingHere.value) return '已定路线'
+  return reachable.value ? '可前往' : '前路受阻'
+})
+const journeyTitle = computed(() => {
+  if (isCurrent.value) return '你已在此地'
+  if (isTravelingHere.value) return `正沿路赶往${selected.value.name}`
+  return reachable.value ? `前往${selected.value.name}` : '当前暂时进不去'
+})
 const journeySummary = computed(() => {
   if (isCurrent.value) return '你可直接在此地处理风闻、跑差、历练与当地事务。'
-  if (reachable.value) return `动身后可在此地进行${actionLabels.value}。`
-  return '先打通与周边州县的通路，再来此地落脚。'
+  if (!reachable.value) return travelPreview.value.blockedReason || '先打通与周边州县的通路，再来此地落脚。'
+
+  const nextStop = travelPreview.value.nextStopId ? LOCATION_MAP.get(travelPreview.value.nextStopId)?.name || travelPreview.value.nextStopId : null
+  const via = travelPreview.value.viaIds.length ? describeViaIds(travelPreview.value.viaIds) : ''
+  const segmentLabel = travelPreview.value.segments <= 1 ? '单段直达' : `共 ${travelPreview.value.segments} 段`
+  const routeLine = via ? `${segmentLabel}，经由${via}` : segmentLabel
+  if (isTravelingHere.value) {
+    return `${routeLine}。下一站 ${nextStop || selected.value.name}，到站后可处理${actionLabels.value}。`
+  }
+  return `${routeLine}。动身后可在此地进行${actionLabels.value}。`
 })
-const travelButtonLabel = computed(() => isCurrent.value ? '你在此地' : reachable.value ? `前往${selected.value.name}` : '尚不可达')
+const travelButtonLabel = computed(() => {
+  if (isCurrent.value) return '你在此地'
+  if (!reachable.value) return '前路受阻'
+  if (isTravelingHere.value) return '继续赶路'
+  return `前往${selected.value.name}`
+})
 
 const locationTypeLine = computed(() => `${selected.value.region} · ${selected.value.terrain}`)
 
@@ -173,9 +197,7 @@ const factionsText = computed(() =>
 )
 
 function onTravel() {
-  const before = player.value.locationId
   travelTo(selected.value.id)
-  if (before !== player.value.locationId) tickWorld()
 }
 
 function onLocationAction(action: string) {
@@ -188,9 +210,10 @@ function onLocationAction(action: string) {
 
 function onChallengeRealm() {
   if (!activeRealm.value) return
-  if (player.value.locationId !== (selected.value as any).realmLocationId && player.value.locationId !== selected.value.id) {
-    travelTo(selected.value.id)
-  }
-  challengeRealm(activeRealm.value.id)
+  travelAndChallengeRealm(activeRealm.value.id)
+}
+
+function describeViaIds(viaIds: string[]) {
+  return viaIds.map(id => LOCATION_MAP.get(id)?.short || id).join('、')
 }
 </script>
