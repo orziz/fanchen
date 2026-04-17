@@ -13,7 +13,6 @@
     "skipLibCheck": true,
     "allowJs": false,
     "lib": ["ES2021", "DOM", "DOM.Iterable"],
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }

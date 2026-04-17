@@ -1,28 +1,35 @@
 :root {
   color-scheme: light;
   /* 宣纸水墨风 (Light Mode) 变量体系 */
-  --bg-ink: #f2ebd9;        /* 亮宣纸色 */
-  --bg-deep: #e8decc;       /* 深宣纸色 */
+  --bg-ink: #f2ebd9;
+  /* 亮宣纸色 */
+  --bg-deep: #e8decc;
+  /* 深宣纸色 */
   --mist: rgba(0, 0, 0, 0.04);
   --card: rgba(255, 255, 255, 0.9);
   --card-soft: rgba(248, 245, 238, 0.7);
   --border: rgba(0, 0, 0, 0.08);
   --line: rgba(0, 0, 0, 0.05);
-  
+
   /* 文本色：墨色为主 */
   --text-main: #2b2823;
   --text-dim: #5c5850;
   --text-faint: #8e897f;
-  
+
   /* 游戏内状态颜色：以不刺眼的古典色为主 */
-  --gold: #b3852b;          /* 暗琉璃黄 */
-  --gold-bright: #d4a340;   
-  --jade: #427e61;          /* 翠玉绿 */
-  --cinnabar: #b44a42;      /* 朱砂红 */
-  --sky: #4682b4;           /* 苍石蓝 */
-  
+  --gold: #b3852b;
+  /* 暗琉璃黄 */
+  --gold-bright: #d4a340;
+  --jade: #427e61;
+  /* 翠玉绿 */
+  --cinnabar: #b44a42;
+  /* 朱砂红 */
+  --sky: #4682b4;
+  /* 苍石蓝 */
+
   --shadow: 0 16px 32px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.02);
-  --radius-xl: 22px;        /* 稍微减弱圆角更显修仙书卷感 */
+  --radius-xl: 22px;
+  /* 稍微减弱圆角更显修仙书卷感 */
   --radius-lg: 16px;
   --radius-md: 10px;
   --radius-sm: 6px;
@@ -78,7 +85,7 @@ body {
 body {
   position: relative;
   /* 外部环境背景：极简宣纸过渡色 */
-  background: 
+  background:
     radial-gradient(circle at top, rgba(230, 222, 204, 0.8), transparent 40%),
     linear-gradient(180deg, #edebd9 0%, #e0dac2 100%);
   color: var(--text-main);
