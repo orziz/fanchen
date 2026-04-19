@@ -66,6 +66,24 @@ export function createInitialTerritories(): Record<string, TerritoryEntry> {
       + (loc.tags.includes('court') ? 12 : 0)
       + ((loc.tags.includes('port') || loc.tags.includes('market')) ? 6 : 0)
       + (loc.tags.includes('pass') ? 8 : 0),
+    prosperity: 22
+      + (loc.marketTier || 0) * 8
+      + ((loc.tags.includes('port') || loc.tags.includes('market')) ? 8 : 0)
+      + (loc.tags.includes('court') ? 5 : 0),
+    tradeHeat: 10
+      + (loc.marketTier || 0) * 7
+      + ((loc.tags.includes('port') || loc.tags.includes('market')) ? 10 : 0)
+      + (loc.tags.includes('pass') ? 8 : 0),
+    localSupply: 28
+      + (loc.marketTier || 0) * 5
+      + (loc.tags.includes('wild') ? 10 : 0)
+      + (loc.tags.includes('forge') ? 6 : 0)
+      + (loc.tags.includes('cultivation') ? 4 : 0),
+    needPressure: 24
+      + (loc.tags.includes('town') ? 8 : 0)
+      + (loc.tags.includes('court') ? 10 : 0)
+      + (loc.tags.includes('pass') ? 8 : 0)
+      + (loc.tags.includes('sect') ? 6 : 0),
   }]))
 }
 
@@ -88,6 +106,7 @@ function createInitialPlayer(): PlayerState {
     learnedKnowledges: {},
     affiliationId: null, affiliationRank: 0,
     factionStanding: {}, regionStanding: {}, factionCooldowns: {},
+    npcIntel: {},
     wantedByFactionId: null, wantedUntilDay: 0, relations: {},
     masterId: null, partnerId: null, rivalIds: [],
     affiliationTasks: [], affiliationTaskDay: 0,
@@ -264,10 +283,21 @@ function createInitialStory(): StoryState {
   }
 }
 
+function seedInitialNpcIntel(player: PlayerState, npcs: NpcState[]) {
+  npcs.forEach((npc) => {
+    if (npc.locationId === player.locationId) {
+      player.npcIntel[npc.id] = 'met'
+    }
+  })
+}
+
 export function createGameState(): GameState {
+  const player = createInitialPlayer()
+  const npcs = Array.from({ length: 12 }, (_, i) => createNPC(i + 1))
+  seedInitialNpcIntel(player, npcs)
   return {
-    player: createInitialPlayer(),
-    npcs: Array.from({ length: 12 }, (_, i) => createNPC(i + 1)),
+    player,
+    npcs,
     market: createInitialMarket(),
     auction: createAuctionListings(randomInt(4, 6)),
     world: createInitialWorld(),

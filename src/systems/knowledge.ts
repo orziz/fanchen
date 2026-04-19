@@ -30,20 +30,20 @@ export function getKnowledgeLearnIssues(knowledgeId: string) {
     issues.push(`境界不足，需要至少${ctx.getRankData(knowledge.minRankIndex).name}。`)
   }
   if (player.insight < knowledge.minInsight) {
-    issues.push(`悟性不足，还差${round(knowledge.minInsight - player.insight, 1)}。`)
+    issues.push(`悟性不足，还差${Math.ceil(knowledge.minInsight - player.insight)}。`)
   }
   return issues
 }
 
 function applyKnowledgeEffect(effect: Record<string, number>) {
   const player = getContext().game.player
-  if (effect.insight) player.insight += effect.insight
-  if (effect.power) player.power += effect.power
-  if (effect.charisma) player.charisma += effect.charisma
-  if (effect.reputation) player.reputation += effect.reputation
-  if (effect.farming) player.skills.farming += effect.farming
-  if (effect.crafting) player.skills.crafting += effect.crafting
-  if (effect.trading) player.skills.trading += effect.trading
+  if (effect.insight) player.insight = round(player.insight + effect.insight, 4)
+  if (effect.power) player.power = round(player.power + effect.power, 4)
+  if (effect.charisma) player.charisma = round(player.charisma + effect.charisma, 4)
+  if (effect.reputation) player.reputation = round(player.reputation + effect.reputation, 4)
+  if (effect.farming) player.skills.farming = round(player.skills.farming + effect.farming, 4)
+  if (effect.crafting) player.skills.crafting = round(player.skills.crafting + effect.crafting, 4)
+  if (effect.trading) player.skills.trading = round(player.skills.trading + effect.trading, 4)
 }
 
 export function learnKnowledge(knowledgeId: string, options: { skipRequirement?: boolean; sourceText?: string } = {}) {

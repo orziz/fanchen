@@ -354,6 +354,17 @@
   color: var(--text-main);
 }
 
+.dock-tab-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  color: var(--text-faint);
+}
+
+.dock-tab-btn:disabled:hover {
+  background: transparent;
+  color: var(--text-faint);
+}
+
 .dock-tab-btn.active {
   background: rgba(208, 171, 108, 0.14);
   border-color: rgba(208, 171, 108, 0.3);
@@ -421,6 +432,19 @@
 .dock-hotbar-btn:hover {
   background: rgba(0, 0, 0, 0.06);
   color: var(--text-main);
+}
+
+.dock-hotbar-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  color: var(--text-faint);
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+.dock-hotbar-btn:disabled:hover {
+  background: rgba(0, 0, 0, 0.02);
+  color: var(--text-faint);
 }
 
 .dock-hotbar-btn.active {

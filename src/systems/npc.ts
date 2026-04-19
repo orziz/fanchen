@@ -1,7 +1,16 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
 import { LOCATION_MAP, FACTION_MAP } from '@/config'
+import type { NpcIntelSource } from '@/types/game'
 import { sample, randomFloat, randomInt, findRoute } from '@/utils'
+import { recordNpcEconomicAction } from './worldEconomy'
+
+const RUMOR_VENUE_COSTS = {
+  teahouse: 4,
+  tavern: 7,
+} as const
+
+type RumorVenue = keyof typeof RUMOR_VENUE_COSTS
 
 /* ─── Profession Pools ─── */
 
@@ -40,6 +49,140 @@ function refreshNpcLifeProfile(npc: any, force = false) {
 }
 
 const YANPASS_CURFEW_HOURS = new Set([10, 11, 0, 1])
+
+function venueLabel(venue: RumorVenue) {
+  return venue === 'teahouse' ? '茶馆' : '酒馆'
+}
+
+function isValidNpcIntelSource(source: unknown): source is NpcIntelSource {
+  return source === 'heard' || source === 'met'
+}
+
+function npcIntelWeight(source: NpcIntelSource | null) {
+  if (source === 'met') return 2
+  if (source === 'heard') return 1
+  return 0
+}
+
+function venueSupportedByLocation(venue: RumorVenue, locationId: string) {
+  const tags = LOCATION_MAP.get(locationId)?.tags || []
+  if (venue === 'teahouse') return tags.some(tag => ['town', 'market', 'court', 'sect'].includes(tag))
+  return tags.some(tag => ['market', 'port', 'pass', 'town'].includes(tag))
+}
+
+function buildRumorScope(anchorId: string) {
+  const nearby = LOCATION_MAP.get(anchorId)?.neighbors || []
+  const extended = nearby.flatMap(id => LOCATION_MAP.get(id)?.neighbors || [])
+  return new Set([anchorId, ...nearby, ...extended])
+}
+
+function scoreRumorTarget(npc: any, venue: RumorVenue, anchorId: string, scope: Set<string>) {
+  const tags = LOCATION_MAP.get(npc.locationId)?.tags || []
+  let score = npc.locationId === anchorId ? 42 : scope.has(npc.locationId) ? 24 : 10
+  if (venue === 'teahouse') {
+    if (tags.some(tag => ['town', 'court', 'sect'].includes(tag))) score += 14
+    score += npc.mood.curiosity * 0.05 + npc.mood.kindness * 0.03
+  } else {
+    if (tags.some(tag => ['market', 'port', 'pass'].includes(tag))) score += 16
+    score += npc.wealth * 0.04 + npc.mood.greed * 0.03
+  }
+  return score + randomFloat(-3, 3)
+}
+
+function pickRumorTargets(venue: RumorVenue) {
+  const ctx = getContext()
+  const anchorId = ctx.game.player.locationId
+  const scope = buildRumorScope(anchorId)
+  return ctx.game.npcs
+    .filter(npc => npc.alive && !knowsNpc(npc.id))
+    .sort((left, right) => scoreRumorTarget(right, venue, anchorId, scope) - scoreRumorTarget(left, venue, anchorId, scope))
+}
+
+function drawRumorTargets(venue: RumorVenue) {
+  const candidates = [...pickRumorTargets(venue)]
+  const targets: typeof candidates = []
+  const count = Math.min(venue === 'teahouse' ? 2 : 3, candidates.length)
+  while (targets.length < count && candidates.length) {
+    const index = randomInt(0, candidates.length - 1)
+    targets.push(candidates.splice(index, 1)[0])
+  }
+  return targets
+}
+
+function describeRumor(npc: any, venue: RumorVenue) {
+  const locationName = LOCATION_MAP.get(npc.locationId)?.name || npc.locationId
+  if (venue === 'teahouse') {
+    return `你在茶馆听人提起${npc.name}，说此人近来常在${locationName}活动，正打算${npc.goal}。`
+  }
+  return `你在酒馆从行脚客口中听到${npc.name}的消息：此人最近常在${locationName}出没，多半忙着${npc.goal}。`
+}
+
+export function getNpcIntelSource(npcId: string): NpcIntelSource | null {
+  const source = getContext().game.player.npcIntel[npcId]
+  return isValidNpcIntelSource(source) ? source : null
+}
+
+export function rememberNpcIntel(npcId: string, source: NpcIntelSource = 'heard') {
+  const player = getContext().game.player
+  const current = getNpcIntelSource(npcId)
+  if (npcIntelWeight(current) >= npcIntelWeight(source)) return current || source
+  player.npcIntel[npcId] = source
+  return source
+}
+
+export function knowsNpc(npcId: string) {
+  return Boolean(getNpcIntelSource(npcId))
+}
+
+export function meetNpcsAtLocation(locationId = getContext().game.player.locationId) {
+  const ctx = getContext()
+  const metIds = ctx.game.npcs
+    .filter(npc => npc.alive && npc.locationId === locationId)
+    .map(npc => npc.id)
+  metIds.forEach(npcId => rememberNpcIntel(npcId, 'met'))
+  return metIds
+}
+
+export function getNpcRumorIssues(venue: RumorVenue): string[] {
+  const ctx = getContext()
+  const issues: string[] = []
+  if (!venueSupportedByLocation(venue, ctx.game.player.locationId)) {
+    issues.push(`此地还没有能让你稳稳打听消息的${venueLabel(venue)}。`)
+  }
+  const cost = RUMOR_VENUE_COSTS[venue]
+  if (ctx.game.player.money < cost) {
+    issues.push(`灵石不足，还差${cost - ctx.game.player.money}`)
+  }
+  if (!pickRumorTargets(venue).length) {
+    issues.push('眼下已经没有新的生面孔消息可打听了')
+  }
+  return issues
+}
+
+export function canGatherNpcRumors(venue: RumorVenue) {
+  return getNpcRumorIssues(venue).length === 0
+}
+
+export function explainNpcRumors(venue: RumorVenue) {
+  const issues = getNpcRumorIssues(venue)
+  return issues.length ? issues.join('；') : `花点茶资酒钱，就能在${venueLabel(venue)}里换到新的江湖消息。`
+}
+
+export function gatherNpcRumors(venue: RumorVenue) {
+  const ctx = getContext()
+  const issues = getNpcRumorIssues(venue)
+  if (issues.length) {
+    ctx.appendLog(`${venueLabel(venue)}里暂时打听不到新消息。${issues[0]}`, 'warn')
+    return [] as string[]
+  }
+  ctx.game.player.money -= RUMOR_VENUE_COSTS[venue]
+  const targets = drawRumorTargets(venue)
+  targets.forEach((npc) => {
+    rememberNpcIntel(npc.id, 'heard')
+    ctx.appendLog(describeRumor(npc, venue), 'npc')
+  })
+  return targets.map(npc => npc.id)
+}
 
 function canNpcUseYanpassFastTrack(npc: any) {
   return npc.factionId === 'yanpass-escort' || npc.action === 'trade' || npc.wealth >= 220
@@ -247,6 +390,7 @@ function processNpcAction(npc: any, action: string) {
     default:
       npc.lastEvent = `在${location.name}观望局势`
   }
+  recordNpcEconomicAction(npc, action, npc.locationId)
   if (Math.random() < 0.12) ctx.appendLog(`${npc.name}又有动作：${npc.lastEvent}。`, 'npc')
 }
 

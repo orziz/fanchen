@@ -95,7 +95,7 @@ export function getTechniqueLearnIssues(skillId: string) {
     issues.push(`境界不足，需要至少${ctx.getRankData(technique.minRankIndex).name}。`)
   }
   if (player.insight < technique.minInsight) {
-    issues.push(`悟性不足，还差${round(technique.minInsight - player.insight, 1)}。`)
+    issues.push(`悟性不足，还差${Math.ceil(technique.minInsight - player.insight)}。`)
   }
   return issues
 }

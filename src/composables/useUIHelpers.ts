@@ -1,5 +1,5 @@
 import { RARITY_META, MODE_OPTIONS, FACTIONS, FACTION_MAP, SECT_BUILDINGS, getTechnique } from '@/config'
-import { round } from '@/utils'
+import { formatNumber } from '@/utils'
 import type { ItemData } from '@/config/items'
 import type { NpcState } from '@/types/game'
 
@@ -105,9 +105,9 @@ function describeEffectRecord(effect: Record<string, number> | null | undefined)
   return Object.entries(effect)
     .filter(([, v]) => v)
     .map(([k, v]) => {
-      if (k === 'damageMultiplier') return `${labels[k] || k} ×${round(v, 2)}`
+      if (k === 'damageMultiplier') return `${labels[k] || k} ${Math.round(v * 100)}%`
       if (percentKeys.has(k)) return `${labels[k] || k} ${v > 0 ? '+' : ''}${Math.round(v * 100)}%`
-      return `${labels[k] || k} ${v > 0 ? `+${round(v, 2)}` : round(v, 2)}`
+      return `${labels[k] || k} ${v > 0 ? `+${formatNumber(v)}` : formatNumber(v)}`
     })
     .join('，')
 }

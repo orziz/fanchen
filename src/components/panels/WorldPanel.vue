@@ -40,11 +40,13 @@
         </template>
       </UiCardHeader>
       <p class="item-meta">{{ loc.region }} · {{ loc.terrain }} · 市集 {{ loc.marketTier || 0 }} 阶</p>
-      <p class="item-meta">灵气 {{ loc.aura }}，风险 {{ loc.danger }}，可在此处理 {{ getActionLine(loc.actions) }}</p>
+      <p class="item-meta">灵气 {{ loc.aura }}，风险 {{ loc.danger }}，治安 {{ getSecurity(loc.id) }}，税赋 {{ formatPercent(getTaxRate(loc.id)) }}</p>
+      <p class="item-meta">{{ getEconomy(loc.id).prosperityLabel }}，{{ getEconomy(loc.id).heatLabel }}，{{ getEconomy(loc.id).supplyLabel }}，{{ getEconomy(loc.id).needLabel }}</p>
+      <p class="item-meta">可在此处理 {{ getActionLine(loc.actions) }}</p>
       <p v-if="player.locationId !== loc.id && getTravelHint(loc.id)" class="item-meta">{{ getTravelHint(loc.id) }}</p>
       <UiActionGroup>
         <button class="item-button" @click="doFocus(loc.id)">查看地图</button>
-        <button class="item-button" :class="player.locationId === loc.id ? 'is-current' : 'is-route'" :disabled="player.locationId !== loc.id && !canTravelTo(loc.id)" @click="doTravel(loc.id)">
+        <button class="item-button" :class="player.locationId === loc.id ? 'is-current' : 'is-route'" :disabled="player.locationId !== loc.id && !canTravelTo(loc.id)" :title="getTravelButtonReason(loc.id) || undefined" @click="doTravel(loc.id)">
           {{ getTravelButtonLabel(loc.id) }}
         </button>
         <button v-if="isRealmHere(loc.id) && activeRealm" class="item-button" :class="{ 'is-route': player.locationId !== loc.id }" @click="doChallenge(activeRealm.id)">
@@ -60,9 +62,11 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { ACTION_META, LOCATIONS, LOCATION_MAP, REALM_TEMPLATES } from '@/config'
-import { round } from '@/utils'
+import { formatNumber } from '@/utils'
 import { useStage } from '@/composables/useStage'
+import { getTerritorySecurity, getTerritoryTaxRate } from '@/systems/social'
 import { getTravelPreview, travelAndChallengeRealm, travelTo } from '@/systems/world'
+import { getLocationEconomyOverview } from '@/systems/worldEconomy'
 import UiActionGroup from '@/components/ui/UiActionGroup.vue'
 import UiCardHeader from '@/components/ui/UiCardHeader.vue'
 import UiMetricGrid from '@/components/ui/UiMetricGrid.vue'
@@ -81,13 +85,21 @@ const activeRealm = computed(() => {
 const worldSummaryItems = computed(() => [
   { label: '今日天候', value: world.value.weather },
   { label: '异象征兆', value: world.value.omen },
-  { label: '商帮好感', value: round(world.value.factionFavor.merchants, 1) },
-  { label: '朝廷声望', value: round(world.value.factionFavor.court, 1) },
-  { label: '本地声望', value: round(store.getRegionStanding(player.value.locationId), 1) },
+  { label: '商帮好感', value: formatNumber(world.value.factionFavor.merchants) },
+  { label: '朝廷声望', value: formatNumber(world.value.factionFavor.court) },
+  { label: '本地声望', value: formatNumber(store.getRegionStanding(player.value.locationId)) },
+  { label: '当前治安', value: `${getSecurity(player.value.locationId)}` },
+  { label: '当前税赋', value: formatPercent(getTaxRate(player.value.locationId)) },
+  { label: '本地商气', value: getEconomy(player.value.locationId).prosperityLabel },
+  { label: '外货局势', value: getEconomy(player.value.locationId).needLabel },
   { label: '活跃地点', value: LOCATIONS.length },
 ])
 
 function getLocationName(id: string) { return LOCATION_MAP.get(id)?.name || id }
+function getSecurity(id: string) { return getTerritorySecurity(id) }
+function getTaxRate(id: string) { return getTerritoryTaxRate(id) }
+function getEconomy(id: string) { return getLocationEconomyOverview(id) }
+function formatPercent(value: number) { return `${Math.round(value * 100)}%` }
 
 function isRealmHere(locId: string) {
   return activeRealm.value?.locationId === locId
@@ -128,5 +140,10 @@ function getTravelButtonLabel(locId: string) {
   if (!canTravelTo(locId)) return '前路受阻'
   if (player.value.travelPlan?.destinationId === locId) return '继续赶路'
   return `前往${getLocationName(locId)}`
+}
+
+function getTravelButtonReason(locId: string) {
+  if (player.value.locationId === locId) return '你已在此地。'
+  return getTravelHint(locId)
 }
 </script>

@@ -6,7 +6,19 @@ import { isTradeHubLocation } from './faction'
 
 function createTerritoryEntry(locationId: string): TerritoryEntry {
   const loc = LOCATION_MAP.get(locationId)
-  if (!loc) return { locationId, controllerId: null, incumbentId: null, playerInfluence: 0, stability: 24 }
+  if (!loc) {
+    return {
+      locationId,
+      controllerId: null,
+      incumbentId: null,
+      playerInfluence: 0,
+      stability: 24,
+      prosperity: 24,
+      tradeHeat: 12,
+      localSupply: 30,
+      needPressure: 24,
+    }
+  }
   return {
     locationId,
     controllerId: loc.factionIds?.[0] || null,
@@ -17,6 +29,24 @@ function createTerritoryEntry(locationId: string): TerritoryEntry {
       + (loc.tags.includes('court') ? 12 : 0)
       + (loc.tags.includes('port') || loc.tags.includes('market') ? 6 : 0)
       + (loc.tags.includes('pass') ? 8 : 0),
+    prosperity: 22
+      + (loc.marketTier || 0) * 8
+      + (loc.tags.includes('port') || loc.tags.includes('market') ? 8 : 0)
+      + (loc.tags.includes('court') ? 5 : 0),
+    tradeHeat: 10
+      + (loc.marketTier || 0) * 7
+      + (loc.tags.includes('port') || loc.tags.includes('market') ? 10 : 0)
+      + (loc.tags.includes('pass') ? 8 : 0),
+    localSupply: 28
+      + (loc.marketTier || 0) * 5
+      + (loc.tags.includes('wild') ? 10 : 0)
+      + (loc.tags.includes('forge') ? 6 : 0)
+      + (loc.tags.includes('cultivation') ? 4 : 0),
+    needPressure: 24
+      + (loc.tags.includes('town') ? 8 : 0)
+      + (loc.tags.includes('court') ? 10 : 0)
+      + (loc.tags.includes('pass') ? 8 : 0)
+      + (loc.tags.includes('sect') ? 6 : 0),
   }
 }
 
@@ -104,6 +134,96 @@ export function getPlayerTerritoryModifier(locationId: string) {
   return 0
 }
 
+export function getTerritorySecurity(locationId: string) {
+  const territory = getTerritoryState(locationId)
+  const location = LOCATION_MAP.get(locationId)
+  const playerFaction = getContext().game.player.playerFaction
+  let security = territory.stability
+    - (location?.danger || 0) * 5
+    + (location?.tags.includes('court') ? 12 : 0)
+    + (location?.tags.includes('pass') ? 8 : 0)
+    + (location?.tags.includes('market') || location?.tags.includes('port') ? 4 : 0)
+    + territory.prosperity * 0.12
+    + territory.localSupply * 0.08
+    - territory.needPressure * 0.18
+  if (playerFaction && territory.controllerId === playerFaction.id) {
+    security += 8 + (playerFaction.branches?.watch || 0) * 3
+  } else if (territory.playerInfluence >= 30) {
+    security += 3
+  }
+  if (territory.tradeHeat >= 70 && territory.stability < 36) security -= 6
+  return clamp(round(security), 8, 100)
+}
+
+export function getTerritoryTaxRate(locationId: string) {
+  const territory = getTerritoryState(locationId)
+  const location = LOCATION_MAP.get(locationId)
+  const playerFaction = getContext().game.player.playerFaction
+  const security = getTerritorySecurity(locationId)
+  let taxRate = 0.028
+    + (location?.marketTier || 0) * 0.012
+    + (location?.tags.includes('court') ? 0.014 : 0)
+    + (location?.tags.includes('pass') ? 0.01 : 0)
+    + territory.tradeHeat * 0.0006
+    + Math.max(0, territory.prosperity - 45) * 0.0004
+    + territory.needPressure * 0.0005
+    - territory.localSupply * 0.00025
+  if (security < 35) taxRate += 0.014
+  else if (security < 55) taxRate += 0.006
+  if (playerFaction && territory.controllerId === playerFaction.id) {
+    taxRate -= 0.015 + (playerFaction.branches?.watch || 0) * 0.002
+  } else if (territory.playerInfluence >= 30) {
+    taxRate -= 0.006
+  }
+  return clamp(round(taxRate, 3), 0.02, 0.22)
+}
+
+export function getTerritoryCommerceEffects(locationId: string) {
+  const security = getTerritorySecurity(locationId)
+  const taxRate = getTerritoryTaxRate(locationId)
+  return {
+    security,
+    taxRate,
+    tradeLossRate: clamp(round(Math.max(0, 48 - security) * 0.0024, 3), 0, 0.08),
+    industryLossRate: clamp(round(Math.max(0, 42 - security) * 0.002, 3), 0, 0.06),
+  }
+}
+
+export function processTerritoryStatusTick() {
+  const ctx = getContext()
+  const playerFaction = ctx.game.player.playerFaction
+  if (ctx.game.world.hour !== 0) return
+
+  Object.keys(ctx.game.world.territories || {}).forEach((locationId) => {
+    const territory = getTerritoryState(locationId)
+    const location = LOCATION_MAP.get(locationId)
+    if (!location) return
+
+    let drift = (location.tags.includes('court') ? 1 : 0)
+      + (location.tags.includes('pass') ? 1 : 0)
+      - Math.max(0, location.danger - 2)
+
+    if (playerFaction && territory.controllerId === playerFaction.id) {
+      drift += 2 + (playerFaction.branches?.watch || 0)
+      const taxIncome = Math.max(0, Math.round(getTerritoryTaxRate(locationId) * (18 + (location.marketTier || 0) * 22)))
+      playerFaction.treasury += taxIncome
+    } else if (territory.playerInfluence >= 30) {
+      drift += 1
+    }
+
+    const standing = ctx.getRegionStanding(locationId)
+    if (standing >= 8) drift += 1
+    else if (standing <= -4) drift -= 1
+
+    if (territory.prosperity >= 60) drift += 1
+    if (territory.localSupply >= 62) drift += 1
+    if (territory.needPressure >= 68) drift -= 2
+    if (territory.tradeHeat >= 72 && getTerritorySecurity(locationId) < 40) drift -= 2
+
+    territory.stability = clamp(round(territory.stability + drift + randomInt(-2, 2)), 8, 120)
+  })
+}
+
 function getTerritoryCampaignBaseCost(locationId: string) {
   const location = LOCATION_MAP.get(locationId)
   return {
@@ -131,7 +251,7 @@ export function getTerritoryCampaignIssues(locationId: string): string[] {
   if (g.player.stamina < cost.stamina) issues.push(`体力不足，还差${cost.stamina - g.player.stamina}`)
   if ((playerFaction.crew?.guards || 0) < cost.guardNeed) issues.push(`护手不够，还差${cost.guardNeed - (playerFaction.crew?.guards || 0)}`)
   if ((playerFaction.crew?.runners || 0) < cost.runnerNeed) issues.push(`跑线人手不够，还差${cost.runnerNeed - (playerFaction.crew?.runners || 0)}`)
-  if (location.tags.includes('court') && ctx.getRegionStanding(locationId) < 6) issues.push(`本地声望太浅，还差${round(6 - ctx.getRegionStanding(locationId), 1)}`)
+  if (location.tags.includes('court') && ctx.getRegionStanding(locationId) < 6) issues.push(`本地声望太浅，还差${Math.ceil(6 - ctx.getRegionStanding(locationId))}`)
   return issues
 }
 
@@ -177,8 +297,8 @@ export function launchTerritoryCampaign(locationId: string) {
   if (delta >= 0) {
     territory.playerInfluence = clamp(territory.playerInfluence + 18 + Math.max(4, Math.round(delta * 0.45)), 0, 100)
     territory.stability = clamp(territory.stability - 6, 10, 120)
-    playerFaction.influence += 3.6
-    playerFaction.prestige += 2.4
+    playerFaction.influence = round(playerFaction.influence + 3.6, 4)
+    playerFaction.prestige = round(playerFaction.prestige + 2.4, 4)
     ctx.adjustRegionStanding(locationId, 1.2)
     if (territory.playerInfluence >= 60) {
       territory.controllerId = playerFaction.id
@@ -191,7 +311,7 @@ export function launchTerritoryCampaign(locationId: string) {
   }
   territory.playerInfluence = clamp(territory.playerInfluence + Math.max(0, 4 + delta), 0, 100)
   territory.stability = clamp(territory.stability + 4, 10, 120)
-  playerFaction.prestige = Math.max(0, playerFaction.prestige - 0.8)
+  playerFaction.prestige = round(Math.max(0, playerFaction.prestige - 0.8), 4)
   ctx.appendLog(`你在${location.name}试着争路，却被${getTerritoryControllerName(territory)}压了回来。`, 'warn')
 }
 

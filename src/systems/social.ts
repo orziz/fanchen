@@ -26,11 +26,15 @@ export {
   explainTerritoryCampaign,
   getPlayerFactionTerritories,
   getPlayerFactionTerritoryTargets,
+  getTerritoryCommerceEffects,
   getPlayerTerritoryModifier,
   getTerritoryCampaignIssues,
+  getTerritorySecurity,
   getTerritoryStabilizeIssues,
   getTerritoryState,
+  getTerritoryTaxRate,
   launchTerritoryCampaign,
+  processTerritoryStatusTick,
   stabilizeTerritory,
 } from './social/territory'
 export {
@@ -69,10 +73,13 @@ export {
 } from './social/playerFaction'
 export {
   assignTeaching,
+  canCreateSect,
   canCompleteSectMission,
   completeSectMission,
   createSect,
+  explainCreateSect,
   explainSectMission,
+  getCreateSectIssues,
   getSectMissionIssues,
   processSectTick,
   refreshSectMissions,

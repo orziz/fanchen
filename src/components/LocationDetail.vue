@@ -28,7 +28,9 @@
         <button
           class="item-button location-travel-btn"
           :class="{ active: !isCurrent && reachable, 'is-current': isCurrent, 'is-unreachable': !isCurrent && !reachable }"
+          :disabled="!canTravel"
           :aria-disabled="!canTravel"
+          :title="travelButtonReason"
           @click="canTravel ? onTravel() : undefined"
         >{{ travelButtonLabel }}</button>
       </section>
@@ -73,7 +75,7 @@
       <div class="location-footer-copy">
         <section class="location-note">
           <p class="section-kicker">常驻人物</p>
-          <p class="location-meta">{{ residents.length ? residents.map(n => `${n.name}·${n.personalityLabel}`).join('、') : '暂无熟悉面孔' }}</p>
+          <p class="location-meta">{{ residents.length ? residents.map(n => residentLabel(n)).join('、') : '你还没在此地听说过什么熟面孔。' }}</p>
         </section>
         <section class="location-note">
           <p class="section-kicker">此地门路</p>
@@ -129,6 +131,10 @@ const journeySummary = computed(() => {
   }
   return `${routeLine}。动身后可在此地进行${actionLabels.value}。`
 })
+const travelButtonReason = computed(() => {
+  if (isCurrent.value) return '你已在此地。'
+  return journeySummary.value
+})
 const travelButtonLabel = computed(() => {
   if (isCurrent.value) return '你在此地'
   if (!reachable.value) return '前路受阻'
@@ -145,7 +151,7 @@ const locationTags = computed(() => [
 ])
 
 const residents = computed(() =>
-  store.npcs.filter(n => n.locationId === selected.value.id).slice(0, 5)
+  store.npcs.filter(n => n.locationId === selected.value.id && player.value.npcIntel[n.id]).slice(0, 5)
 )
 
 const factionsHere = computed(() =>
@@ -215,5 +221,9 @@ function onChallengeRealm() {
 
 function describeViaIds(viaIds: string[]) {
   return viaIds.map(id => LOCATION_MAP.get(id)?.short || id).join('、')
+}
+
+function residentLabel(npc: { id: string; name: string; personalityLabel: string }) {
+  return player.value.npcIntel[npc.id] === 'met' ? `${npc.name}·${npc.personalityLabel}` : `${npc.name}·只闻其名`
 }
 </script>

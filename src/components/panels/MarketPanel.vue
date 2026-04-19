@@ -1,9 +1,24 @@
 <template>
-  <p class="panel-intro">市集货架随时辰轮转。压货、跑城、交割和踩线，才是把商路滚活的正经做法。</p>
+  <p class="panel-intro">这里现在只分两件事来看：一边盯跑商货路，一边只看一处市集的货架，不再把整圈地界一次摊满。</p>
 
   <UiMetricGrid :items="tradeSummaryItems" />
 
+  <div class="panel-section-nav">
+    <button
+      v-for="section in marketSections"
+      :key="section.key"
+      :class="['panel-section-button', { active: activeMarketSection === section.key }]"
+      type="button"
+      @click="activeMarketSection = section.key"
+    >
+      <span>{{ section.label }}</span>
+      <strong class="panel-section-button__count">{{ section.count }}</strong>
+    </button>
+  </div>
+  <p class="panel-section-copy">{{ activeMarketSectionMeta.desc }}</p>
+
   <!-- Active trade run -->
+  <template v-if="activeMarketSection === 'trade'">
   <UiPanelCard v-if="activeTradeRun" tone="combat" standout>
     <UiCardHeader kicker="当前货队" :title="activeTradeRun.cargoLabel" title-class="auction-title">
       <template #aside>
@@ -29,7 +44,7 @@
           </template>
         </UiCardHeader>
         <p class="item-meta">{{ route.cargoLabel }} · {{ route.segments }} 段路程 · 到站预估 {{ route.saleEstimate }}</p>
-        <p class="item-meta">压货 {{ route.purchaseCost }} 灵石</p>
+        <p class="item-meta">压货 {{ route.purchaseCost }} 灵石 · 起货税 {{ formatPercent(route.originTaxRate) }} · 落地治安 {{ route.destinationSecurity }}</p>
         <UiActionGroup>
           <button class="item-button" @click="doTradeRouteAction(route)">
             {{ getTradeRouteActionLabel(route) }}
@@ -60,21 +75,35 @@
       </UiPillRow>
       <p v-for="note in focusedTradeNotes" :key="`${focusedTradeRoute.destinationId}-${note}`" class="item-meta">{{ note }}</p>
       <UiActionGroup>
-        <button class="item-button" :disabled="!focusedTradeReady" @click="doStartTrade(focusedTradeRoute.destinationId)">
+        <button class="item-button" :disabled="!focusedTradeReady" :title="focusedTradeNotes.join('；')" @click="doStartTrade(focusedTradeRoute.destinationId)">
           {{ focusedTradeReady ? '条件已齐，立即压货' : '条件未齐，暂不能压货' }}
         </button>
       </UiActionGroup>
     </UiPanelCard>
   </div>
+  </template>
 
   <!-- Markets by location -->
-  <h3 class="subsection-title">各地市集</h3>
-  <div v-for="[locationId, listings] in sortedMarkets" :key="locationId">
-    <h3 class="subsection-title">{{ getLocationName(locationId) }}</h3>
-    <p class="panel-intro">灵气 {{ getLocation(locationId)?.aura }}，偏好 {{ getMarketBiasLabel(getLocation(locationId)?.marketBias || '') }}，特产 {{ getLocation(locationId)?.resource }}。</p>
-    <div class="market-grid">
-      <template v-if="listings.length">
-        <UiPanelCard v-for="listing in listings.slice(0, 6)" :key="listing.listingId" tone="market">
+  <template v-if="activeMarketSection === 'market'">
+    <div v-if="marketLocationOptions.length" class="panel-section-nav panel-section-nav--compact">
+      <button
+        v-for="location in marketLocationOptions"
+        :key="location.id"
+        :class="['panel-section-button', { active: visibleMarketLocationId === location.id }]"
+        type="button"
+        @click="selectedMarketLocationId = location.id"
+      >
+        <span>{{ location.label }}</span>
+        <strong class="panel-section-button__count">{{ location.count }}</strong>
+      </button>
+    </div>
+
+    <template v-if="selectedMarketEntry">
+      <h3 class="subsection-title">{{ getLocationName(selectedMarketEntry.locationId) }}</h3>
+      <p class="panel-intro">灵气 {{ getLocation(selectedMarketEntry.locationId)?.aura }}，偏好 {{ getMarketBiasLabel(getLocation(selectedMarketEntry.locationId)?.marketBias || '') }}，特产 {{ getLocation(selectedMarketEntry.locationId)?.resource }}，{{ getEconomyHeat(selectedMarketEntry.locationId) }}，{{ getEconomySummary(selectedMarketEntry.locationId) }}。</p>
+      <div class="market-grid">
+        <template v-if="selectedMarketEntry.listings.length">
+          <UiPanelCard v-for="listing in selectedMarketEntry.listings.slice(0, 6)" :key="listing.listingId" tone="market">
           <UiCardHeader :title="`${itemOf(listing.itemId).name} x${listing.quantity}`" title-class="market-title">
             <template #aside>
               <UiPill variant="rarity" :tone="RARITY_META[itemOf(listing.itemId).rarity].color">{{ listing.price }} 灵石</UiPill>
@@ -83,14 +112,16 @@
           <p class="market-meta">{{ itemOf(listing.itemId).desc }}</p>
           <p class="market-meta">卖家：{{ listing.seller }}</p>
           <UiActionGroup variant="market">
-            <button v-if="locationId === currentLocation.id" class="item-button" @click="doBuy(listing.listingId)">立即购入</button>
-            <button v-else class="item-button" @click="doTravel(locationId)">前往{{ getLocationShort(locationId) }}</button>
+            <button v-if="selectedMarketEntry.locationId === currentLocation.id" class="item-button" @click="doBuy(listing.listingId)">立即购入</button>
+            <button v-else class="item-button" @click="doTravel(selectedMarketEntry.locationId)">前往{{ getLocationShort(selectedMarketEntry.locationId) }}</button>
           </UiActionGroup>
         </UiPanelCard>
-      </template>
-      <div v-else class="empty-state">暂无货品。</div>
-    </div>
-  </div>
+        </template>
+        <div v-else class="empty-state">这一地的货架眼下是空的。</div>
+      </div>
+    </template>
+    <div v-else class="empty-state">各地货架暂时都还没摆出来。</div>
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -98,10 +129,11 @@ import { computed, nextTick, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { RARITY_META, LOCATION_MAP, getItem } from '@/config'
-import { round } from '@/utils'
+import { formatNumber } from '@/utils'
 import { getMarketBiasLabel } from '@/composables/useUIHelpers'
 import { getTradeRouteOptions, startTradeRun, advanceTradeRun, buyListing } from '@/systems/trade'
 import { travelTo, tickWorld } from '@/systems/world'
+import { getLocationEconomyOverview } from '@/systems/worldEconomy'
 import UiActionGroup from '@/components/ui/UiActionGroup.vue'
 import UiCardHeader from '@/components/ui/UiCardHeader.vue'
 import UiMetricGrid from '@/components/ui/UiMetricGrid.vue'
@@ -113,15 +145,43 @@ const store = useGameStore()
 const { player, market, currentLocation } = storeToRefs(store)
 
 const activeTradeRun = computed(() => player.value.tradeRun)
+const currentEconomy = computed(() => getLocationEconomyOverview(currentLocation.value.id))
+type MarketSectionKey = 'trade' | 'market'
+
+const activeMarketSection = ref<MarketSectionKey>('trade')
+const selectedMarketLocationId = ref(currentLocation.value.id)
 
 const tradeSummaryItems = computed(() => [
-  { label: '当前商技', value: round(player.value.skills.trading, 1) },
-  { label: '本地声望', value: round(store.getRegionStanding(), 1) },
+  { label: '当前商技', value: formatNumber(player.value.skills.trading) },
+  { label: '本地声望', value: formatNumber(store.getRegionStanding()) },
+  { label: '本地商气', value: currentEconomy.value.prosperityLabel },
+  { label: '外货局势', value: currentEconomy.value.needLabel },
   {
     label: '在途货路',
     value: activeTradeRun.value ? `${activeTradeRun.value.originName}→${activeTradeRun.value.destinationName}` : '暂无',
   },
 ])
+
+const marketSections = computed(() => ([
+  {
+    key: 'trade' as const,
+    label: '跑商',
+    count: tradeRoutes.value.length + (activeTradeRun.value ? 1 : 0),
+    desc: activeTradeRun.value
+      ? '先盯在途货队和下一条要压的货路。'
+      : '这里只看货路、压货条件和在途货队，不混进各地货架。',
+  },
+  {
+    key: 'market' as const,
+    label: '市集',
+    count: sortedMarkets.value.length,
+    desc: '各地货架改成一地一看，先挑地点，再看这一地有什么货。',
+  },
+]))
+
+const activeMarketSectionMeta = computed(() =>
+  marketSections.value.find(section => section.key === activeMarketSection.value) || marketSections.value[0]
+)
 
 const tradeRoutes = computed(() => getTradeRouteOptions(currentLocation.value.id))
 
@@ -160,7 +220,8 @@ const focusedTradeNotes = computed(() => {
 
   const notes: string[] = [
     `${focusedTradeRoute.value.cargoLabel}需要先在${focusedTradeRoute.value.originName}压货，再跑${focusedTradeRoute.value.segments}段路送到${focusedTradeRoute.value.destinationName}。`,
-    `目的地当前本地声望 ${round(focusedTradeRoute.value.localStanding, 1)}，会继续影响这条货路后续滚动收益。`,
+    `${focusedTradeRoute.value.originName}起货税约 ${formatPercent(focusedTradeRoute.value.originTaxRate)}，${focusedTradeRoute.value.destinationName}当前治安 ${focusedTradeRoute.value.destinationSecurity}、税赋 ${formatPercent(focusedTradeRoute.value.destinationTaxRate)}。`,
+    `目的地当前本地声望 ${formatNumber(focusedTradeRoute.value.localStanding)}，会继续影响这条货路后续滚动收益。`,
   ]
 
   if (activeTradeRun.value) {
@@ -187,10 +248,36 @@ const sortedMarkets = computed(() => {
     })
 })
 
+const marketLocationOptions = computed(() =>
+  sortedMarkets.value.map(([locationId, listings]) => ({
+    id: locationId,
+    label: locationId === currentLocation.value.id ? `${getLocationShort(locationId)} · 当前` : getLocationShort(locationId),
+    count: listings.length,
+  }))
+)
+
+const visibleMarketLocationId = computed(() => {
+  const match = marketLocationOptions.value.find(location => location.id === selectedMarketLocationId.value)
+  return match?.id || marketLocationOptions.value[0]?.id || null
+})
+
+const selectedMarketEntry = computed(() => {
+  if (!visibleMarketLocationId.value) return null
+  const entry = sortedMarkets.value.find(([locationId]) => locationId === visibleMarketLocationId.value)
+  if (!entry) return null
+  return {
+    locationId: entry[0],
+    listings: entry[1],
+  }
+})
+
 function getLocation(id: string) { return LOCATION_MAP.get(id) }
 function getLocationName(id: string) { return LOCATION_MAP.get(id)?.name || id }
 function getLocationShort(id: string) { return LOCATION_MAP.get(id)?.short || id }
+function getEconomySummary(id: string) { return getLocationEconomyOverview(id).summary }
+function getEconomyHeat(id: string) { return getLocationEconomyOverview(id).heatLabel }
 function itemOf(itemId: string) { return getItem(itemId)! }
+function formatPercent(value: number) { return `${Math.round(value * 100)}%` }
 
 function doStartTrade(destId: string) {
   if (startTradeRun(destId)) {
@@ -207,6 +294,7 @@ function getTradeRouteActionLabel(route: TradeRoute) {
 }
 
 async function showTradeConditions(destId: string) {
+  activeMarketSection.value = 'trade'
   focusedTradeRouteId.value = destId
   await nextTick()
   tradeConditionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })

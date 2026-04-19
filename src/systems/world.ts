@@ -5,14 +5,15 @@ import {
   LOCATION_MAP, LOCATIONS, TRAVEL_EVENT_TEMPLATES, DISTRIBUTABLE_ITEMS, TIME_LABELS,
   ACTION_META, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
 } from '@/config'
-import { sample, randomInt, fillTemplate, findRoute as resolveRoute } from '@/utils'
+import { sample, randomInt, fillTemplate, findRoute as resolveRoute, round } from '@/utils'
 import { applyPassiveAction, attemptBreakthrough, revivePlayer } from './player'
 import { autoCombatTick, maybeStartEncounter, startPursuitEncounter, challengeRealm } from './combat'
 import { advanceTradeRun, resolvePassiveTrade, isTradeHub, maybeStartBestTradeRun } from './trade'
 import { resolveAuctionVisit, resolveAuctionTurn, refreshMarketIfNeeded, maybeActivateRealm } from './auction'
-import { hasActiveFactionPursuit, processRelationshipTick, processSectTick, processPlayerFactionTick, processFactionStatusTick } from './social'
-import { processNpcLifeTick, runNpcAI } from './npc'
+import { hasActiveFactionPursuit, processRelationshipTick, processSectTick, processPlayerFactionTick, processFactionStatusTick, processTerritoryStatusTick } from './social'
+import { meetNpcsAtLocation, processNpcLifeTick, runNpcAI } from './npc'
 import { processIndustryTick } from './industry'
+import { processWorldEconomyTick } from './worldEconomy'
 
 /* ─── Travel Events ─── */
 
@@ -37,7 +38,7 @@ function triggerTravelEvent(location: ReturnType<typeof LOCATION_MAP.get>) {
   }
   ctx.adjustResource('hp', -randomInt(4, 10), 'maxHp')
   ctx.adjustResource('qi', -randomInt(2, 8), 'maxQi')
-  ctx.game.player.breakthrough += 1.5
+  ctx.game.player.breakthrough = round(ctx.game.player.breakthrough + 1.5, 4)
   ctx.appendLog(event.text, 'warn')
 }
 
@@ -254,6 +255,7 @@ function advancePlayerTravelStep(): TravelAdvanceResult {
   activePlan.pausedReason = null
   g.player.locationId = nextStopId
   g.player.action = 'travel'
+  meetNpcsAtLocation(nextStopId)
   const travelStaminaCost = ACTION_META.travel?.cost?.stamina ?? 6
   const travelQiCost = ACTION_META.travel?.cost?.qi ?? 3
   ctx.adjustResource('stamina', -travelStaminaCost, 'maxStamina')
@@ -422,7 +424,7 @@ function processActionKey(actionKey: string | null) {
     applyPassiveAction('sect')
     if (g.player.sect) {
       g.player.sect.treasury += 8 + g.player.sect.buildings.market * 4
-      g.player.sect.prestige += 0.6
+      g.player.sect.prestige = round(g.player.sect.prestige + 0.6, 4)
     }
     return
   }
@@ -481,7 +483,9 @@ export function tickWorld() {
     processRelationshipTick()
     processSectTick()
     processPlayerFactionTick()
+    processTerritoryStatusTick()
     processIndustryTick()
+    processWorldEconomyTick()
     if (g.world.hour === 0) processNpcLifeTick()
   }
   runNpcAI()

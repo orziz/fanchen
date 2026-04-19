@@ -15,6 +15,8 @@ export interface RelationState {
   affinity: number; trust: number; romance: number; rivalry: number; role: string
 }
 
+export type NpcIntelSource = 'heard' | 'met'
+
 /* ─── Player Assets ─── */
 export interface AssetState {
   id: string; propertyId: string; locationId: string; kind: string; label: string
@@ -101,6 +103,7 @@ export interface PlayerState {
   affiliationId: string | null; affiliationRank: number
   factionStanding: Record<string, number>; regionStanding: Record<string, number>
   factionCooldowns: Record<string, number>
+  npcIntel: Record<string, NpcIntelSource>
   wantedByFactionId: string | null; wantedUntilDay: number
   relations: Record<string, RelationState>
   masterId: string | null; partnerId: string | null; rivalIds: string[]
@@ -159,6 +162,7 @@ export interface RealmProgress { activeRealmId: string | null; cooldown: number;
 export interface TerritoryEntry {
   locationId: string; controllerId: string | null; incumbentId: string | null
   playerInfluence: number; stability: number
+  prosperity: number; tradeHeat: number; localSupply: number; needPressure: number
 }
 
 export interface MarketListing {

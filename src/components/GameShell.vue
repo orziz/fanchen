@@ -7,11 +7,11 @@
 
       <!-- 中间内容区：主场景 + 右侧导轨 -->
       <div class="v3-body">
-        <div class="v3-stage-wrap" :class="{ 'has-context': !!contextType }">
+        <div class="v3-stage-wrap" :class="{ 'has-context': contextPanels.length > 0 }">
           <!-- 上下文关联副栏（市场/拍卖行 → 背包；战斗/势力 → 角色状态）-->
-          <aside v-if="contextType" class="v3-context-col">
-            <PlayerPanel v-if="contextType === 'player-stats'" />
-            <InventoryPanel v-else-if="contextType === 'inventory'" class="v3-ctx-inventory" />
+          <aside v-if="contextPanels.length" class="v3-context-col">
+            <PlayerPanel v-if="contextPanels.includes('player-stats')" />
+            <InventoryPanel v-if="contextPanels.includes('inventory')" class="v3-ctx-inventory" />
           </aside>
 
           <!-- 主舞台 -->
@@ -46,5 +46,5 @@ import StoryOverlay from './StoryOverlay.vue'
 import ToastStack from './ToastStack.vue'
 import InventoryPanel from './panels/InventoryPanel.vue'
 
-const { contextType } = useStage()
+const { contextPanels } = useStage()
 </script>

@@ -15,9 +15,14 @@
             <p>气血 {{ hpPercent }}% / 真气 {{ qiPercent }}% / 体力 {{ staminaPercent }}%</p>
           </article>
           <article class="command-reading-card">
+            <span>修为底子</span>
+            <strong>{{ cultivationPercent }}%</strong>
+            <p>{{ cultivationStatus }}</p>
+          </article>
+          <article class="command-reading-card">
             <span>破境火候</span>
             <strong>{{ breakthroughPercent }}%</strong>
-            <p>{{ breakthroughPercent >= 85 ? '已接近可冲关线' : `距下一境尚差 ${formatNumber(Math.max(0, nextBreakthroughNeed - player.breakthrough))}` }}</p>
+            <p>{{ breakthroughStatus }}</p>
           </article>
           <article class="command-reading-card">
             <span>当前门路</span>
@@ -84,6 +89,8 @@
           :theme="action.theme"
           :title="action.label"
           :description="action.desc"
+          :disabled="action.disabled"
+          :disabled-reason="action.reason"
           @click="runQuickAction(action.key)"
         />
       </UiActionGroup>
@@ -95,8 +102,15 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { MODE_OPTIONS, REALM_TEMPLATES, RANKS } from '@/config'
-import { formatNumber } from '@/utils'
+import {
+  MODE_OPTIONS,
+  REALM_TEMPLATES,
+  getBreakthroughActionDescription,
+  getBreakthroughDisabledReason,
+  getBreakthroughHintCopy,
+  getBreakthroughStatusCopy,
+  getCultivationStatusCopy,
+} from '@/config'
 import { getModeLabel } from '@/composables/useUIHelpers'
 import { attemptBreakthrough, setMode } from '@/systems/player'
 import { performAction } from '@/systems/world'
@@ -107,7 +121,10 @@ import UiPill from '@/components/ui/UiPill.vue'
 import UiPillRow from '@/components/ui/UiPillRow.vue'
 
 const store = useGameStore()
-const { player, world, currentLocation, currentAffiliation, sect, nextBreakthroughNeed } = storeToRefs(store)
+const {
+  player, world, currentLocation, currentAffiliation, sect, hasNextRank, nextBreakthroughNeed,
+  cultivationGateNeed, breakthroughReadyNeed,
+} = storeToRefs(store)
 
 function getPercent(value: number, max: number) {
   if (!max) return 0
@@ -118,6 +135,23 @@ const hpPercent = computed(() => getPercent(player.value.hp, player.value.maxHp)
 const qiPercent = computed(() => getPercent(player.value.qi, player.value.maxQi))
 const staminaPercent = computed(() => getPercent(player.value.stamina, player.value.maxStamina))
 const breakthroughPercent = computed(() => getPercent(player.value.breakthrough, nextBreakthroughNeed.value))
+const cultivationPercent = computed(() => getPercent(player.value.cultivation, cultivationGateNeed.value))
+const cultivationStatus = computed(() => getCultivationStatusCopy({
+  hasNextRank: hasNextRank.value,
+  nextBreakthroughNeed: nextBreakthroughNeed.value,
+  cultivation: player.value.cultivation,
+  breakthrough: player.value.breakthrough,
+  rankIndex: player.value.rankIndex,
+  aura: currentLocation.value.aura,
+}))
+const breakthroughStatus = computed(() => getBreakthroughStatusCopy({
+  hasNextRank: hasNextRank.value,
+  nextBreakthroughNeed: nextBreakthroughNeed.value,
+  cultivation: player.value.cultivation,
+  breakthrough: player.value.breakthrough,
+  rankIndex: player.value.rankIndex,
+  aura: currentLocation.value.aura,
+}))
 
 const activeRealm = computed(() => {
   const id = world.value.realm.activeRealmId
@@ -145,18 +179,19 @@ const routeDesc = computed(() => {
   return `资产 ${assetCount.value} 处，仍需继续摸门路。`
 })
 
-const hasNextRank = computed(() => player.value.rankIndex < RANKS.length - 1)
-
 const breakthroughReady = computed(() =>
-  hasNextRank.value && player.value.breakthrough >= nextBreakthroughNeed.value * 0.85
+  hasNextRank.value && player.value.breakthrough >= breakthroughReadyNeed.value
 )
 
 const breakthroughHint = computed(() => {
-  if (!hasNextRank.value) return '你已站在当前境界尽头，手动冲关会提示继续温养根基。'
-  if (breakthroughReady.value) {
-    return `当前火候 ${breakthroughPercent.value}%，已过手动冲关线；所在地点灵气 ${currentLocation.value.aura} 会计入成败。`
-  }
-  return `当前火候 ${breakthroughPercent.value}%，到 85% 就能手动冲关；未到线时点下去也会给出明确提示。`
+  return getBreakthroughHintCopy({
+    hasNextRank: hasNextRank.value,
+    nextBreakthroughNeed: nextBreakthroughNeed.value,
+    cultivation: player.value.cultivation,
+    breakthrough: player.value.breakthrough,
+    rankIndex: player.value.rankIndex,
+    aura: currentLocation.value.aura,
+  })
 })
 
 const manualActionTag = computed(() => {
@@ -167,19 +202,32 @@ const manualActionTag = computed(() => {
 
 const manualActions = computed(() => {
   const tradeRun = player.value.tradeRun
+  const breakthroughReason = getBreakthroughDisabledReason({
+    hasNextRank: hasNextRank.value,
+    nextBreakthroughNeed: nextBreakthroughNeed.value,
+    cultivation: player.value.cultivation,
+    breakthrough: player.value.breakthrough,
+    rankIndex: player.value.rankIndex,
+    aura: currentLocation.value.aura,
+  })
   return [
-    { key: 'meditate', label: '手动修炼', desc: '静坐一轮，补修为与真气。', theme: '补修为' },
+    { key: 'meditate', label: '手动修炼', desc: '静坐一轮，补修为与真气。', theme: '补修为', disabled: false, reason: '' },
     {
       key: 'breakthrough',
       label: '主动冲关',
-      desc: !hasNextRank.value
-        ? '当前境界已到头，只能继续温养根基。'
-        : breakthroughReady.value
-          ? `火候 ${breakthroughPercent.value}%，现在就能试破当前境界。`
-          : `当前火候 ${breakthroughPercent.value}%，建议到 85% 后再抢关。`,
+      desc: getBreakthroughActionDescription({
+        hasNextRank: hasNextRank.value,
+        nextBreakthroughNeed: nextBreakthroughNeed.value,
+        cultivation: player.value.cultivation,
+        breakthrough: player.value.breakthrough,
+        rankIndex: player.value.rankIndex,
+        aura: currentLocation.value.aura,
+      }),
       theme: '抢关口',
+      disabled: !breakthroughReady.value,
+      reason: breakthroughReason,
     },
-    { key: 'quest', label: '追查机缘', desc: '跑一趟差事，碰碰风闻与奇遇。', theme: '探风闻' },
+    { key: 'quest', label: '追查机缘', desc: '跑一趟差事，碰碰风闻与奇遇。', theme: '探风闻', disabled: false, reason: '' },
     {
       key: 'trade',
       label: tradeRun ? '继续跑商' : '顺手做买卖',
@@ -187,8 +235,10 @@ const manualActions = computed(() => {
         ? `${tradeRun.originName}到${tradeRun.destinationName}的货路还在跑。`
         : '跑一笔货，快进一轮营生。',
       theme: '滚营生',
+      disabled: false,
+      reason: '',
     },
-    { key: 'rest', label: '短暂调息', desc: '先把状态拉回安全线。', theme: '回状态' },
+    { key: 'rest', label: '短暂调息', desc: '先把状态拉回安全线。', theme: '回状态', disabled: false, reason: '' },
   ]
 })
 
@@ -260,6 +310,8 @@ const recommendation = computed<Recommendation>(() => {
 })
 
 function runQuickAction(actionKey: string) {
+  const action = manualActions.value.find(entry => entry.key === actionKey)
+  if (action?.disabled) return
   if (actionKey === 'rest') {
     store.adjustResource('hp', 18, 'maxHp')
     store.adjustResource('qi', 16, 'maxQi')

@@ -14,7 +14,7 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value))
 }
 
-export function round(value: number, digits = 1): number {
+export function round(value: number, digits = 0): number {
   const ratio = 10 ** digits
   return Math.round(value * ratio) / ratio
 }

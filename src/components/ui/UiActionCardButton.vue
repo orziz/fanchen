@@ -1,5 +1,5 @@
 <template>
-  <button :type="type" :class="classes" :disabled="disabled" :aria-disabled="disabled ? 'true' : undefined" @click="emit('click', $event)">
+  <button :type="type" :class="classes" :disabled="disabled" :aria-disabled="disabled ? 'true' : undefined" :title="buttonTitle" @click="emit('click', $event)">
     <span v-if="theme || $slots.theme" :class="['ui-action-card-button__theme', themeClass]">
       <slot name="theme">{{ theme }}</slot>
     </span>
@@ -8,6 +8,9 @@
     </strong>
     <span v-if="description || $slots.description" :class="['ui-action-card-button__desc', descriptionClass]">
       <slot name="description">{{ description }}</slot>
+    </span>
+    <span v-if="hintText || $slots.hint" class="ui-action-card-button__hint">
+      <slot name="hint">{{ hintText }}</slot>
     </span>
   </button>
 </template>
@@ -23,6 +26,7 @@ const props = withDefaults(defineProps<{
   description?: string
   theme?: string
   disabled?: boolean
+  disabledReason?: string
   buttonClass?: ClassName
   themeClass?: ClassName
   titleClass?: ClassName
@@ -33,6 +37,7 @@ const props = withDefaults(defineProps<{
   description: '',
   theme: '',
   disabled: false,
+  disabledReason: '',
 })
 
 const emit = defineEmits<{
@@ -45,4 +50,11 @@ const classes = computed(() => [
   'action-button-card',
   props.buttonClass,
 ])
+
+const buttonTitle = computed(() => {
+  if (props.disabled) return props.disabledReason || props.description || props.title || undefined
+  return props.description || props.title || undefined
+})
+
+const hintText = computed(() => props.disabled ? props.disabledReason : '')
 </script>

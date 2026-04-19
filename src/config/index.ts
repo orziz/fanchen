@@ -15,6 +15,26 @@ export {
 } from './constants'
 export type { RankData, ModeOption, ActionMeta } from './constants'
 
+export {
+	REALM_POWER_PER_RANK,
+	getCultivationGateNeed,
+	getBreakthroughReadyNeed,
+	getRealmPowerBonus,
+	getCultivationBreakthroughFloor,
+} from './progression'
+
+export {
+	getCultivationStatusCopy,
+	getBreakthroughStatusCopy,
+	getGrowthProgressNote,
+	getBreakthroughHintCopy,
+	getBreakthroughDisabledReason,
+	getBreakthroughActionDescription,
+	describeIndustryAssetEffect,
+	describeIndustryNextUpgrade,
+	describeIndustryUpgradeResult,
+} from './text'
+
 export { ITEMS, ITEM_MAP, DISTRIBUTABLE_ITEMS, canUseItemDirectly, getItem, getItemUsageSummary, getManualItemBySkillId, hasAssetClaimEffect } from './items'
 export { getKnowledgeItemById } from './items'
 export type { ItemData, ManualCategory } from './items'
@@ -49,6 +69,14 @@ export { WORLD_EVENT_TEMPLATES, TRAVEL_EVENT_TEMPLATES, SOCIAL_EVENT_TEMPLATES, 
 export type { WorldEventTemplate, TravelEventTemplate, SocialEventTemplate, SectEventTemplate } from './events'
 
 export { STORY_DEFINITIONS, STORY_MAP } from './story'
+export {
+	OPENING_TUTORIAL_FLAGS,
+	OPENING_TUTORIAL_SCRIPT_IDS,
+	OPENING_TUTORIAL_STARTER_ITEMS,
+	OPENING_TUTORIAL_STARTING_MONEY,
+	OPENING_TUTORIAL_STARTING_TITLE,
+	OPENING_TUTORIAL_STORY_ID,
+} from './tutorial'
 export type {
 	StoryPresentationMode,
 	StoryBindingKey,

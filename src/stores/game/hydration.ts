@@ -8,8 +8,15 @@ import type {
   SectState,
   StoryHistoryEntry,
   StoryProgressEntry,
+  TerritoryEntry,
 } from '@/types/game'
-import { LEGACY_SAVE_KEYS, MAX_LOG, SAVE_KEY, getTechnique, getTechniqueByItemId } from '@/config'
+import {
+  LEGACY_SAVE_KEYS,
+  MAX_LOG,
+  SAVE_KEY,
+  getTechnique,
+  getTechniqueByItemId,
+} from '@/config'
 import { ensureArray } from '@/utils'
 import {
   createGameState,
@@ -22,6 +29,22 @@ import {
 
 type TeachingState = SectState['teachings'][number]
 type LegacyEquipmentState = Partial<PlayerState['equipment']> & { manual?: string | null | undefined }
+
+const OBSOLETE_SAVE_SLOT_KEYS = [
+  `${SAVE_KEY}-spring`,
+  `${SAVE_KEY}-summer`,
+  `${SAVE_KEY}-autumn`,
+  `${SAVE_KEY}-spring-backup`,
+  `${SAVE_KEY}-summer-backup`,
+  `${SAVE_KEY}-autumn-backup`,
+] as const
+
+export const OBSOLETE_SAVE_STORAGE_KEYS = [`${SAVE_KEY}-active-slot`, ...OBSOLETE_SAVE_SLOT_KEYS] as const
+
+export interface StoredSaveRecord {
+  raw: string
+  source: 'primary' | 'slot-migrated' | 'legacy'
+}
 
 function readLegacyEquipment(rawPlayer: Partial<PlayerState> | undefined): LegacyEquipmentState {
   return (rawPlayer?.equipment || {}) as unknown as LegacyEquipmentState
@@ -39,6 +62,56 @@ function hydrateAssetCollection(value: unknown): AssetState[] {
     ...assetDefaults,
     ...asset,
   }) as AssetState)
+}
+
+function hydrateNpcIntel(rawPlayer: Partial<PlayerState> | undefined): PlayerState['npcIntel'] {
+  return Object.fromEntries(
+    Object.entries(rawPlayer?.npcIntel || {}).flatMap(([npcId, source]) => (
+      source === 'heard' || source === 'met' ? [[npcId, source]] : []
+    )),
+  )
+}
+
+function hydrateTerritories(
+  rawTerritories: Partial<Record<string, Partial<TerritoryEntry>>> | undefined,
+  defaults: Record<string, TerritoryEntry>,
+) {
+  return Object.fromEntries(
+    Object.entries(defaults).map(([locationId, territory]) => [
+      locationId,
+      {
+        ...territory,
+        ...((rawTerritories || {})[locationId] || {}),
+      },
+    ]),
+  )
+}
+
+function parseStoredSnapshot(raw: string) {
+  try {
+    return JSON.parse(raw) as Partial<GameState>
+  } catch {
+    return null
+  }
+}
+
+function readMainSaveRecord(): StoredSaveRecord | null {
+  const raw = localStorage.getItem(SAVE_KEY)
+  if (raw && parseStoredSnapshot(raw)) {
+    return { raw, source: 'primary' }
+  }
+  return null
+}
+
+function readObsoleteSlotRecord(): StoredSaveRecord | null {
+  const candidates = OBSOLETE_SAVE_SLOT_KEYS.flatMap((key) => {
+    const raw = localStorage.getItem(key)
+    const snapshot = raw ? parseStoredSnapshot(raw) : null
+    return raw && snapshot ? [{ raw, lastSavedAt: Number(snapshot.lastSavedAt) || 0 }] : []
+  }).sort((left, right) => right.lastSavedAt - left.lastSavedAt)
+
+  if (!candidates.length) return null
+  return { raw: candidates[0].raw, source: 'slot-migrated' }
 }
 
 export function hydrateLearnedTechniques(rawPlayer: Partial<PlayerState> | undefined, learnedDay = 0) {
@@ -117,6 +190,7 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
   const rawPF = raw.player?.playerFaction
   const learnedTechniques = hydrateLearnedTechniques(raw.player, Number(raw.world?.day) || 0)
   const heartSlot = hydrateHeartSlot(raw.player, learnedTechniques)
+  const npcIntel = hydrateNpcIntel(raw.player)
   const skillLibrary = hydrateSectSkillLibrary(rawSect)
   const teachings = hydrateTeachings(rawSect)
   const rawEquipment = readLegacyEquipment(raw.player)
@@ -151,6 +225,7 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
       skills: { ...fresh.player.skills, ...(raw.player?.skills || {}) },
       factionStanding: { ...fresh.player.factionStanding, ...(raw.player?.factionStanding || {}) },
       regionStanding: { ...fresh.player.regionStanding, ...(raw.player?.regionStanding || {}) },
+      npcIntel: { ...fresh.player.npcIntel, ...npcIntel },
       relations: { ...fresh.player.relations, ...(raw.player?.relations || {}) },
       stats: { ...fresh.player.stats, ...(raw.player?.stats || {}) },
       affiliationTasks: Array.isArray(raw.player?.affiliationTasks) ? raw.player!.affiliationTasks : [],
@@ -173,7 +248,7 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
       ...fresh.world, ...raw.world,
       factionFavor: { ...fresh.world.factionFavor, ...(raw.world?.factionFavor || {}) },
       factions: { ...fresh.world.factions, ...(raw.world?.factions || {}) },
-      territories: { ...fresh.world.territories, ...(raw.world?.territories || {}) },
+      territories: hydrateTerritories(raw.world?.territories as Partial<Record<string, Partial<TerritoryEntry>>> | undefined, fresh.world.territories),
       realm: { ...fresh.world.realm, ...(raw.world?.realm || {}) },
     },
     combat: { ...fresh.combat, ...(raw.combat || {}) },
@@ -223,11 +298,17 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
   return game
 }
 
-export function readStoredSave() {
-  const keys = [SAVE_KEY, ...LEGACY_SAVE_KEYS]
+export function readStoredSave(): StoredSaveRecord | null {
+  const mainRecord = readMainSaveRecord()
+  if (mainRecord) return mainRecord
+
+  const obsoleteSlotRecord = readObsoleteSlotRecord()
+  if (obsoleteSlotRecord) return obsoleteSlotRecord
+
+  const keys = [...LEGACY_SAVE_KEYS]
   for (const key of keys) {
     const raw = localStorage.getItem(key)
-    if (raw) return { key, raw }
+    if (raw && parseStoredSnapshot(raw)) return { raw, source: 'legacy' }
   }
   return null
 }

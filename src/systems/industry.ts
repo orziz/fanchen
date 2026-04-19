@@ -1,8 +1,9 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
-import { LOCATION_MAP, PROPERTY_DEFS, PROPERTY_MAP, FACTIONS, FACTION_MAP, CROPS, CROP_MAP, CRAFT_RECIPES, RECIPE_MAP, getItem } from '@/config'
+import { LOCATION_MAP, PROPERTY_DEFS, PROPERTY_MAP, FACTIONS, FACTION_MAP, CROPS, CROP_MAP, CRAFT_RECIPES, RECIPE_MAP, describeIndustryUpgradeResult, getItem } from '@/config'
 import { uid, clamp, round } from '@/utils'
-import { isTradeHubLocation, getGovernmentOfficeName, getPlayerTerritoryModifier, adjustFactionStanding } from './social'
+import { isTradeHubLocation, getGovernmentOfficeName, getPlayerTerritoryModifier, getTerritoryCommerceEffects, adjustFactionStanding } from './social'
+import { recordHarvestOutput, recordShopTurnover, recordWorkshopCycle } from './worldEconomy'
 import type { AssetState } from '@/types/game'
 
 /* ═══════════════════ Constants ═══════════════════ */
@@ -52,8 +53,8 @@ function getIndustrySupportBonus(kind: string, locationId?: string) {
 
 function applyIndustryNetworkGrowth(kind: string, value: number) {
   const ctx = getContext(); const pf = ctx.game.player.playerFaction; const sect = ctx.game.player.sect
-  if (pf) { pf.treasury += Math.max(1, Math.floor(value * (kind === 'shop' ? 0.12 : 0.08))); pf.influence += kind === 'shop' ? 0.18 : 0.1 }
-  if (sect) { sect.treasury += Math.max(0, Math.floor(value * 0.05)); sect.prestige += kind === 'workshop' ? 0.16 : 0.08 }
+  if (pf) { pf.treasury += Math.max(1, Math.floor(value * (kind === 'shop' ? 0.12 : 0.08))); pf.influence = round(pf.influence + (kind === 'shop' ? 0.18 : 0.1), 4) }
+  if (sect) { sect.treasury += Math.max(0, Math.floor(value * 0.05)); sect.prestige = round(sect.prestige + (kind === 'workshop' ? 0.16 : 0.08), 4) }
 }
 
 function getGovernmentStandingNeed(kind: string, locationId?: string) {
@@ -141,7 +142,7 @@ export function fulfillIndustryOrder(orderId: string) {
   const order = orders.find((e: any) => e.id === orderId) as any; if (!order) return
   if (!canFulfillIndustryOrder(orderId)) { ctx.appendLog('你手头货不够，还交不了这笔订单。', 'warn'); return }
   order.requirements.forEach((r: any) => ctx.removeItemFromInventory(r.itemId, r.quantity))
-  g.player.money += order.rewardMoney; g.player.reputation += order.rewardReputation
+  g.player.money += order.rewardMoney; g.player.reputation = round(g.player.reputation + order.rewardReputation, 4)
   adjustFactionStanding(order.factionId, order.standing || 0)
   g.world.industryOrders = orders.filter((e: any) => e.id !== orderId) as any[]
   ctx.appendLog(`你完成了${order.factionName}的"${order.title}"，入账${order.rewardMoney}灵石。`, 'loot')
@@ -164,7 +165,7 @@ export function getGovernmentContractIssues(kind: string): string[] {
   const ctx = getContext(); const offer = getGovernmentContractOffers().find(e => e.kind === kind)
   if (!offer) return ['当前没有官府出售这类契约。']
   const issues: string[] = []; const standing = ctx.getRegionStanding()
-  if (standing < offer.standingNeed) issues.push(`地区声望不足，还差${round(offer.standingNeed - standing, 1)}`)
+  if (standing < offer.standingNeed) issues.push(`地区声望不足，还差${Math.ceil(offer.standingNeed - standing)}`)
   if (ctx.game.player.money < offer.price) issues.push(`灵石不足，还差${offer.price - ctx.game.player.money}`)
   return issues
 }
@@ -263,7 +264,7 @@ export function upgradeAsset(kind: string, assetId: string) {
   const cost = getAssetUpgradeCost(kind, assetId); g.player.money -= cost; a.level += 1
   if (kind === 'shop') { a.stock = 0; a.pendingIncome = 0 }
   g.player.stats.industryUpgrades += 1; adjustFactionStanding(g.player.affiliationId, 1.8 + a.level * 0.3)
-  ctx.appendLog(`${a.label}扩建完成，升到 ${a.level} 级。`, 'loot')
+  ctx.appendLog(`${a.label}扩建完成，升到 ${a.level} 级。${describeIndustryUpgradeResult(kind, a.level)}`, 'loot')
 }
 
 /* ═══════════════════ Farm Operations ═══════════════════ */
@@ -289,13 +290,16 @@ function harvestCropInternal(asset: AssetState, opts: { automated?: boolean } = 
   if (!asset || !asset.cropId) return false; if (asset.daysRemaining > 0) { if (!opts.automated) getContext().appendLog('作物尚未成熟。', 'warn'); return false }
   const crop = CROP_MAP.get(asset.cropId); if (!crop) return false
   const ctx = getContext(); const support = getIndustrySupportBonus('farm', asset.locationId); const opBonus = getAssetOperatorBonus(asset)
+  const territory = getTerritoryCommerceEffects(asset.locationId)
   const harvestYield = crop.yield + Math.max(0, asset.level - 1) + Math.round(crop.yield * (support.output + opBonus))
-  ctx.addItemToInventory(crop.harvestItemId, harvestYield)
-  asset.cropId = null; asset.daysRemaining = 0; asset.lastManagedResult = `${getItem(crop.harvestItemId)?.name || crop.harvestItemId} x${harvestYield}`
-  ctx.game.player.skills.farming += opts.automated ? 0.25 : 0.4; ctx.game.player.stats.cropsHarvested += harvestYield
+  const securedYield = Math.max(1, Math.round(harvestYield * (1 - territory.industryLossRate * 0.4)))
+  ctx.addItemToInventory(crop.harvestItemId, securedYield)
+  asset.cropId = null; asset.daysRemaining = 0; asset.lastManagedResult = `${getItem(crop.harvestItemId)?.name || crop.harvestItemId} x${securedYield}${territory.industryLossRate > 0.01 ? '（地面折耗后）' : ''}`
+  ctx.game.player.skills.farming = round(ctx.game.player.skills.farming + (opts.automated ? 0.25 : 0.4), 4); ctx.game.player.stats.cropsHarvested += securedYield
   adjustFactionStanding(ctx.game.player.affiliationId, opts.automated ? 0.8 : 1.5)
-  applyIndustryNetworkGrowth('farm', harvestYield * 6)
-  if (!opts.automated) ctx.appendLog(`你从${asset.label}收成了${getItem(crop.harvestItemId)?.name || crop.harvestItemId} x${harvestYield}。`, 'loot')
+  applyIndustryNetworkGrowth('farm', securedYield * 6)
+  recordHarvestOutput(asset.locationId, crop.harvestItemId, securedYield)
+  if (!opts.automated) ctx.appendLog(`你从${asset.label}收成了${getItem(crop.harvestItemId)?.name || crop.harvestItemId} x${securedYield}。`, 'loot')
   return true
 }
 
@@ -324,7 +328,7 @@ export function craftRecipe(recipeId: string) {
   const support = getIndustrySupportBonus('workshop', ws?.locationId || ctx.getCurrentLocation().id); const opBonus = getAssetOperatorBonus(ws)
   const extra = wsLevel >= 3 && Math.random() < 0.3 + support.output + opBonus ? 1 : 0
   ctx.addItemToInventory(recipe.outputItemId, recipe.outputQuantity + extra)
-  g.player.skills.crafting += 0.6; g.player.stats.craftedItems += recipe.outputQuantity + extra
+  g.player.skills.crafting = round(g.player.skills.crafting + 0.6, 4); g.player.stats.craftedItems += recipe.outputQuantity + extra
   adjustFactionStanding(g.player.affiliationId, 2); applyIndustryNetworkGrowth('workshop', recipe.cost + extra * 22)
   ctx.appendLog(`你亲手做出了${getItem(recipe.outputItemId)?.name || recipe.outputItemId}。`, 'loot')
 }
@@ -349,7 +353,7 @@ export function collectShopIncome(assetId: string) {
   const ctx = getContext(); const shop = getAssets('shop').find(e => e.id === assetId); if (!shop) return
   if (shop.pendingIncome <= 0) { ctx.appendLog('今天铺面还没什么进账。', 'info'); return }
   const income = shop.pendingIncome; shop.pendingIncome = 0
-  ctx.game.player.money += income; ctx.game.player.skills.trading += 0.5; ctx.game.player.stats.shopCollections += 1
+  ctx.game.player.money += income; ctx.game.player.skills.trading = round(ctx.game.player.skills.trading + 0.5, 4); ctx.game.player.stats.shopCollections += 1
   adjustFactionStanding(ctx.game.player.affiliationId, 1.5); applyIndustryNetworkGrowth('shop', income)
   ctx.appendLog(`你从${shop.label}收回了${income}灵石。`, 'loot')
 }
@@ -378,19 +382,25 @@ export function processIndustryTick() {
     const support = getIndustrySupportBonus('workshop', ws.locationId); const opBonus = getAssetOperatorBonus(ws)
     const extra = ws.level >= 2 && Math.random() < 0.18 + support.output * 0.5 + opBonus ? 1 : 0
     ctx.addItemToInventory(recipe.outputItemId, recipe.outputQuantity + extra)
-    g.player.skills.crafting += 0.25; g.player.stats.craftedItems += recipe.outputQuantity + extra
+    g.player.skills.crafting = round(g.player.skills.crafting + 0.25, 4); g.player.stats.craftedItems += recipe.outputQuantity + extra
     ws.lastManagedResult = `${getItem(recipe.outputItemId)?.name || recipe.outputItemId} x${recipe.outputQuantity + extra}`
     applyIndustryNetworkGrowth('workshop', autoCost + extra * 18)
+    recordWorkshopCycle(ws.locationId, recipe.inputs.map(i => i.itemId), recipe.outputItemId, recipe.outputQuantity + extra)
   })
 
   getAssets('shop').forEach(shop => {
     if (shop.managerNpcId && shop.stock <= 0) restockShopInternal(shop, { automated: true })
     if (shop.stock <= 0) return
     const loc = LOCATION_MAP.get(shop.locationId); const support = getIndustrySupportBonus('shop', shop.locationId); const opBonus = getAssetOperatorBonus(shop)
+    const territory = getTerritoryCommerceEffects(shop.locationId)
     const income = Math.max(5, Math.round(4 + g.player.skills.trading * 0.45 + (loc?.marketTier || 0) * 2 + shop.level * 3 + shop.level * (support.output + opBonus)))
     const upkeep = Math.max(1, Math.round(shop.level * (1 - support.upkeep)))
-    shop.stock -= 1; shop.pendingIncome += Math.max(2, income - upkeep)
-    shop.lastManagedResult = `待收账 ${shop.pendingIncome} 灵石`
+    const taxes = Math.max(0, Math.round(income * territory.taxRate))
+    const leakage = Math.max(0, Math.round(income * territory.industryLossRate * 0.5))
+    const realizedIncome = Math.max(2, income - upkeep - taxes - leakage)
+    shop.stock -= 1; shop.pendingIncome += realizedIncome
+    shop.lastManagedResult = `待收账 ${shop.pendingIncome} 灵石 · 税耗${taxes}${leakage > 0 ? ` · 漏耗${leakage}` : ''}`
+    recordShopTurnover(shop.locationId, realizedIncome, 1)
   })
 
   refreshIndustryOrders(true)

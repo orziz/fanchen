@@ -16,6 +16,8 @@
           :theme="action.theme"
           :title="action.label"
           :description="action.desc"
+          :disabled="action.disabled"
+          :disabled-reason="action.reason"
           @click="runQuickAction(action.key)"
         />
       </UiActionGroup>
@@ -35,8 +37,9 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
+import { getBreakthroughActionDescription, getBreakthroughDisabledReason } from '@/config'
 import { useWindows } from '@/composables/useWindows'
-import { setMode, attemptBreakthrough } from '@/systems/player'
+import { attemptBreakthrough } from '@/systems/player'
 import { performAction } from '@/systems/world'
 import UiActionCardButton from '@/components/ui/UiActionCardButton.vue'
 import UiActionGroup from '@/components/ui/UiActionGroup.vue'
@@ -44,34 +47,64 @@ import UiCardHeader from '@/components/ui/UiCardHeader.vue'
 import UiPill from '@/components/ui/UiPill.vue'
 
 const store = useGameStore()
-const { player, currentAffiliation, sect } = storeToRefs(store)
+const { player, currentAffiliation, sect, hasNextRank, nextBreakthroughNeed, breakthroughReadyNeed } = storeToRefs(store)
 const { openWindow } = useWindows()
+
+const canManualBreakthrough = computed(() =>
+  hasNextRank.value && player.value.breakthrough >= breakthroughReadyNeed.value
+)
 
 const manualActions = computed(() => {
   const g = store.game
   const s = sect.value
   const aff = currentAffiliation.value
+  const breakthroughReason = getBreakthroughDisabledReason({
+    hasNextRank: hasNextRank.value,
+    nextBreakthroughNeed: nextBreakthroughNeed.value,
+    cultivation: player.value.cultivation,
+    breakthrough: player.value.breakthrough,
+    rankIndex: player.value.rankIndex,
+  })
   return [
-    { key: 'meditate', label: '手动修炼', desc: '静坐一轮，补修为与真气。', theme: '补修为' },
-    { key: 'breakthrough', label: '主动冲关', desc: '火候够了就立刻试破境。', theme: '抢关口' },
-    { key: 'quest', label: '追查机缘', desc: '跑一趟差事，碰碰风闻与奇遇。', theme: '探风闻' },
+    { key: 'meditate', label: '手动修炼', desc: '静坐一轮，补修为与真气。', theme: '补修为', disabled: false, reason: '' },
+    {
+      key: 'breakthrough',
+      label: '主动冲关',
+      desc: getBreakthroughActionDescription({
+        hasNextRank: hasNextRank.value,
+        nextBreakthroughNeed: nextBreakthroughNeed.value,
+        cultivation: player.value.cultivation,
+        breakthrough: player.value.breakthrough,
+        rankIndex: player.value.rankIndex,
+      }),
+      theme: '抢关口',
+      disabled: !canManualBreakthrough.value,
+      reason: breakthroughReason,
+    },
+    { key: 'quest', label: '追查机缘', desc: '跑一趟差事，碰碰风闻与奇遇。', theme: '探风闻', disabled: false, reason: '' },
     {
       key: 'trade',
       label: g.player.tradeRun ? '继续跑商' : '顺手做买卖',
       desc: g.player.tradeRun ? `${g.player.tradeRun.originName}到${g.player.tradeRun.destinationName}的货路还在跑。` : '跑一笔货，快进一轮营生。',
       theme: '滚营生',
+      disabled: false,
+      reason: '',
     },
-    { key: 'rest', label: '短暂调息', desc: '先把状态拉回安全线。', theme: '回状态' },
+    { key: 'rest', label: '短暂调息', desc: '先把状态拉回安全线。', theme: '回状态', disabled: false, reason: '' },
     {
       key: s ? 'sect' : 'affiliation',
       label: s ? '处理宗门事务' : aff ? '查看门内事务' : '去投门路',
       desc: s ? '去处理宗门、弟子和传功。' : aff ? '去处理当前门路。' : '先去势力页找个落脚点。',
       theme: s ? '理宗门' : '看门路',
+      disabled: false,
+      reason: '',
     },
   ]
 })
 
 function runQuickAction(action: string) {
+  const actionMeta = manualActions.value.find(entry => entry.key === action)
+  if (actionMeta?.disabled) return
   if (action === 'rest') {
     store.adjustResource('hp', 18, 'maxHp')
     store.adjustResource('qi', 16, 'maxQi')

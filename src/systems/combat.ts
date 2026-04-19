@@ -35,13 +35,13 @@ function buildEnemyFromTemplate(
     maxHp: Math.round(template.baseHp * scale), hp: Math.round(template.baseHp * scale),
     maxQi: Math.round((template.baseQi || 20) * (1 + (options.boss ? 0.18 : 0))),
     qi: Math.round((template.baseQi || 20) * (1 + (options.boss ? 0.18 : 0))),
-    power: round(template.basePower * scale, 1), dodge: 0.04, defense: 0.04, crit: 0.05,
+    power: round(template.basePower * scale), dodge: 0.04, defense: 0.04, crit: 0.05,
     burnOnHit: 0, chillOnHit: 0, qiBurn: 0,
     rewards: {
       money: Math.round((template.rewards?.money || 12) * scale),
-      cultivation: round((template.rewards?.cultivation || 4) * (1 + playerRank * 0.08), 1),
+      cultivation: Math.round((template.rewards?.cultivation || 4) * (1 + playerRank * 0.08)),
       reputation: options.boss ? 5 + playerRank : Math.max(0, Math.round((options.danger || 1) * 0.3)),
-      breakthrough: options.boss ? 8 + (options.danger || 0) : 1 + (options.danger || 0) * 0.5,
+      breakthrough: options.boss ? 8 + (options.danger || 0) : Math.max(1, Math.round(1 + (options.danger || 0) * 0.5)),
     },
     rewardItemIds: options.rewardItemIds || [], lootTypes: template.lootTypes || [],
     effects: { burn: 0, exposed: 0, chill: 0 },
@@ -49,7 +49,7 @@ function buildEnemyFromTemplate(
   affixes.forEach(affix => {
     if (!affix) return
     enemy.maxHp = Math.round(enemy.maxHp * (1 + (affix.mod.hp || 0))); enemy.hp = enemy.maxHp
-    enemy.power = round(enemy.power * (1 + (affix.mod.power || 0)), 1)
+    enemy.power = round(enemy.power * (1 + (affix.mod.power || 0)))
     enemy.dodge += affix.mod.dodge || 0; enemy.defense += affix.mod.defense || 0; enemy.crit += affix.mod.crit || 0
     enemy.burnOnHit += affix.mod.burn || 0; enemy.chillOnHit += affix.mod.chill || 0; enemy.qiBurn += affix.mod.qiBurn || 0
   })
@@ -163,16 +163,16 @@ function applyOngoingEffects() {
 
 function computePlayerDamage(kind: string) {
   const ctx = getContext()
-  const base = ctx.getPlayerPower() + ctx.game.player.rankIndex * 4 + ctx.getPlayerInsight() * 0.28
+  const base = ctx.getPlayerPower() + ctx.getPlayerInsight() * 0.28
   const variance = randomFloat(0.88, 1.14)
   const skillMultiplier = kind === 'skill' ? 1.55 : kind === 'counter' ? 1.25 : 1
-  return Math.max(6, round(base * variance * skillMultiplier, 1))
+  return Math.max(6, Math.round(base * variance * skillMultiplier))
 }
 
 function enemyReceivesDamage(enemy: EnemyState, rawDamage: number) {
   if (Math.random() < enemy.dodge) { addCombatHistory(`${enemy.name}身形一晃，避开了你的攻势。`, 'warn'); return 0 }
   const effectiveDefense = Math.max(0, enemy.defense - enemy.effects.exposed * 0.06)
-  const finalDamage = Math.max(5, round(rawDamage * (1 - effectiveDefense), 1))
+  const finalDamage = Math.max(5, Math.round(rawDamage * (1 - effectiveDefense)))
   enemy.hp = Math.max(0, enemy.hp - finalDamage)
   addCombatHistory(`你打中了${enemy.name}，造成${finalDamage}点伤害。`, 'loot')
   return finalDamage
@@ -233,7 +233,7 @@ function enemyTurn(enemy: EnemyState) {
   const effects = ctx.game.combat.playerEffects || { burn: 0, guard: 0, chill: 0 }
   const guardMultiplier = effects.guard > 0 ? 0.58 : 1
   const chillMultiplier = enemy.effects.chill > 0 ? Math.max(0.72, 1 - enemy.effects.chill * 0.08) : 1
-  const damage = Math.max(4, round(enemy.power * randomFloat(0.84, 1.12) * guardMultiplier * chillMultiplier, 1))
+  const damage = Math.max(4, Math.round(enemy.power * randomFloat(0.84, 1.12) * guardMultiplier * chillMultiplier))
   ctx.adjustResource('hp', -damage, 'maxHp')
   addCombatHistory(`${enemy.name}反击，令你损失${damage}点气血。`, 'warn')
   if (enemy.qiBurn) ctx.adjustResource('qi', -enemy.qiBurn, 'maxQi')
@@ -247,8 +247,8 @@ function enemyTurn(enemy: EnemyState) {
 function resolveVictory(enemy: EnemyState) {
   const ctx = getContext()
   const p = ctx.game.player
-  p.money += enemy.rewards.money; p.cultivation += enemy.rewards.cultivation
-  p.breakthrough += enemy.rewards.breakthrough; p.reputation += enemy.rewards.reputation
+  p.money += enemy.rewards.money; p.cultivation = round(p.cultivation + enemy.rewards.cultivation, 4)
+  p.breakthrough = round(p.breakthrough + enemy.rewards.breakthrough, 4); p.reputation = round(p.reputation + enemy.rewards.reputation, 4)
   p.stats.enemiesDefeated += 1
   const dropIds = enemy.rewardItemIds.length ? enemy.rewardItemIds
     : enemy.lootTypes.length ? [chooseRewardItemByTypes(enemy.lootTypes).id] : []

@@ -9,7 +9,7 @@
         </div>
         <div class="story-overlay__actions">
           <button class="control-button ghost" type="button" @click="showStoryInRail()">收入侧栏</button>
-          <button class="control-button ghost" type="button" @click="closeStory()">结束</button>
+          <button v-if="canClose" class="control-button ghost" type="button" @click="closeStory()">结束</button>
         </div>
       </div>
       <StoryScene />
@@ -23,12 +23,19 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import StoryScene from './StoryScene.vue'
 import { closeStory, getActiveStoryScene, showStoryInRail } from '@/systems/story'
+import { canDismissStoryScene } from '@/systems/tutorial'
 
 const store = useGameStore()
 const { story } = storeToRefs(store)
 
-const isVisible = computed(() => {
+const scene = computed(() => {
   story.value
-  return Boolean(getActiveStoryScene() && story.value.presentation === 'overlay')
+  return getActiveStoryScene()
 })
+
+const isVisible = computed(() => {
+  return Boolean(scene.value && story.value.presentation === 'overlay')
+})
+
+const canClose = computed(() => canDismissStoryScene(story.value, scene.value))
 </script>

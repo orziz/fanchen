@@ -38,8 +38,44 @@
   flex-shrink: 0;
 }
 
+.pin-card-head--actions {
+  position: relative;
+  padding-right: 116px;
+}
+
+.pin-card-head--actions .ui-card-head__body {
+  display: block;
+}
+
+.pin-card-head--actions .ui-card-head__aside {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  margin-left: 0;
+  width: auto;
+  max-width: none;
+}
+
+.pin-card-head--actions .ui-card-head__body--stacked .ui-card-head__aside {
+  width: auto;
+}
+
 .pin-card-journal .pin-card-head {
   background: linear-gradient(180deg, rgba(239, 246, 249, 0.96), rgba(240, 232, 217, 0.92));
+}
+
+.pin-card-journal .pin-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  padding-right: 10px;
+}
+
+.pin-card-journal .pin-card-filter-row {
+  margin-bottom: 0;
+  padding-right: 4px;
+  flex-shrink: 0;
 }
 
 .pin-card-profile .pin-card-head {
@@ -63,6 +99,40 @@
   display: flex;
   gap: 6px;
   align-items: center;
+  justify-content: flex-end;
+}
+
+.pin-card-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pin-card-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(179, 133, 43, 0.14);
+  background: rgba(255, 251, 245, 0.82);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.pin-card-filter-chip strong {
+  min-width: 18px;
+  color: var(--gold);
+  font-size: 12px;
+  text-align: center;
+}
+
+.pin-card-filter-chip.active {
+  border-color: rgba(179, 133, 43, 0.26);
+  background: linear-gradient(180deg, rgba(249, 243, 232, 0.98), rgba(240, 232, 217, 0.92));
+  color: var(--text-main);
 }
 
 .pin-card-body {

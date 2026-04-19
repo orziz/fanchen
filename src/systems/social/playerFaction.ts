@@ -10,7 +10,7 @@ export function getCreatePlayerFactionIssues(): string[] {
   const issues: string[] = []
   if (g.player.playerFaction) issues.push('你已经有自家势力了')
   if (g.player.rankIndex < 1) issues.push('至少要有练力修为，才能扛住初期摊子')
-  if (g.player.reputation < 22) issues.push(`声望不足，还差${round(22 - g.player.reputation, 1)}`)
+  if (g.player.reputation < 22) issues.push(`声望不足，还差${Math.ceil(22 - g.player.reputation)}`)
   if (g.player.money < 900) issues.push(`灵石不足，还差${900 - g.player.money}`)
   return issues
 }
@@ -125,8 +125,8 @@ export function upgradePlayerFactionBranch(branchKey: string) {
   }
   g.player.money -= cost
   ;(playerFaction.branches as any)[branchKey] = level + 1
-  playerFaction.prestige += 2 + level
-  playerFaction.influence += 1.2 + level * 0.4
+  playerFaction.prestige = round(playerFaction.prestige + 2 + level, 4)
+  playerFaction.influence = round(playerFaction.influence + 1.2 + level * 0.4, 4)
   ctx.appendLog(`你的势力把${branch.label}扩到了 ${level + 1} 级。`, 'loot')
 }
 
@@ -167,8 +167,8 @@ export function recruitFactionMember(npcId: string) {
   }
   g.player.money -= 36
   playerFaction.members.push(npcId)
-  playerFaction.influence += 1.8
-  playerFaction.prestige += 1
+  playerFaction.influence = round(playerFaction.influence + 1.8, 4)
+  playerFaction.prestige = round(playerFaction.prestige + 1, 4)
   npc.factionId = playerFaction.id
   npc.lastEvent = `投到${playerFaction.name}门下做事`
   ctx.adjustRelation(npcId, { affinity: 4, trust: 6 })
@@ -194,7 +194,7 @@ export function getPlayerFactionMissionIssues(missionId: string): string[] {
   if (mission.kind === 'office') {
     if (!getGovernmentOfficeName(g.player.locationId)) issues.push('要在有官衙驻点的地方才能打点')
     if (g.player.money < mission.moneyCost) issues.push(`打点银不足，还差${mission.moneyCost - g.player.money}`)
-    if (ctx.getRegionStanding(g.player.locationId) < mission.standingNeed) issues.push(`本地声望不足，还差${round(mission.standingNeed - ctx.getRegionStanding(g.player.locationId), 1)}`)
+    if (ctx.getRegionStanding(g.player.locationId) < mission.standingNeed) issues.push(`本地声望不足，还差${Math.ceil(mission.standingNeed - ctx.getRegionStanding(g.player.locationId))}`)
   }
   return issues
 }
@@ -226,8 +226,8 @@ export function completePlayerFactionMission(missionId: string) {
   }
   playerFaction.treasury += mission.rewardTreasury || 0
   playerFaction.supplies = clamp(playerFaction.supplies + (mission.rewardSupplies || 0), 0, 180)
-  playerFaction.influence += mission.rewardInfluence || 0
-  playerFaction.prestige += mission.rewardPrestige || 0
+  playerFaction.influence = round(playerFaction.influence + (mission.rewardInfluence || 0), 4)
+  playerFaction.prestige = round(playerFaction.prestige + (mission.rewardPrestige || 0), 4)
   if (mission.rewardRegion) ctx.adjustRegionStanding(g.player.locationId, mission.rewardRegion)
   g.player.stats.factionTasksCompleted += 1
   playerFaction.missions = missions.filter((entry: any) => entry.id !== missionId) as any[]
@@ -271,10 +271,10 @@ export function processPlayerFactionTick() {
   })
   playerFaction.treasury += Math.max(0, revenue - upkeep) + territoryRevenue
   playerFaction.supplies = clamp(playerFaction.supplies + supplyDelta, 0, 180)
-  playerFaction.influence += 0.6 + (playerFaction.branches.watch || 0) * 0.5 + controlledCount * 0.4
-  playerFaction.prestige += controlledCount * 0.25
+  playerFaction.influence = round(playerFaction.influence + 0.6 + (playerFaction.branches.watch || 0) * 0.5 + controlledCount * 0.4, 4)
+  playerFaction.prestige = round(playerFaction.prestige + controlledCount * 0.25, 4)
   if (playerFaction.supplies <= 10) {
-    playerFaction.prestige = Math.max(0, playerFaction.prestige - 1)
+    playerFaction.prestige = round(Math.max(0, playerFaction.prestige - 1), 4)
     ctx.appendLog(`${playerFaction.name}补给吃紧，手下人做事开始慢了。`, 'warn')
   }
   if (playerFaction.prestige >= playerFaction.level * 16) {

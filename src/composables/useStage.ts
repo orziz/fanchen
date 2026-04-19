@@ -14,23 +14,24 @@ export const STAGE_TABS = [
 
 export type StageTab = typeof STAGE_TABS[number]['id']
 
-type ContextType = 'inventory' | 'player-stats' | null
+export type ContextPanel = 'inventory' | 'player-stats'
 
-const CONTEXT_MAP: Partial<Record<StageTab, Exclude<ContextType, null>>> = {
-  market: 'inventory',
-  auction: 'inventory',
-  combat: 'player-stats',
-  sect: 'player-stats',
+const CONTEXT_LAYOUTS: Partial<Record<StageTab, ContextPanel[]>> = {
+  market: ['inventory'],
+  auction: ['inventory'],
+  combat: ['player-stats'],
+  sect: ['player-stats'],
 }
 
 const activeTab = ref<StageTab>('inventory')
 
 export function useStage() {
-  const contextType = computed<ContextType>(() => CONTEXT_MAP[activeTab.value] ?? null)
+  const contextPanels = computed<ContextPanel[]>(() => CONTEXT_LAYOUTS[activeTab.value] ?? [])
+  const contextType = computed<ContextPanel | null>(() => contextPanels.value[0] ?? null)
 
   function setTab(tab: StageTab) {
     activeTab.value = tab
   }
 
-  return { activeTab, contextType, setTab }
+  return { activeTab, contextPanels, contextType, setTab }
 }

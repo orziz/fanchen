@@ -63,13 +63,16 @@ import { useGameStore } from '@/stores/game'
 import { SPEED_OPTIONS, TIME_LABELS, ACTION_META, REALM_TEMPLATES } from '@/config'
 import { formatNumber } from '@/utils'
 import { getModeLabel } from '@/composables/useUIHelpers'
+import { getOpeningTutorialObjective } from '@/systems/tutorial'
 
 const store = useGameStore()
-const { player, world, currentAffiliation, sect, saveState, speed } = storeToRefs(store)
+const { player, world, currentAffiliation, sect, saveState, speed, story } = storeToRefs(store)
 
 const timeLabelText = computed(() => TIME_LABELS[world.value.hour] || '子时')
 
 const focusSummary = computed(() => {
+  const tutorialObjective = getOpeningTutorialObjective(story.value, player.value)
+  if (tutorialObjective) return tutorialObjective
   const p = player.value
   const tr = p.tradeRun
   const realm = world.value.realm.activeRealmId

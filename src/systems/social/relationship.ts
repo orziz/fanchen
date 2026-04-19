@@ -1,6 +1,7 @@
 import { getContext } from '@/core/context'
 import { LOCATION_MAP, SOCIAL_EVENT_TEMPLATES } from '@/config'
-import { clamp, sample } from '@/utils'
+import { clamp, sample, round } from '@/utils'
+import { rememberNpcIntel } from '../npc'
 import { tryStartNpcVisitStory } from '../story'
 
 export function processRelationshipTick() {
@@ -9,7 +10,7 @@ export function processRelationshipTick() {
   g.npcs.forEach(npc => {
     const relation = ctx.ensurePlayerRelation(npc.id)
     if (relation.role === 'partner' && Math.random() < 0.1) {
-      g.player.breakthrough += 1.2
+      g.player.breakthrough = round(g.player.breakthrough + 1.2, 4)
       relation.affinity = clamp(relation.affinity + 1, -100, 100)
       if (Math.random() < 0.24) {
         const template = sample(SOCIAL_EVENT_TEMPLATES.filter(event => event.id === 'partner'))
@@ -17,12 +18,12 @@ export function processRelationshipTick() {
       }
     }
     if (relation.role === 'master' && Math.random() < 0.14) {
-      g.player.cultivation += 0.6
+      g.player.cultivation = round(g.player.cultivation + 0.6, 4)
       relation.trust = clamp(relation.trust + 1, -100, 100)
     }
     if (relation.role === 'rival' && Math.random() < 0.12) {
       relation.rivalry = clamp(relation.rivalry + 2, 0, 100)
-      g.player.reputation += 0.1
+      g.player.reputation = round(g.player.reputation + 0.1, 4)
       if (Math.random() < 0.4) {
         const template = sample(SOCIAL_EVENT_TEMPLATES.filter(event => event.id === 'rival'))
         ctx.appendLog(template.text.split('{npc}').join(npc.name), template.type)
@@ -41,6 +42,7 @@ export function visitNpc(npcId: string) {
     ctx.appendLog(`${npc.name}目前在${LOCATION_MAP.get(npc.locationId)!.name}，暂时见不到。`, 'warn')
     return
   }
+  rememberNpcIntel(npcId, 'met')
   if (tryStartNpcVisitStory(npcId)) return
   const attitude = relation.affinity > 20 ? '坦诚' : relation.affinity > 0 ? '平和' : '疏离'
   const cost = 10 + Math.max(0, relation.rivalry > 10 ? 8 : 0)
@@ -60,7 +62,7 @@ export function visitNpc(npcId: string) {
     const template = sample(SOCIAL_EVENT_TEMPLATES.filter(event => event.id === 'teaching' || event.id === 'gift'))
     ctx.appendLog(template.text.split('{npc}').join(npc.name), template.type)
     if (template.id === 'gift') ctx.addItemToInventory(sample(['mist-herb', 'spirit-grain', 'jade-spring']), 1)
-    if (template.id === 'teaching') g.player.insight += 0.4
+    if (template.id === 'teaching') g.player.insight = round(g.player.insight + 0.4, 4)
   }
 }
 
@@ -91,6 +93,7 @@ export function explainRecruitDisciple(npcId: string) {
 export function recruitDisciple(npcId: string) {
   const ctx = getContext()
   const npc = ctx.getNpc(npcId)!
+  rememberNpcIntel(npcId, 'met')
   if (!canRecruitDisciple(npcId)) {
     ctx.appendLog('对方还没有认可到愿意入你门墙的程度。', 'warn')
     return
@@ -129,6 +132,7 @@ export function explainMasterBond(npcId: string) {
 export function becomeMasterBond(npcId: string) {
   const ctx = getContext()
   const npc = ctx.getNpc(npcId)!
+  rememberNpcIntel(npcId, 'met')
   if (!canBecomeMaster(npcId)) {
     ctx.appendLog('对方还未到愿意收你入门的地步。', 'warn')
     return
@@ -166,6 +170,7 @@ export function explainPartnerBond(npcId: string) {
 export function becomePartner(npcId: string) {
   const ctx = getContext()
   const npc = ctx.getNpc(npcId)!
+  rememberNpcIntel(npcId, 'met')
   if (!canBecomePartner(npcId)) {
     ctx.appendLog('你们之间的情分还未到水到渠成的程度。', 'warn')
     return
@@ -181,6 +186,7 @@ export function declareRival(npcId: string) {
   const ctx = getContext()
   const npc = ctx.getNpc(npcId)
   if (!npc) return
+  rememberNpcIntel(npcId, 'met')
   const relation = ctx.ensurePlayerRelation(npcId)
   relation.role = 'rival'
   relation.rivalry = clamp(relation.rivalry + 28, 0, 100)

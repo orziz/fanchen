@@ -1,11 +1,36 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { GameState, LearnedTechniqueState, RelationState } from '@/types/game'
-import { FACTIONS, FACTION_MAP, LEGACY_SAVE_KEYS, LOCATION_MAP, RANKS, SAVE_KEY, TIME_LABELS, getItem, getTechnique, getTechniqueResolvedEffectValue } from '@/config'
+import { useStage } from '@/composables/useStage'
+import {
+  FACTIONS,
+  FACTION_MAP,
+  LEGACY_SAVE_KEYS,
+  LOCATION_MAP,
+  RANKS,
+  SAVE_KEY,
+  TIME_LABELS,
+  OPENING_TUTORIAL_STORY_ID,
+  getBreakthroughReadyNeed,
+  getCultivationBreakthroughFloor,
+  getCultivationGateNeed,
+  getItem,
+  getRealmPowerBonus,
+  getTechnique,
+  getTechniqueResolvedEffectValue,
+} from '@/config'
 import { clamp, round, buildMapTexture, findRoute } from '@/utils'
 import type { MapTexture } from '@/utils'
 import { bus } from '@/core/events'
 import { setContext, type GameContext } from '@/core/context'
+import { meetNpcsAtLocation } from '@/systems/npc'
+import { startStory } from '@/systems/story'
+import {
+  markOpeningTutorialStarted,
+  primeOpeningTutorialState,
+  shouldAutoStartOpeningTutorial,
+  syncOpeningTutorialState,
+} from '@/systems/tutorial'
 import {
   createAuctionListings,
   createGameState,
@@ -18,7 +43,9 @@ import {
   createRelationState,
   deriveLifeStage,
 } from './factories'
-import { hydrateGameState, readStoredSave } from './hydration'
+import { OBSOLETE_SAVE_STORAGE_KEYS, hydrateGameState, readStoredSave } from './hydration'
+
+const STALE_SAVE_KEYS = [...LEGACY_SAVE_KEYS, ...OBSOLETE_SAVE_STORAGE_KEYS]
 
 function resolveTechniqueEffect(
   technique: NonNullable<ReturnType<typeof getTechnique>> | null,
@@ -29,6 +56,7 @@ function resolveTechniqueEffect(
 }
 
 export const useGameStore = defineStore('game', () => {
+  const { setTab } = useStage()
   const game = ref<GameState>(createGameState())
   const selectedLocationId = ref('qinghe')
   const speed = ref(1)
@@ -49,11 +77,18 @@ export const useGameStore = defineStore('game', () => {
   const currentLocation = computed(() => LOCATION_MAP.get(player.value.locationId)!)
   const selectedLocation = computed(() => LOCATION_MAP.get(selectedLocationId.value) || currentLocation.value)
   const rankData = computed(() => RANKS[Math.min(player.value.rankIndex, RANKS.length - 1)])
+  const hasNextRank = computed(() => player.value.rankIndex < RANKS.length - 1)
   const nextBreakthroughNeed = computed(() => {
     const next = RANKS[Math.min(player.value.rankIndex + 1, RANKS.length - 1)]
     return next ? next.need : 999999
   })
-  const playerPower = computed(() => player.value.power + (player.value.bonusPower || 0))
+  const cultivationGateNeed = computed(() => hasNextRank.value ? getCultivationGateNeed(nextBreakthroughNeed.value) : 0)
+  const breakthroughReadyNeed = computed(() => hasNextRank.value ? getBreakthroughReadyNeed(nextBreakthroughNeed.value) : 0)
+  const cultivationBreakthroughFloor = computed(() => (
+    hasNextRank.value ? getCultivationBreakthroughFloor(player.value.cultivation, nextBreakthroughNeed.value) : 0
+  ))
+  const realmPowerBonus = computed(() => getRealmPowerBonus(player.value.rankIndex))
+  const playerPower = computed(() => player.value.power + (player.value.bonusPower || 0) + realmPowerBonus.value)
   const playerInsight = computed(() => player.value.insight + (player.value.bonusInsight || 0))
   const playerCharisma = computed(() => player.value.charisma + (player.value.bonusCharisma || 0))
   const currentAffiliation = computed(() => player.value.affiliationId ? FACTION_MAP.get(player.value.affiliationId) || null : null)
@@ -110,7 +145,7 @@ export const useGameStore = defineStore('game', () => {
     const current = p[key]
     if (typeof current !== 'number') return
     const max = maxKey && typeof p[maxKey] === 'number' ? p[maxKey] as number : Infinity
-    ;(p[key] as number) = clamp(current + amount, 0, max)
+    ;(p[key] as number) = clamp(round(current + amount, 4), 0, max)
     bus.emit('state:resource-changed', { key, amount, value: p[key] })
   }
 
@@ -132,7 +167,7 @@ export const useGameStore = defineStore('game', () => {
 
   function adjustRegionStanding(locationId = player.value.locationId, amount = 0) {
     if (!locationId || !amount) return
-    game.value.player.regionStanding[locationId] = round((game.value.player.regionStanding[locationId] || 0) + amount, 1)
+    game.value.player.regionStanding[locationId] = round((game.value.player.regionStanding[locationId] || 0) + amount, 4)
     bus.emit('state:region-standing-changed', { locationId, amount })
   }
 
@@ -140,17 +175,17 @@ export const useGameStore = defineStore('game', () => {
     if (!factionId) return 0
     const p = game.value.player
     const w = game.value.world
-    p.factionStanding[factionId] = round((p.factionStanding[factionId] || 0) + amount, 1)
+    p.factionStanding[factionId] = round((p.factionStanding[factionId] || 0) + amount, 4)
     if (w.factions[factionId]) {
       w.factions[factionId].standing = p.factionStanding[factionId]
-      w.factions[factionId].favor += amount * 0.25
+      w.factions[factionId].favor = round(w.factions[factionId].favor + amount * 0.25, 4)
     }
     const faction = FACTION_MAP.get(factionId)
     if (faction) {
       const officialTypes = new Set(['court', 'bureau', 'garrison'])
-      if (officialTypes.has(faction.type)) w.factionFavor.court += amount * 0.2
-      else if (['guild', 'escort', 'village', 'society'].includes(faction.type)) w.factionFavor.merchants += amount * 0.18
-      else if (faction.type === 'order') w.factionFavor.sect += amount * 0.12
+      if (officialTypes.has(faction.type)) w.factionFavor.court = round(w.factionFavor.court + amount * 0.2, 4)
+      else if (['guild', 'escort', 'village', 'society'].includes(faction.type)) w.factionFavor.merchants = round(w.factionFavor.merchants + amount * 0.18, 4)
+      else if (faction.type === 'order') w.factionFavor.sect = round(w.factionFavor.sect + amount * 0.12, 4)
     }
     const affFaction = currentAffiliation.value
     if (affFaction) {
@@ -192,6 +227,7 @@ export const useGameStore = defineStore('game', () => {
   function updateDerivedStats() {
     const p = game.value.player
     const rank = RANKS[Math.min(p.rankIndex, RANKS.length - 1)]
+    const nextRank = p.rankIndex < RANKS.length - 1 ? RANKS[p.rankIndex + 1] : null
     let maxQi = rank.qiMax
     let maxHp = rank.hpMax
     let maxStamina = rank.staminaMax
@@ -242,17 +278,33 @@ export const useGameStore = defineStore('game', () => {
     p.bonusCharisma = charismaBonus
     p.cultivationBonus = cultivationBonus
     p.breakthroughRate = breakthroughRate
+    if (nextRank) {
+      p.breakthrough = round(Math.max(p.breakthrough, getCultivationBreakthroughFloor(p.cultivation, nextRank.need)), 4)
+    }
     p.qi = clamp(p.qi, 0, maxQi)
     p.hp = clamp(p.hp, 0, maxHp)
     p.stamina = clamp(p.stamina, 0, maxStamina)
     bus.emit('state:derived-stats-updated')
   }
 
+  function clearStaleSaveKeys() {
+    STALE_SAVE_KEYS.forEach(key => localStorage.removeItem(key))
+  }
+
+  function maybeStartOpeningTutorial() {
+    if (!shouldAutoStartOpeningTutorial(game.value.story)) return
+    setTab('inventory')
+    if (startStory(OPENING_TUTORIAL_STORY_ID, { locationId: game.value.player.locationId }, 'overlay')) {
+      markOpeningTutorialStarted()
+    }
+  }
+
   function saveGame(manual = true) {
     try {
       game.value.lastSavedAt = Date.now()
-      localStorage.setItem(SAVE_KEY, JSON.stringify(game.value))
-      LEGACY_SAVE_KEYS.forEach(key => localStorage.removeItem(key))
+      const snapshot = JSON.stringify(game.value)
+      localStorage.setItem(SAVE_KEY, snapshot)
+      clearStaleSaveKeys()
       saveState.value = `${manual ? '已手动存档' : '自动存档'} ${new Date(game.value.lastSavedAt).toLocaleTimeString('zh-CN', { hour12: false })}`
       bus.emit('game:saved', { manual })
     } catch {
@@ -266,12 +318,16 @@ export const useGameStore = defineStore('game', () => {
       const stored = readStoredSave()
       if (!stored?.raw) { appendLog('当前浏览器里没有可读取的存档。', 'warn'); return }
       game.value = hydrateGameState(JSON.parse(stored.raw))
-      localStorage.setItem(SAVE_KEY, JSON.stringify(game.value))
-      LEGACY_SAVE_KEYS.forEach(key => localStorage.removeItem(key))
+      const snapshot = JSON.stringify(game.value)
+      localStorage.setItem(SAVE_KEY, snapshot)
+      clearStaleSaveKeys()
       updateDerivedStats()
       selectedLocationId.value = game.value.player.locationId
+      meetNpcsAtLocation(game.value.player.locationId)
+      syncOpeningTutorialState()
+      maybeStartOpeningTutorial()
       saveState.value = `已读取 ${new Date(game.value.lastSavedAt || Date.now()).toLocaleTimeString('zh-CN', { hour12: false })}`
-      appendLog('旧日行程已经续上。', 'info')
+      appendLog(stored.source === 'slot-migrated' ? '旧日行程已并回单一存档。' : '旧日行程已经续上。', 'info')
       bus.emit('game:loaded')
     } catch {
       appendLog('存档损坏或格式不兼容，读取失败。', 'warn')
@@ -280,34 +336,49 @@ export const useGameStore = defineStore('game', () => {
 
   function resetGame() {
     game.value = createGameState()
+    primeOpeningTutorialState()
     selectedLocationId.value = game.value.player.locationId
+    setTab('inventory')
     saveState.value = '新轮回已开启'
     updateDerivedStats()
-    appendLog('新的一世开始了，你从云泽渡醒来。', 'info')
+    meetNpcsAtLocation(game.value.player.locationId)
+    appendLog('你在青禾镇街口惊醒，怀里只剩一点零碎盘缠。', 'info')
+    maybeStartOpeningTutorial()
     bus.emit('game:reset')
   }
 
   function initializeGame() {
     if (initialized.value) return
     const stored = readStoredSave()
+    let resumedStoredSave = false
     if (stored?.raw) {
       try {
         game.value = hydrateGameState(JSON.parse(stored.raw))
-        localStorage.setItem(SAVE_KEY, JSON.stringify(game.value))
-        LEGACY_SAVE_KEYS.forEach(key => localStorage.removeItem(key))
+        const snapshot = JSON.stringify(game.value)
+        localStorage.setItem(SAVE_KEY, snapshot)
+        clearStaleSaveKeys()
         saveState.value = '已载入本地存档'
+        resumedStoredSave = true
       } catch {
         game.value = createGameState()
+        primeOpeningTutorialState()
         saveState.value = '旧存档损坏，已重置'
       }
     } else {
       game.value = createGameState()
+      primeOpeningTutorialState()
       saveState.value = '未存档'
     }
     updateDerivedStats()
     selectedLocationId.value = game.value.player.locationId
+    if (!resumedStoredSave || shouldAutoStartOpeningTutorial(game.value.story)) {
+      setTab('inventory')
+    }
+    meetNpcsAtLocation(game.value.player.locationId)
     mapTexture.value = buildMapTexture()
-    appendLog('凡尘立道录已开启，你的寒门修途开始运转。', 'info')
+    syncOpeningTutorialState()
+    appendLog(resumedStoredSave ? '旧日行程已经续上。' : '你在青禾镇街口惊醒，怀里只剩一点零碎盘缠。', 'info')
+    maybeStartOpeningTutorial()
     initialized.value = true
     bus.emit('game:initialized')
   }
@@ -339,7 +410,8 @@ export const useGameStore = defineStore('game', () => {
     game, selectedLocationId, speed, saveState, mapTexture, feedback, initialized,
     bus,
     player, npcs, combat, world, market, auction, log, story,
-    currentLocation, selectedLocation, rankData, nextBreakthroughNeed,
+    currentLocation, selectedLocation, rankData, hasNextRank, nextBreakthroughNeed,
+    cultivationGateNeed, breakthroughReadyNeed, cultivationBreakthroughFloor, realmPowerBonus,
     playerPower, playerInsight, playerCharisma,
     currentAffiliation, playerFaction, sect,
     getCurrentLocation, getSelectedLocation, getRankData, getNextBreakthroughNeed,

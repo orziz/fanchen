@@ -9,9 +9,15 @@ import {
   type StoryNodeSpec,
   type StoryPresentationMode,
 } from '@/config/story'
+import { OPENING_TUTORIAL_SCRIPT_IDS } from '@/config/tutorial'
 import { getContext } from '@/core/context'
 import type { StoryBindings, StoryHistoryEntry, StoryProgressEntry } from '@/types/game'
 import { fillTemplate } from '@/utils'
+import {
+  grantOpeningTutorialStarterPack,
+  openOpeningTutorialAffiliationView,
+  openOpeningTutorialMapView,
+} from './tutorial'
 
 const STORY_HISTORY_LIMIT = 24
 
@@ -44,6 +50,18 @@ interface StoryScriptPayload {
 type StoryScriptHandler = (payload: StoryScriptPayload) => boolean | void
 
 const STORY_SCRIPTS: Record<string, StoryScriptHandler> = {
+  [OPENING_TUTORIAL_SCRIPT_IDS.openMap]: () => {
+    openOpeningTutorialMapView()
+    return true
+  },
+  [OPENING_TUTORIAL_SCRIPT_IDS.grantStarterPack]: () => {
+    grantOpeningTutorialStarterPack()
+    return true
+  },
+  [OPENING_TUTORIAL_SCRIPT_IDS.openAffiliation]: () => {
+    openOpeningTutorialAffiliationView()
+    return true
+  },
   'npc-visit-bonus': ({ bindings }) => {
     const ctx = getContext()
     if (!bindings.npcId) return true

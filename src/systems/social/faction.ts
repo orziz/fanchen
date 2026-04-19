@@ -1,6 +1,7 @@
 import { getContext } from '@/core/context'
 import { FACTION_MAP, LOCATION_MAP, getItem } from '@/config'
 import { round } from '@/utils'
+import { syncOpeningTutorialState } from '@/systems/tutorial'
 import {
   FACTION_LEAVE_REPUTATION_COST,
   FACTION_REJOIN_COOLDOWN_DAYS,
@@ -91,15 +92,15 @@ export function adjustFactionStanding(factionId: string, amount: number) {
   const g = ctx.game
   if (!factionId) return 0
   const faction = FACTION_MAP.get(factionId)
-  g.player.factionStanding[factionId] = round((g.player.factionStanding[factionId] || 0) + amount, 1)
+  g.player.factionStanding[factionId] = round((g.player.factionStanding[factionId] || 0) + amount, 4)
   if (g.world.factions[factionId]) {
     g.world.factions[factionId].standing = g.player.factionStanding[factionId]
-    g.world.factions[factionId].favor += amount * 0.25
+    g.world.factions[factionId].favor = round(g.world.factions[factionId].favor + amount * 0.25, 4)
   }
   if (faction) {
-    if (isOfficialFaction(faction)) g.world.factionFavor.court += amount * 0.2
-    else if (['guild', 'escort', 'village', 'society'].includes(faction.type)) g.world.factionFavor.merchants += amount * 0.18
-    else if (faction.type === 'order') g.world.factionFavor.sect += amount * 0.12
+    if (isOfficialFaction(faction)) g.world.factionFavor.court = round(g.world.factionFavor.court + amount * 0.2, 4)
+    else if (['guild', 'escort', 'village', 'society'].includes(faction.type)) g.world.factionFavor.merchants = round(g.world.factionFavor.merchants + amount * 0.18, 4)
+    else if (faction.type === 'order') g.world.factionFavor.sect = round(g.world.factionFavor.sect + amount * 0.12, 4)
   }
   checkAffiliationRankUp()
   return g.player.factionStanding[factionId]
@@ -196,7 +197,7 @@ export function getAffiliationTaskIssues(taskId: string): string[] {
   if (task.kind === 'liaison') {
     const standing = ctx.getRegionStanding(faction.locationId)
     if (g.player.money < task.moneyCost) issues.push(`灵石不足，还差${task.moneyCost - g.player.money}`)
-    if (standing < task.standingNeed) issues.push(`本地声望不足，还差${round(task.standingNeed - standing, 1)}`)
+    if (standing < task.standingNeed) issues.push(`本地声望不足，还差${Math.ceil(task.standingNeed - standing)}`)
   }
   return issues
 }
@@ -226,7 +227,7 @@ export function completeAffiliationTask(taskId: string) {
   }
   if (task.kind === 'liaison') g.player.money -= task.moneyCost
   g.player.money += task.rewardMoney
-  g.player.reputation += task.rewardReputation
+  g.player.reputation = round(g.player.reputation + task.rewardReputation, 4)
   adjustFactionStanding(task.factionId, task.rewardStanding)
   ctx.adjustRegionStanding(FACTION_MAP.get(task.factionId)?.locationId || g.player.locationId, task.rewardRegion)
   g.player.stats.affiliationTasksCompleted += 1
@@ -245,7 +246,7 @@ export function getFactionJoinIssues(factionId: string): string[] {
   if (cooldownDays > 0) issues.push(`还需等待${cooldownDays}天才能重返这方势力`)
   if (g.player.locationId !== faction.locationId) issues.push(`需前往${LOCATION_MAP.get(faction.locationId)?.name || faction.locationId}`)
   if (g.player.money < faction.joinRequirement.money) issues.push(`灵石不足，还差${faction.joinRequirement.money - g.player.money}`)
-  if (g.player.reputation < faction.joinRequirement.reputation) issues.push(`声望不足，还差${round(faction.joinRequirement.reputation - g.player.reputation, 1)}`)
+  if (g.player.reputation < faction.joinRequirement.reputation) issues.push(`声望不足，还差${Math.ceil(faction.joinRequirement.reputation - g.player.reputation)}`)
   if (g.player.rankIndex < faction.joinRequirement.rankIndex) issues.push(`境界不足，需要${ctx.getRankData()?.name || '更高境界'}`)
   return issues
 }
@@ -281,6 +282,7 @@ export function joinFaction(factionId: string) {
   if (previous && previous.id !== factionId) ctx.appendLog(`你离开了${previous.name}，转而投向${faction.name}。`, 'npc')
   g.player.title = `${faction.name}${faction.titles[0]}`
   ctx.appendLog(`你正式加入${faction.name}，身份为"${faction.titles[0]}"。`, 'loot')
+  syncOpeningTutorialState({ announce: true })
 }
 
 export function leaveFaction() {

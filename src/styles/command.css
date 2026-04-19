@@ -262,6 +262,12 @@
   line-height: 1.55;
 }
 
+.ui-action-card-button__hint {
+  color: var(--cinnabar);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 .command-action-section {
   background:
     radial-gradient(circle at top right, rgba(70, 130, 180, 0.05), transparent 32%),

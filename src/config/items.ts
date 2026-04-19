@@ -4,18 +4,31 @@ export type ManualCategory = 'heart' | 'spell' | 'knowledge'
 
 export interface ItemData {
   id: string
+  /** 名称 */
   name: string
+  /** 类型 */
   type: string
+  /** 稀有度 */
   rarity: string
+  /** 品阶 */
   tier: number
+  /** 最低可用等级索引 */
   minRankIndex: number
+  /** 基础价值 */
   baseValue: number
+  /** 描述 */
   desc: string
+  /** 效果 */
   effect: Record<string, number>
+  /** 手动技能ID */
   manualSkillId?: string
+  /** 知识ID */
   knowledgeId?: string
+  /** 手册分类 */
   manualCategory?: ManualCategory
+  /** 仅可发现 */
   discoverOnly?: boolean
+  /** 可直接使用 */
   directUse?: boolean
 }
 

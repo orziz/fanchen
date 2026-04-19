@@ -78,6 +78,27 @@ export function refreshSectMissions(force = false) {
   return sect.missions
 }
 
+export function getCreateSectIssues(): string[] {
+  const ctx = getContext()
+  const g = ctx.game
+  const issues: string[] = []
+  if (g.player.sect) issues.push('你已经建立了自己的宗门')
+  if (g.player.rankIndex < 4) issues.push('至少筑基之后，才能撑起一宗门面')
+  if (!ctx.findInventoryEntry('sect-banner')) issues.push('缺少立宗旗幡')
+  if (g.player.reputation < 68) issues.push(`声望不足，还差${Math.ceil(68 - g.player.reputation)}`)
+  if (g.player.money < 3800) issues.push(`灵石不足，还差${3800 - g.player.money}`)
+  return issues
+}
+
+export function canCreateSect() {
+  return getCreateSectIssues().length === 0
+}
+
+export function explainCreateSect() {
+  const issues = getCreateSectIssues()
+  return issues.length ? issues.join('；') : '开宗立门的条件已经齐了。'
+}
+
 export function getSectMissionIssues(missionId: string): string[] {
   const ctx = getContext()
   const g = ctx.game
@@ -99,7 +120,7 @@ export function getSectMissionIssues(missionId: string): string[] {
   }
   if (mission.kind === 'recruit') {
     if (g.player.money < mission.moneyCost) issues.push(`安置银不足，还差${mission.moneyCost - g.player.money}`)
-    if (g.player.reputation < mission.reputationNeed) issues.push(`声望不足，还差${round(mission.reputationNeed - g.player.reputation, 1)}`)
+    if (g.player.reputation < mission.reputationNeed) issues.push(`声望不足，还差${Math.ceil(mission.reputationNeed - g.player.reputation)}`)
   }
   return issues
 }
@@ -133,8 +154,8 @@ export function completeSectMission(missionId: string) {
       const npc = ctx.getNpc(teaching.npcId)
       const gainedStages = applyTeachingGain(teaching, mission.rewardTeaching + sect.buildings.library * 0.3)
       if (!npc || gainedStages <= 0) return
-      npc.cultivation += gainedStages * (10 + sect.buildings.dojo * 3)
-      sect.prestige += gainedStages * 0.8
+      npc.cultivation = round(npc.cultivation + gainedStages * (10 + sect.buildings.dojo * 3), 4)
+      sect.prestige = round(sect.prestige + gainedStages * 0.8, 4)
       g.player.stats.disciplesTaught += gainedStages
     })
   }
@@ -144,8 +165,8 @@ export function completeSectMission(missionId: string) {
   }
   sect.food = clamp(sect.food + (mission.rewardFood || 0), 0, 240)
   sect.treasury += mission.rewardTreasury || 0
-  sect.prestige += mission.rewardPrestige || 0
-  g.player.reputation += mission.rewardReputation || 0
+  sect.prestige = round(sect.prestige + (mission.rewardPrestige || 0), 4)
+  g.player.reputation = round(g.player.reputation + (mission.rewardReputation || 0), 4)
   g.player.stats.sectTasksCompleted += 1
   sect.missions = missions.filter((entry: any) => entry.id !== missionId) as any[]
   ctx.appendLog(`你替${sect.name}办妥"${mission.title}"，宗门根基更稳了。`, 'loot')
@@ -154,20 +175,8 @@ export function completeSectMission(missionId: string) {
 export function createSect() {
   const ctx = getContext()
   const g = ctx.game
-  if (g.player.sect) {
-    ctx.appendLog('你已经建立了自己的宗门。', 'warn')
-    return
-  }
-  if (g.player.rankIndex < 4) {
-    ctx.appendLog('你还只是江湖中人，离自立宗门差得太远。', 'warn')
-    return
-  }
-  if (!ctx.findInventoryEntry('sect-banner')) {
-    ctx.appendLog('建宗至少要备好一面宗门旗幡。', 'warn')
-    return
-  }
-  if (g.player.reputation < 68 || g.player.money < 3800) {
-    ctx.appendLog('建宗需要筑基以上名望、足够灵石和真正的立宗资格。', 'warn')
+  if (!canCreateSect()) {
+    ctx.appendLog('开宗立门的条件还没有齐。', 'warn')
     return
   }
   const name = createSectName()
@@ -181,7 +190,7 @@ export function createSect() {
     .filter(Boolean)
     .slice(0, 1)
   refreshSectMissions(true)
-  g.player.reputation += 6
+  g.player.reputation = round(g.player.reputation + 6, 4)
   ctx.appendLog(`你正式开宗立门，宗门"${name}"就此开宗。`, 'loot')
 }
 
@@ -202,7 +211,7 @@ export function upgradeSectBuilding(buildingKey: string) {
   }
   g.player.money -= cost
   ;(g.player.sect.buildings as any)[buildingKey] = level + 1
-  g.player.sect.prestige += 2 + level
+  g.player.sect.prestige = round(g.player.sect.prestige + 2 + level, 4)
   ctx.appendLog(`${building.label}升至 ${level + 1} 级。`, 'info')
 }
 
@@ -246,8 +255,8 @@ export function processSectTick() {
     if (!npc) return
     const gainedStages = applyTeachingGain(teaching, 1 + sect.buildings.library * 0.5)
     if (gainedStages > 0) {
-      npc.cultivation += gainedStages * (10 + sect.buildings.dojo * 3)
-      sect.prestige += gainedStages
+      npc.cultivation = round(npc.cultivation + gainedStages * (10 + sect.buildings.dojo * 3), 4)
+      sect.prestige = round(sect.prestige + gainedStages, 4)
       g.player.stats.disciplesTaught += gainedStages
       if (Math.random() < 0.32) {
         const template = sample(SECT_EVENT_TEMPLATES.filter(event => event.id === 'teaching-progress'))
@@ -266,7 +275,7 @@ export function processSectTick() {
       ctx.appendLog(template.text.split('{value}').join(String(tribute)), template.type)
     }
     if (sect.food <= 8) {
-      sect.prestige = Math.max(0, sect.prestige - 1.2)
+      sect.prestige = round(Math.max(0, sect.prestige - 1.2), 4)
       ctx.appendLog(`${sect.name}粮草紧张，门内人心略有浮动。`, 'warn')
     }
     if (sect.prestige >= sect.level * 18) {

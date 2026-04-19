@@ -1,6 +1,6 @@
 <template>
   <div class="inventory-panel">
-    <p class="panel-intro">行囊里装着兵刃、护具、秘籍与契物；当前版本功法统一按单阶熟练度计算，熟练度封顶即视为圆满，可解锁圆满加成与无限誊抄。册页、灵墨等材料只展示用途，不再提供误导性的直接使用按钮。</p>
+    <p class="panel-intro">行囊里装着兵刃、护具、秘籍与契物。药食可随手取用，秘籍与札记留待修习，地契与材料则多半要留着营生、置业或悟道之用。</p>
 
     <div class="inventory-summary-grid">
       <UiPanelCard tone="item" :class-name="summaryCardClass(equippedItem(player.equipment.weapon)?.rarity)">
@@ -120,7 +120,7 @@
             <p class="item-meta">已研读 · 无熟练度 · 第{{ entry.learnedDay }}日纳入见闻。</p>
           </UiPanelCard>
         </template>
-        <div v-else class="empty-state">你暂时还没研读任何学识札记，后续可用来补生活技能和基础属性。</div>
+        <div v-else class="empty-state">你暂时还没研读任何学识札记，多读几卷，手艺和见识自然会慢慢补上来。</div>
       </div>
     </section>
 

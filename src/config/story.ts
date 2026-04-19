@@ -1,3 +1,5 @@
+import { OPENING_TUTORIAL_FLAGS, OPENING_TUTORIAL_SCRIPT_IDS } from './tutorial'
+
 export type StoryPresentationMode = 'overlay' | 'rail' | 'embedded'
 export type StoryBindingKey = 'npc' | 'location'
 export type StorySpeakerMode = 'npc' | 'player' | 'narrator'
@@ -67,6 +69,81 @@ export interface StoryDefinition {
 }
 
 export const STORY_DEFINITIONS: StoryDefinition[] = [
+  {
+    id: 'opening-guidance',
+    title: '青禾醒世',
+    summary: '先在青禾站住脚，再谈拜师入门。',
+    defaultPresentation: 'overlay',
+    startNodeId: 'wake',
+    bindings: ['location'],
+    trigger: {
+      kind: 'manual',
+      scope: 'global',
+      once: true,
+      conditions: [{ kind: 'flag', flag: OPENING_TUTORIAL_FLAGS.active }],
+    },
+    nodes: {
+      wake: {
+        id: 'wake',
+        speaker: '路人',
+        text: '醒醒。你在青禾镇街口睡得都快着凉了，还能起身么？',
+        choices: [
+          {
+            id: 'answer',
+            text: '我想拜入宗门，可盘缠已经见底，只能先求个活路。',
+            next: 'guidance',
+          },
+        ],
+      },
+      guidance: {
+        id: 'guidance',
+        speaker: '路人',
+        text: '前面这片就是青禾镇。先认清地界，再挑一方势力挂个名头，把日子稳下来，别急着空谈宗门。',
+        choices: [
+          {
+            id: 'open-map',
+            text: '先看看青禾周遭的路脉',
+            effects: [
+              { kind: 'run-script', scriptId: OPENING_TUTORIAL_SCRIPT_IDS.openMap },
+              { kind: 'set-presentation', presentation: 'rail' },
+            ],
+            next: 'map',
+          },
+        ],
+      },
+      map: {
+        id: 'map',
+        speakerMode: 'narrator',
+        text: '山河图在你眼前铺开。青禾镇不大，却有田货、人情和落脚的门路；先在这里站稳，往后的路才好走。',
+        choices: [
+          {
+            id: 'take-pack',
+            text: '把护身和口粮先收下',
+            effects: [{ kind: 'run-script', scriptId: OPENING_TUTORIAL_SCRIPT_IDS.grantStarterPack }],
+            next: 'supplies',
+          },
+        ],
+      },
+      supplies: {
+        id: 'supplies',
+        speaker: '路人',
+        text: '这把木柄短枪拿去防身，草膏和口粮也别省着。你先在青禾找个愿意收人的门路，等有了身份，再谈拜师入门。',
+        choices: [
+          {
+            id: 'open-affiliation',
+            text: '去青禾找一家势力挂靠',
+            effects: [{ kind: 'run-script', scriptId: OPENING_TUTORIAL_SCRIPT_IDS.openAffiliation }],
+            next: 'affiliation',
+          },
+        ],
+      },
+      affiliation: {
+        id: 'affiliation',
+        speakerMode: 'narrator',
+        text: '势力页已经替你点开。先在青禾挂靠一方势力，把第一口饭稳住，街面上的其余门路才会慢慢向你打开。',
+      },
+    },
+  },
   {
     id: 'local-undercurrent',
     title: '市井暗流',

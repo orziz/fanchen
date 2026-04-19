@@ -2,12 +2,13 @@
   <nav class="game-dock">
     <div class="dock-tabs">
       <button
-        v-for="tab in STAGE_TABS"
+        v-for="tab in stageTabs"
         :key="tab.id"
         class="dock-tab-btn"
-        :class="{ active: activeTab === tab.id }"
+        :class="{ active: activeTab === tab.id, 'is-locked': Boolean(tab.lockReason) }"
         type="button"
-        :title="tab.label"
+        :title="tab.lockReason || tab.label"
+        :disabled="Boolean(tab.lockReason)"
         @click="setTab(tab.id)"
       >
         <span class="dock-tab-label-full">{{ tab.label }}</span>
@@ -23,6 +24,7 @@
           :class="{ active: isActionHighlighted(action.key) }"
           type="button"
           :title="action.title"
+          :disabled="action.disabled"
           @click="performManualAction(action.key)"
         >{{ action.label }}</button>
       </div>
@@ -51,10 +53,11 @@ import { ACTION_META, MODE_OPTIONS, RANKS, LOCATION_MAP } from '@/config'
 import { getModeLabel } from '@/composables/useUIHelpers'
 import { performAction } from '@/systems/world'
 import { attemptBreakthrough, setMode } from '@/systems/player'
+import { getManualActionLockReason, getStageTabLockReason } from '@/systems/tutorial'
 
 const { activeTab, setTab } = useStage()
 const store = useGameStore()
-const { player, currentLocation } = storeToRefs(store)
+const { player, currentLocation, story } = storeToRefs(store)
 
 const QUICK_MODE_OPTIONS = MODE_OPTIONS
 const ACTION_ORDER = ['rest', 'meditate', 'train', 'trade', 'quest', 'hunt', 'auction', 'breakthrough', 'sect'] as const
@@ -108,6 +111,11 @@ const canManualBreakthrough = computed(() =>
   player.value.rankIndex < RANKS.length - 1 && player.value.breakthrough >= store.nextBreakthroughNeed * 0.85
 )
 
+const stageTabs = computed(() => STAGE_TABS.map(tab => ({
+  ...tab,
+  lockReason: getStageTabLockReason(tab.id, story.value, player.value),
+})))
+
 const manualActions = computed(() => {
   const actionKeys = new Set<string>(['rest', ...currentLocation.value.actions])
   if (player.value.tradeRun) actionKeys.add('trade')
@@ -118,11 +126,15 @@ const manualActions = computed(() => {
   return ACTION_ORDER
     .filter(actionKey => actionKeys.has(actionKey))
     .map(actionKey => ({
+      disabled: Boolean(getManualActionLockReason(actionKey, story.value, player.value)),
       key: actionKey,
       label: actionKey === 'trade' && player.value.tradeRun
         ? player.value.locationId === player.value.tradeRun.destinationId ? '交货' : '跑商'
         : ACTION_LABELS[actionKey],
-      title: ACTION_TITLES[actionKey] || ACTION_META[actionKey]?.label || actionKey,
+      title: getManualActionLockReason(actionKey, story.value, player.value)
+        || ACTION_TITLES[actionKey]
+        || ACTION_META[actionKey]?.label
+        || actionKey,
     }))
 })
 
@@ -135,6 +147,7 @@ function cycleMode() {
 }
 
 function performManualAction(actionKey: string) {
+  if (getManualActionLockReason(actionKey, story.value, player.value)) return
   if (actionKey === 'breakthrough') {
     player.value.action = 'breakthrough'
     attemptBreakthrough()

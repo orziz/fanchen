@@ -4,7 +4,8 @@ import {
   LOCATIONS, LOCATION_MAP, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
   getItem,
 } from '@/config'
-import { sample, randomInt, fillTemplate } from '@/utils'
+import { sample, randomInt, fillTemplate, round } from '@/utils'
+import { createDynamicMarketListings } from './worldEconomy'
 
 /* ─── Reserved Funds ─── */
 
@@ -44,7 +45,7 @@ export function resolveAuctionVisit() {
   if (Math.random() < 0.28 && g.player.money > listing.currentBid + listing.minimumRaise) {
     placeBid(listing.id)
   } else {
-    g.player.reputation += 0.4
+    g.player.reputation = round(g.player.reputation + 0.4, 4)
     ctx.appendLog(`你在拍卖行打探到${item.name}的消息。`, 'npc')
   }
 }
@@ -100,7 +101,7 @@ export function refreshMarketIfNeeded() {
   const ctx = getContext()
   const g = ctx.game
   if (g.world.hour % 4 !== 0 || g.world.subStep !== 0) return
-  LOCATIONS.forEach(loc => { g.market[loc.id] = ctx.createMarketListings(loc) })
+  LOCATIONS.forEach(loc => { g.market[loc.id] = createDynamicMarketListings(loc) })
   ctx.appendLog('各地商铺与黑市货架焕然一新。', 'info')
 }
 
