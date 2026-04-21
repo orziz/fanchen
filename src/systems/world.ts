@@ -1,9 +1,10 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
+import { addPlayerMetric } from '@/core/integerProgress'
 import type { PlayerState, TravelPlanState } from '@/types/game'
 import {
   LOCATION_MAP, LOCATIONS, TRAVEL_EVENT_TEMPLATES, DISTRIBUTABLE_ITEMS, TIME_LABELS,
-  ACTION_META, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
+  ACTION_META, PLAYER_SECT_ENABLED, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
 } from '@/config'
 import { sample, randomInt, fillTemplate, findRoute as resolveRoute, round } from '@/utils'
 import { applyPassiveAction, attemptBreakthrough, revivePlayer } from './player'
@@ -38,7 +39,7 @@ function triggerTravelEvent(location: ReturnType<typeof LOCATION_MAP.get>) {
   }
   ctx.adjustResource('hp', -randomInt(4, 10), 'maxHp')
   ctx.adjustResource('qi', -randomInt(2, 8), 'maxQi')
-  ctx.game.player.breakthrough = round(ctx.game.player.breakthrough + 1.5, 4)
+  addPlayerMetric('breakthrough', 1.5)
   ctx.appendLog(event.text, 'warn')
 }
 
@@ -401,7 +402,7 @@ export function chooseAutoAction(): string | null {
     }
     return location.actions.includes('quest') ? 'quest' : location.actions.includes('hunt') ? 'hunt' : location.actions[0]
   }
-  if (mode === 'sect' && g.player.sect) {
+  if (PLAYER_SECT_ENABLED && mode === 'sect' && g.player.sect) {
     if (!location.tags.includes('sect') && currentLocationCanReach('jadegate') && Math.random() < 0.3) {
       travelTo('jadegate', { advanceNow: false, consumeTime: false, silent: true })
       return null
@@ -422,9 +423,9 @@ function processActionKey(actionKey: string | null) {
   if (actionKey === 'breakthrough') { g.player.action = 'breakthrough'; attemptBreakthrough(); return }
   if (actionKey === 'sect') {
     applyPassiveAction('sect')
-    if (g.player.sect) {
+    if (PLAYER_SECT_ENABLED && g.player.sect) {
       g.player.sect.treasury += 8 + g.player.sect.buildings.market * 4
-      g.player.sect.prestige = round(g.player.sect.prestige + 0.6, 4)
+      g.player.sect.prestige = round(g.player.sect.prestige + 1)
     }
     return
   }
@@ -458,8 +459,10 @@ function processActionKey(actionKey: string | null) {
 }
 
 export function performAction(actionKey: string) {
+  const ctx = getContext()
   processActionKey(actionKey)
   tickWorld()
+  ctx.updateDerivedStats()
 }
 
 /* ─── World Tick ─── */

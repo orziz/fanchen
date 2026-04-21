@@ -7,6 +7,7 @@ import {
   FACTION_MAP,
   LEGACY_SAVE_KEYS,
   LOCATION_MAP,
+  PLAYER_SECT_ENABLED,
   RANKS,
   SAVE_KEY,
   TIME_LABELS,
@@ -22,6 +23,7 @@ import {
 import { clamp, round, buildMapTexture, findRoute } from '@/utils'
 import type { MapTexture } from '@/utils'
 import { bus } from '@/core/events'
+import { normalizeGameNumericState, resolveCarriedDelta } from '@/core/integerProgress'
 import { setContext, type GameContext } from '@/core/context'
 import { meetNpcsAtLocation } from '@/systems/npc'
 import { startStory } from '@/systems/story'
@@ -95,6 +97,10 @@ export const useGameStore = defineStore('game', () => {
   const playerFaction = computed(() => player.value.playerFaction)
   const sect = computed(() => player.value.sect)
 
+  function normalizeNumericState() {
+    normalizeGameNumericState(game.value)
+  }
+
   function getCurrentLocation() { return currentLocation.value }
   function getSelectedLocation() { return selectedLocation.value }
   function getRankData(index?: number) {
@@ -145,7 +151,8 @@ export const useGameStore = defineStore('game', () => {
     const current = p[key]
     if (typeof current !== 'number') return
     const max = maxKey && typeof p[maxKey] === 'number' ? p[maxKey] as number : Infinity
-    ;(p[key] as number) = clamp(round(current + amount, 4), 0, max)
+    ;(p[key] as number) = clamp(round(current + amount), 0, max)
+    normalizeNumericState()
     bus.emit('state:resource-changed', { key, amount, value: p[key] })
   }
 
@@ -154,6 +161,7 @@ export const useGameStore = defineStore('game', () => {
     const stamp = `第${w.day}日 ${TIME_LABELS[w.hour]}`
     game.value.log.unshift({ stamp, text, type })
     if (game.value.log.length > 80) game.value.log.length = 80
+    normalizeNumericState()
     if (['warn', 'loot', 'action'].includes(type)) {
       feedback.value = { text, type }
       setTimeout(() => { feedback.value = null }, 3000)
@@ -167,7 +175,10 @@ export const useGameStore = defineStore('game', () => {
 
   function adjustRegionStanding(locationId = player.value.locationId, amount = 0) {
     if (!locationId || !amount) return
-    game.value.player.regionStanding[locationId] = round((game.value.player.regionStanding[locationId] || 0) + amount, 4)
+    const wholeDelta = resolveCarriedDelta(game.value, `player.regionStanding.${locationId}`, amount)
+    if (!wholeDelta) return
+    game.value.player.regionStanding[locationId] = (game.value.player.regionStanding[locationId] || 0) + wholeDelta
+    normalizeNumericState()
     bus.emit('state:region-standing-changed', { locationId, amount })
   }
 
@@ -175,17 +186,19 @@ export const useGameStore = defineStore('game', () => {
     if (!factionId) return 0
     const p = game.value.player
     const w = game.value.world
-    p.factionStanding[factionId] = round((p.factionStanding[factionId] || 0) + amount, 4)
+    const wholeDelta = resolveCarriedDelta(game.value, `player.factionStanding.${factionId}`, amount)
+    if (!wholeDelta) return p.factionStanding[factionId] || 0
+    p.factionStanding[factionId] = (p.factionStanding[factionId] || 0) + wholeDelta
     if (w.factions[factionId]) {
       w.factions[factionId].standing = p.factionStanding[factionId]
-      w.factions[factionId].favor = round(w.factions[factionId].favor + amount * 0.25, 4)
+      w.factions[factionId].favor += resolveCarriedDelta(game.value, `world.factions.${factionId}.favor`, amount * 0.25)
     }
     const faction = FACTION_MAP.get(factionId)
     if (faction) {
       const officialTypes = new Set(['court', 'bureau', 'garrison'])
-      if (officialTypes.has(faction.type)) w.factionFavor.court = round(w.factionFavor.court + amount * 0.2, 4)
-      else if (['guild', 'escort', 'village', 'society'].includes(faction.type)) w.factionFavor.merchants = round(w.factionFavor.merchants + amount * 0.18, 4)
-      else if (faction.type === 'order') w.factionFavor.sect = round(w.factionFavor.sect + amount * 0.12, 4)
+      if (officialTypes.has(faction.type)) w.factionFavor.court += resolveCarriedDelta(game.value, 'world.factionFavor.court', amount * 0.2)
+      else if (['guild', 'escort', 'village', 'society'].includes(faction.type)) w.factionFavor.merchants += resolveCarriedDelta(game.value, 'world.factionFavor.merchants', amount * 0.18)
+      else if (faction.type === 'order') w.factionFavor.sect += resolveCarriedDelta(game.value, 'world.factionFavor.sect', amount * 0.12)
     }
     const affFaction = currentAffiliation.value
     if (affFaction) {
@@ -197,6 +210,7 @@ export const useGameStore = defineStore('game', () => {
         appendLog(`你在${affFaction.name}中的身份升为"${affFaction.titles[nextRank]}"。`, 'loot')
       }
     }
+    normalizeNumericState()
     bus.emit('state:faction-standing-changed', { factionId, amount })
     return p.factionStanding[factionId]
   }
@@ -265,25 +279,26 @@ export const useGameStore = defineStore('game', () => {
     }
     if (p.masterId) { cultivationBonus += 0.02; breakthroughRate += 0.015 }
     if (p.partnerId) { charismaBonus += 1; cultivationBonus += 0.01 }
-    if (p.sect) {
+    if (PLAYER_SECT_ENABLED && p.sect) {
       cultivationBonus += p.sect.buildings.library * 0.01
       powerBonus += p.sect.buildings.dojo * 0.28
       charismaBonus += Math.max(0, p.sect.level - 1)
     }
-    p.maxQi = maxQi
-    p.maxHp = maxHp
-    p.maxStamina = maxStamina
-    p.bonusPower = powerBonus
-    p.bonusInsight = insightBonus
-    p.bonusCharisma = charismaBonus
+    p.maxQi = round(maxQi)
+    p.maxHp = round(maxHp)
+    p.maxStamina = round(maxStamina)
+    p.bonusPower = round(powerBonus)
+    p.bonusInsight = round(insightBonus)
+    p.bonusCharisma = round(charismaBonus)
     p.cultivationBonus = cultivationBonus
     p.breakthroughRate = breakthroughRate
     if (nextRank) {
-      p.breakthrough = round(Math.max(p.breakthrough, getCultivationBreakthroughFloor(p.cultivation, nextRank.need)), 4)
+      p.breakthrough = round(Math.max(p.breakthrough, getCultivationBreakthroughFloor(p.cultivation, nextRank.need)))
     }
-    p.qi = clamp(p.qi, 0, maxQi)
-    p.hp = clamp(p.hp, 0, maxHp)
-    p.stamina = clamp(p.stamina, 0, maxStamina)
+    p.qi = clamp(p.qi, 0, p.maxQi)
+    p.hp = clamp(p.hp, 0, p.maxHp)
+    p.stamina = clamp(p.stamina, 0, p.maxStamina)
+    normalizeNumericState()
     bus.emit('state:derived-stats-updated')
   }
 
@@ -302,6 +317,7 @@ export const useGameStore = defineStore('game', () => {
   function saveGame(manual = true) {
     try {
       game.value.lastSavedAt = Date.now()
+      normalizeNumericState()
       const snapshot = JSON.stringify(game.value)
       localStorage.setItem(SAVE_KEY, snapshot)
       clearStaleSaveKeys()
@@ -318,6 +334,7 @@ export const useGameStore = defineStore('game', () => {
       const stored = readStoredSave()
       if (!stored?.raw) { appendLog('当前浏览器里没有可读取的存档。', 'warn'); return }
       game.value = hydrateGameState(JSON.parse(stored.raw))
+      normalizeNumericState()
       const snapshot = JSON.stringify(game.value)
       localStorage.setItem(SAVE_KEY, snapshot)
       clearStaleSaveKeys()
@@ -354,6 +371,7 @@ export const useGameStore = defineStore('game', () => {
     if (stored?.raw) {
       try {
         game.value = hydrateGameState(JSON.parse(stored.raw))
+        normalizeNumericState()
         const snapshot = JSON.stringify(game.value)
         localStorage.setItem(SAVE_KEY, snapshot)
         clearStaleSaveKeys()

@@ -1,6 +1,7 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
-import { LOCATION_MAP, PROPERTY_DEFS, PROPERTY_MAP, FACTIONS, FACTION_MAP, CROPS, CROP_MAP, CRAFT_RECIPES, RECIPE_MAP, describeIndustryUpgradeResult, getItem } from '@/config'
+import { addPlayerFactionMetric, addPlayerMetric, addPlayerSkill } from '@/core/integerProgress'
+import { LOCATION_MAP, PLAYER_SECT_ENABLED, PROPERTY_DEFS, PROPERTY_MAP, FACTIONS, FACTION_MAP, CROPS, CROP_MAP, CRAFT_RECIPES, RECIPE_MAP, describeIndustryUpgradeResult, getItem } from '@/config'
 import { uid, clamp, round } from '@/utils'
 import { isTradeHubLocation, getGovernmentOfficeName, getPlayerTerritoryModifier, getTerritoryCommerceEffects, adjustFactionStanding } from './social'
 import { recordHarvestOutput, recordShopTurnover, recordWorkshopCycle } from './worldEconomy'
@@ -37,14 +38,14 @@ function getAssetOperatorBonus(asset: AssetState | null): number {
   const ctx = getContext(); const npc = ctx.getNpc(asset.managerNpcId); if (!npc) return 0
   const rel = ctx.ensurePlayerRelation(npc.id)
   const trust = Math.max(0, rel.trust || 0); const affinity = Math.max(0, rel.affinity || 0)
-  const isDisc = Boolean(ctx.game.player.sect?.disciples.includes(npc.id))
+  const isDisc = PLAYER_SECT_ENABLED && Boolean(ctx.game.player.sect?.disciples.includes(npc.id))
   const isMem = Boolean(ctx.game.player.playerFaction?.members.includes(npc.id))
   return (isDisc ? 0.12 : 0) + (isMem ? 0.08 : 0) + trust * 0.003 + affinity * 0.002
 }
 
 function getIndustrySupportBonus(kind: string, locationId?: string) {
   const ctx = getContext(); const locId = locationId || ctx.getCurrentLocation().id
-  const pf = ctx.game.player.playerFaction; const sect = ctx.game.player.sect
+  const pf = ctx.game.player.playerFaction; const sect = PLAYER_SECT_ENABLED ? ctx.game.player.sect : null
   const tb = getPlayerTerritoryModifier(locId)
   if (kind === 'farm') return { output: (sect?.buildings.hall || 0) * 0.12 + tb * 0.25, upkeep: 0 }
   if (kind === 'workshop') return { output: (sect?.buildings.dojo || 0) * 0.08 + tb * 0.3, upkeep: 0 }
@@ -52,8 +53,8 @@ function getIndustrySupportBonus(kind: string, locationId?: string) {
 }
 
 function applyIndustryNetworkGrowth(kind: string, value: number) {
-  const ctx = getContext(); const pf = ctx.game.player.playerFaction; const sect = ctx.game.player.sect
-  if (pf) { pf.treasury += Math.max(1, Math.floor(value * (kind === 'shop' ? 0.12 : 0.08))); pf.influence = round(pf.influence + (kind === 'shop' ? 0.18 : 0.1), 4) }
+  const ctx = getContext(); const pf = ctx.game.player.playerFaction; const sect = PLAYER_SECT_ENABLED ? ctx.game.player.sect : null
+  if (pf) { pf.treasury += Math.max(1, Math.floor(value * (kind === 'shop' ? 0.12 : 0.08))); addPlayerFactionMetric('influence', kind === 'shop' ? 0.18 : 0.1) }
   if (sect) { sect.treasury += Math.max(0, Math.floor(value * 0.05)); sect.prestige = round(sect.prestige + (kind === 'workshop' ? 0.16 : 0.08), 4) }
 }
 
@@ -76,7 +77,7 @@ function hasIndustryAccess(kind: string, property?: any) {
     if (!property || !property.allowedFactionIds || property.allowedFactionIds.includes(faction.id)) return true
   }
   if (property && hasGovernmentPropertyAccess(property)) return true
-  if (g.player.sect) { const bk = SECT_UNLOCK_BY_KIND[kind]; return (g.player.sect.buildings as any)[bk] > 0 }
+  if (PLAYER_SECT_ENABLED && g.player.sect) { const bk = SECT_UNLOCK_BY_KIND[kind]; return (g.player.sect.buildings as any)[bk] > 0 }
   return false
 }
 
@@ -84,7 +85,7 @@ function hasIndustryAccess(kind: string, property?: any) {
 
 export function getAssetDelegateCandidates() {
   const g = getContext().game; const pf = g.player.playerFaction
-  const ids = [...(g.player.sect?.disciples || []), ...(pf?.members || [])]
+  const ids = [...(PLAYER_SECT_ENABLED ? (g.player.sect?.disciples || []) : []), ...(pf?.members || [])]
   return [...new Set(ids)].map(id => getContext().getNpc(id)).filter(Boolean)
 }
 export function getAssetManager(kind: string, assetId: string) { const a = getAsset(kind, assetId); return a?.managerNpcId ? getContext().getNpc(a.managerNpcId) : null }
@@ -108,11 +109,11 @@ export function getLocalProperties() {
 /* ═══════════════════ Industry Orders ═══════════════════ */
 
 const ORDER_TEMPLATES = [
-  { id: 'grain-route', title: '乡社口粮单', desc: '青禾乡社正在补口粮，先把粗灵米送过去。', requirements: [{ itemId: 'spirit-grain', quantity: 4 }], rewardMoney: 56, rewardReputation: 1.2, standing: 2.4, factionId: 'qinghe-commons' },
-  { id: 'herb-relief', title: '药草济急单', desc: '迷林猎社在收治伤员，急需雾心草和草膏。', requirements: [{ itemId: 'mist-herb', quantity: 2 }, { itemId: 'herb-paste', quantity: 1 }], rewardMoney: 88, rewardReputation: 1.8, standing: 3.2, factionId: 'mist-hunt-lodge' },
-  { id: 'forge-consignment', title: '工盟押货单', desc: '玄铁工盟在催一批练手兵刃，赶得上就能接后续门路。', requirements: [{ itemId: 'wood-spear', quantity: 1 }, { itemId: 'scrap-iron', quantity: 2 }], rewardMoney: 118, rewardReputation: 2.2, standing: 4, factionId: 'blackforge-guild' },
-  { id: 'stall-restock', title: '商盟补货单', desc: '听潮商盟要临时补摊，粗布和杂木料都收。', requirements: [{ itemId: 'cloth-roll', quantity: 2 }, { itemId: 'timber', quantity: 2 }], rewardMoney: 96, rewardReputation: 1.6, standing: 3.4, factionId: 'tide-market' },
-  { id: 'sect-supply', title: '行院备库单', desc: '玉阙行院要补一批基础资材，交货后更容易在外院站稳。', requirements: [{ itemId: 'spirit-grain', quantity: 2 }, { itemId: 'mist-herb', quantity: 2 }, { itemId: 'cloth-roll', quantity: 1 }], rewardMoney: 102, rewardReputation: 2, standing: 3.8, factionId: 'jadegate-courtyard' },
+  { id: 'grain-route', title: '乡社口粮单', desc: '青禾乡社正在补口粮，先把粗灵米送过去。', requirements: [{ itemId: 'spirit-grain', quantity: 4 }], rewardMoney: 56, rewardReputation: 1, standing: 2, factionId: 'qinghe-commons' },
+  { id: 'herb-relief', title: '药草济急单', desc: '迷林猎社在收治伤员，急需雾心草和草膏。', requirements: [{ itemId: 'mist-herb', quantity: 2 }, { itemId: 'herb-paste', quantity: 1 }], rewardMoney: 88, rewardReputation: 2, standing: 3, factionId: 'mist-hunt-lodge' },
+  { id: 'forge-consignment', title: '工盟押货单', desc: '玄铁工盟在催一批练手兵刃，赶得上就能接后续门路。', requirements: [{ itemId: 'wood-spear', quantity: 1 }, { itemId: 'scrap-iron', quantity: 2 }], rewardMoney: 118, rewardReputation: 2, standing: 4, factionId: 'blackforge-guild' },
+  { id: 'stall-restock', title: '商盟补货单', desc: '听潮商盟要临时补摊，粗布和杂木料都收。', requirements: [{ itemId: 'cloth-roll', quantity: 2 }, { itemId: 'timber', quantity: 2 }], rewardMoney: 96, rewardReputation: 2, standing: 3, factionId: 'tide-market' },
+  { id: 'sect-supply', title: '行院备库单', desc: '玉阙行院要补一批基础资材，交货后更容易在外院站稳。', requirements: [{ itemId: 'spirit-grain', quantity: 2 }, { itemId: 'mist-herb', quantity: 2 }, { itemId: 'cloth-roll', quantity: 1 }], rewardMoney: 102, rewardReputation: 2, standing: 4, factionId: 'jadegate-courtyard' },
 ]
 
 function createIndustryOrder(template: typeof ORDER_TEMPLATES[0]) {
@@ -142,7 +143,8 @@ export function fulfillIndustryOrder(orderId: string) {
   const order = orders.find((e: any) => e.id === orderId) as any; if (!order) return
   if (!canFulfillIndustryOrder(orderId)) { ctx.appendLog('你手头货不够，还交不了这笔订单。', 'warn'); return }
   order.requirements.forEach((r: any) => ctx.removeItemFromInventory(r.itemId, r.quantity))
-  g.player.money += order.rewardMoney; g.player.reputation = round(g.player.reputation + order.rewardReputation, 4)
+  g.player.money += order.rewardMoney
+  addPlayerMetric('reputation', order.rewardReputation)
   adjustFactionStanding(order.factionId, order.standing || 0)
   g.world.industryOrders = orders.filter((e: any) => e.id !== orderId) as any[]
   ctx.appendLog(`你完成了${order.factionName}的"${order.title}"，入账${order.rewardMoney}灵石。`, 'loot')
@@ -295,7 +297,7 @@ function harvestCropInternal(asset: AssetState, opts: { automated?: boolean } = 
   const securedYield = Math.max(1, Math.round(harvestYield * (1 - territory.industryLossRate * 0.4)))
   ctx.addItemToInventory(crop.harvestItemId, securedYield)
   asset.cropId = null; asset.daysRemaining = 0; asset.lastManagedResult = `${getItem(crop.harvestItemId)?.name || crop.harvestItemId} x${securedYield}${territory.industryLossRate > 0.01 ? '（地面折耗后）' : ''}`
-  ctx.game.player.skills.farming = round(ctx.game.player.skills.farming + (opts.automated ? 0.25 : 0.4), 4); ctx.game.player.stats.cropsHarvested += securedYield
+  addPlayerSkill('farming', opts.automated ? 0.25 : 0.4); ctx.game.player.stats.cropsHarvested += securedYield
   adjustFactionStanding(ctx.game.player.affiliationId, opts.automated ? 0.8 : 1.5)
   applyIndustryNetworkGrowth('farm', securedYield * 6)
   recordHarvestOutput(asset.locationId, crop.harvestItemId, securedYield)
@@ -328,7 +330,7 @@ export function craftRecipe(recipeId: string) {
   const support = getIndustrySupportBonus('workshop', ws?.locationId || ctx.getCurrentLocation().id); const opBonus = getAssetOperatorBonus(ws)
   const extra = wsLevel >= 3 && Math.random() < 0.3 + support.output + opBonus ? 1 : 0
   ctx.addItemToInventory(recipe.outputItemId, recipe.outputQuantity + extra)
-  g.player.skills.crafting = round(g.player.skills.crafting + 0.6, 4); g.player.stats.craftedItems += recipe.outputQuantity + extra
+  addPlayerSkill('crafting', 0.6); g.player.stats.craftedItems += recipe.outputQuantity + extra
   adjustFactionStanding(g.player.affiliationId, 2); applyIndustryNetworkGrowth('workshop', recipe.cost + extra * 22)
   ctx.appendLog(`你亲手做出了${getItem(recipe.outputItemId)?.name || recipe.outputItemId}。`, 'loot')
 }
@@ -353,7 +355,7 @@ export function collectShopIncome(assetId: string) {
   const ctx = getContext(); const shop = getAssets('shop').find(e => e.id === assetId); if (!shop) return
   if (shop.pendingIncome <= 0) { ctx.appendLog('今天铺面还没什么进账。', 'info'); return }
   const income = shop.pendingIncome; shop.pendingIncome = 0
-  ctx.game.player.money += income; ctx.game.player.skills.trading = round(ctx.game.player.skills.trading + 0.5, 4); ctx.game.player.stats.shopCollections += 1
+  ctx.game.player.money += income; addPlayerSkill('trading', 0.5); ctx.game.player.stats.shopCollections += 1
   adjustFactionStanding(ctx.game.player.affiliationId, 1.5); applyIndustryNetworkGrowth('shop', income)
   ctx.appendLog(`你从${shop.label}收回了${income}灵石。`, 'loot')
 }
@@ -382,7 +384,7 @@ export function processIndustryTick() {
     const support = getIndustrySupportBonus('workshop', ws.locationId); const opBonus = getAssetOperatorBonus(ws)
     const extra = ws.level >= 2 && Math.random() < 0.18 + support.output * 0.5 + opBonus ? 1 : 0
     ctx.addItemToInventory(recipe.outputItemId, recipe.outputQuantity + extra)
-    g.player.skills.crafting = round(g.player.skills.crafting + 0.25, 4); g.player.stats.craftedItems += recipe.outputQuantity + extra
+    addPlayerSkill('crafting', 0.25); g.player.stats.craftedItems += recipe.outputQuantity + extra
     ws.lastManagedResult = `${getItem(recipe.outputItemId)?.name || recipe.outputItemId} x${recipe.outputQuantity + extra}`
     applyIndustryNetworkGrowth('workshop', autoCost + extra * 18)
     recordWorkshopCycle(ws.locationId, recipe.inputs.map(i => i.itemId), recipe.outputItemId, recipe.outputQuantity + extra)

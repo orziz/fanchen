@@ -3,7 +3,7 @@
     <div class="hero-copy">
       <p class="eyebrow">离线原生修真经营</p>
       <h1>凡尘立道录</h1>
-      <p class="subtitle">从寒门凡人起步，在乡社、商帮、官府与行院之间挣门路、跑商路、攒产业，再决定自己是继续借势而起，还是另立唯一的宗门。</p>
+      <p class="subtitle">从寒门凡人起步，在乡社、商帮、官府与行院之间挣门路、跑商路、攒产业，再把外部势力、自家盘子与个人修行一层层做实。</p>
     </div>
     <div class="hero-side">
       <div class="hero-top-row">
@@ -60,7 +60,7 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { SPEED_OPTIONS, TIME_LABELS, ACTION_META, REALM_TEMPLATES } from '@/config'
+import { PLAYER_SECT_ENABLED, SPEED_OPTIONS, TIME_LABELS, ACTION_META, REALM_TEMPLATES } from '@/config'
 import { formatNumber } from '@/utils'
 import { getModeLabel } from '@/composables/useUIHelpers'
 import { getOpeningTutorialObjective } from '@/systems/tutorial'
@@ -88,7 +88,7 @@ const focusSummary = computed(() => {
 
 const routeSummary = computed(() => {
   if (currentAffiliation.value) return currentAffiliation.value.name
-  if (sect.value) return sect.value.name
+  if (sect.value) return PLAYER_SECT_ENABLED ? sect.value.name : `${sect.value.name}·封山`
   return '尚未投势'
 })
 

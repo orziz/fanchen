@@ -143,6 +143,9 @@
   <h3 class="subsection-title">宗门</h3>
   <template v-if="sect">
     <UiMetricGrid :items="sectSummaryItems" />
+    <UiPanelCard tone="combat" standout>
+      <p class="item-meta">{{ sectReadonlyCopy }}</p>
+    </UiPanelCard>
     <div class="panel-section-nav panel-section-nav--compact">
       <button
         v-for="panel in sectPanels"
@@ -233,11 +236,9 @@
   <template v-else>
     <UiPanelCard tone="combat" standout>
       <p class="auction-meta">
-        宗门是你独占的一脉根基。需求：至少筑基、声望 68、灵石 3800、立宗旗幡 1。
-        当前：境界 {{ getRankName(player.rankIndex) }}、声望 {{ formatNumber(player.reputation) }}、灵石 {{ formatNumber(player.money) }}。
+        宗门山门暂未开启。当前：境界 {{ getRankName(player.rankIndex) }}、声望 {{ formatNumber(player.reputation) }}、灵石 {{ formatNumber(player.money) }}。
       </p>
       <p class="item-meta">当前差口：{{ createSectReason() }}</p>
-      <UiActionGroup variant="auction"><button class="item-button" :disabled="!canFoundSect()" :title="createSectReason()" @click="doCreateSect">开宗立门</button></UiActionGroup>
     </UiPanelCard>
   </template>
   </template>
@@ -247,7 +248,7 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { FACTIONS, FACTION_MAP, RANKS, LOCATION_MAP, SECT_BUILDINGS, getItem, getTechnique } from '@/config'
+import { FACTIONS, FACTION_MAP, PLAYER_SECT_CREATE_BLOCK_TEXT, PLAYER_SECT_ENABLED, PLAYER_SECT_FROZEN_TEXT, RANKS, LOCATION_MAP, SECT_BUILDINGS, getItem, getTechnique } from '@/config'
 import { formatNumber } from '@/utils'
 import { describeTechniqueEffect, getFactionTypeLabel, formatUnlockLabels, getTechniqueKindLabel } from '@/composables/useUIHelpers'
 import {
@@ -280,7 +281,12 @@ function getTechniqueEffect(id: string) { return describeTechniqueEffect(getTech
 
 const affiliationTasks = computed(() => currentAffiliation.value ? refreshAffiliationTasks() : [])
 const factionMissions = computed(() => playerFaction.value ? refreshPlayerFactionMissions() : [])
-const sectMissions = computed(() => sect.value ? refreshSectMissions() : [])
+const sectMissions = computed(() => {
+  if (!sect.value) return []
+  if (!PLAYER_SECT_ENABLED) return Array.isArray(sect.value.missions) ? sect.value.missions : []
+  return refreshSectMissions()
+})
+const sectReadonlyCopy = computed(() => PLAYER_SECT_FROZEN_TEXT)
 
 type SectSectionKey = 'factions' | 'affiliation' | 'player-faction' | 'sect'
 type PlayerFactionPanelKey = 'overview' | 'missions'
@@ -294,7 +300,7 @@ const sectSections = computed(() => ([
   { key: 'factions' as const, label: '可投势力', count: FACTIONS.length, desc: '先只看哪些外部势力能投、还差什么门槛。' },
   { key: 'affiliation' as const, label: '势力差使', count: affiliationTasks.value.length, desc: currentAffiliation.value ? '只看当前身份下能接的正式差使。' : '先投一家势力，这一栏才会真正转起来。' },
   { key: 'player-faction' as const, label: '自家势力', count: playerFaction.value ? playerFaction.value.members.length || 1 : 0, desc: playerFaction.value ? '把自家盘子的经营和事务拆开看，不再一屏堆满。' : '你还没拉起自家势力，这一栏只留建势入口。' },
-  { key: 'sect' as const, label: '宗门', count: sect.value ? sect.value.disciples.length || 1 : 0, desc: sect.value ? '宗门改成按差使、建筑、藏经阁和弟子分栏看。' : '你尚未立宗，这一栏只留开宗入口。' },
+  { key: 'sect' as const, label: '宗门', count: sect.value ? sect.value.disciples.length || 1 : 0, desc: PLAYER_SECT_ENABLED ? (sect.value ? '宗门改成按差使、建筑、藏经阁和弟子分栏看。' : '你尚未立宗，这一栏只留开宗入口。') : (sect.value ? PLAYER_SECT_FROZEN_TEXT : PLAYER_SECT_CREATE_BLOCK_TEXT) },
 ]))
 const activeSectSectionMeta = computed(() =>
   sectSections.value.find(section => section.key === activeSectSection.value) || sectSections.value[0]
@@ -427,24 +433,26 @@ function factionMissionReason(id: string) {
 }
 
 function canFoundSect() {
-  return canCreateSect()
+  return PLAYER_SECT_ENABLED && canCreateSect()
 }
 
 function createSectReason() {
+  if (!PLAYER_SECT_ENABLED) return PLAYER_SECT_CREATE_BLOCK_TEXT
   return explainCreateSect()
 }
 
 function canRunSectMission(id: string) {
-  return canCompleteSectMission(id)
+  return PLAYER_SECT_ENABLED && canCompleteSectMission(id)
 }
 
 function sectMissionReason(id: string) {
+  if (!PLAYER_SECT_ENABLED) return PLAYER_SECT_FROZEN_TEXT
   return explainSectMission(id)
 }
 
 function canUpgradeBuilding(key: string) {
   const building = SECT_BUILDINGS[key as keyof typeof SECT_BUILDINGS]
-  if (!sect.value || !building) return false
+  if (!PLAYER_SECT_ENABLED || !sect.value || !building) return false
   const level = sect.value.buildings[key as keyof typeof sect.value.buildings] || 0
   const cost = building.baseCost * (level + 1)
   return player.value.money >= cost
@@ -452,6 +460,7 @@ function canUpgradeBuilding(key: string) {
 
 function buildingUpgradeReason(key: string) {
   const building = SECT_BUILDINGS[key as keyof typeof SECT_BUILDINGS]
+  if (!PLAYER_SECT_ENABLED) return PLAYER_SECT_FROZEN_TEXT
   if (!sect.value || !building) return '你尚未建立宗门。'
   const level = sect.value.buildings[key as keyof typeof sect.value.buildings] || 0
   const cost = building.baseCost * (level + 1)

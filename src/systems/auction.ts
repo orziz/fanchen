@@ -1,5 +1,6 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
+import { addPlayerMetric } from '@/core/integerProgress'
 import {
   LOCATIONS, LOCATION_MAP, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
   getItem,
@@ -45,7 +46,7 @@ export function resolveAuctionVisit() {
   if (Math.random() < 0.28 && g.player.money > listing.currentBid + listing.minimumRaise) {
     placeBid(listing.id)
   } else {
-    g.player.reputation = round(g.player.reputation + 0.4, 4)
+    addPlayerMetric('reputation', 0.4)
     ctx.appendLog(`你在拍卖行打探到${item.name}的消息。`, 'npc')
   }
 }

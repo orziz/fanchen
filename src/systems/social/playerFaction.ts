@@ -1,4 +1,5 @@
 import { getContext } from '@/core/context'
+import { addPlayerFactionMetric } from '@/core/integerProgress'
 import { LOCATION_MAP } from '@/config'
 import { clamp, randomInt, round } from '@/utils'
 import { getGovernmentOfficeName, isTradeHubLocation } from './faction'
@@ -33,8 +34,8 @@ function buildPlayerFactionRouteMission(playerFaction: any) {
     runnerNeed: 2,
     rewardTreasury: 118,
     rewardSupplies: 10,
-    rewardInfluence: 2.8,
-    rewardPrestige: 1.4,
+    rewardInfluence: 3,
+    rewardPrestige: 1,
   })
 }
 
@@ -52,8 +53,8 @@ function buildPlayerFactionRecruitMission(playerFaction: any) {
     role,
     moneyCost: 68,
     rewardCrew: 1,
-    rewardInfluence: 1.8,
-    rewardPrestige: 1.2,
+    rewardInfluence: 2,
+    rewardPrestige: 1,
   })
 }
 
@@ -63,9 +64,9 @@ function buildPlayerFactionOfficeMission(playerFaction: any) {
     desc: `借官面或地头去给${playerFaction.name}打点一圈，把下一段路走顺。`,
     moneyCost: 54,
     standingNeed: 6,
-    rewardInfluence: 4.2,
-    rewardPrestige: 2.2,
-    rewardRegion: 1.4,
+    rewardInfluence: 4,
+    rewardPrestige: 2,
+    rewardRegion: 1,
     rewardSupplies: 4,
   })
 }
@@ -125,8 +126,8 @@ export function upgradePlayerFactionBranch(branchKey: string) {
   }
   g.player.money -= cost
   ;(playerFaction.branches as any)[branchKey] = level + 1
-  playerFaction.prestige = round(playerFaction.prestige + 2 + level, 4)
-  playerFaction.influence = round(playerFaction.influence + 1.2 + level * 0.4, 4)
+  addPlayerFactionMetric('prestige', 2 + level)
+  addPlayerFactionMetric('influence', 1.2 + level * 0.4)
   ctx.appendLog(`你的势力把${branch.label}扩到了 ${level + 1} 级。`, 'loot')
 }
 
@@ -167,8 +168,8 @@ export function recruitFactionMember(npcId: string) {
   }
   g.player.money -= 36
   playerFaction.members.push(npcId)
-  playerFaction.influence = round(playerFaction.influence + 1.8, 4)
-  playerFaction.prestige = round(playerFaction.prestige + 1, 4)
+  addPlayerFactionMetric('influence', 1.8)
+  addPlayerFactionMetric('prestige', 1)
   npc.factionId = playerFaction.id
   npc.lastEvent = `投到${playerFaction.name}门下做事`
   ctx.adjustRelation(npcId, { affinity: 4, trust: 6 })
@@ -226,8 +227,8 @@ export function completePlayerFactionMission(missionId: string) {
   }
   playerFaction.treasury += mission.rewardTreasury || 0
   playerFaction.supplies = clamp(playerFaction.supplies + (mission.rewardSupplies || 0), 0, 180)
-  playerFaction.influence = round(playerFaction.influence + (mission.rewardInfluence || 0), 4)
-  playerFaction.prestige = round(playerFaction.prestige + (mission.rewardPrestige || 0), 4)
+  addPlayerFactionMetric('influence', mission.rewardInfluence || 0)
+  addPlayerFactionMetric('prestige', mission.rewardPrestige || 0)
   if (mission.rewardRegion) ctx.adjustRegionStanding(g.player.locationId, mission.rewardRegion)
   g.player.stats.factionTasksCompleted += 1
   playerFaction.missions = missions.filter((entry: any) => entry.id !== missionId) as any[]
@@ -271,10 +272,10 @@ export function processPlayerFactionTick() {
   })
   playerFaction.treasury += Math.max(0, revenue - upkeep) + territoryRevenue
   playerFaction.supplies = clamp(playerFaction.supplies + supplyDelta, 0, 180)
-  playerFaction.influence = round(playerFaction.influence + 0.6 + (playerFaction.branches.watch || 0) * 0.5 + controlledCount * 0.4, 4)
-  playerFaction.prestige = round(playerFaction.prestige + controlledCount * 0.25, 4)
+  addPlayerFactionMetric('influence', 0.6 + (playerFaction.branches.watch || 0) * 0.5 + controlledCount * 0.4)
+  addPlayerFactionMetric('prestige', controlledCount * 0.25)
   if (playerFaction.supplies <= 10) {
-    playerFaction.prestige = round(Math.max(0, playerFaction.prestige - 1), 4)
+    addPlayerFactionMetric('prestige', -1)
     ctx.appendLog(`${playerFaction.name}补给吃紧，手下人做事开始慢了。`, 'warn')
   }
   if (playerFaction.prestige >= playerFaction.level * 16) {

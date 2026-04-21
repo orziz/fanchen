@@ -1,4 +1,5 @@
 import { getContext } from '@/core/context'
+import { addPlayerFactionMetric } from '@/core/integerProgress'
 import { FACTION_MAP, LOCATION_MAP } from '@/config'
 import type { TerritoryEntry } from '@/types/game'
 import { clamp, randomInt, round } from '@/utils'
@@ -297,8 +298,8 @@ export function launchTerritoryCampaign(locationId: string) {
   if (delta >= 0) {
     territory.playerInfluence = clamp(territory.playerInfluence + 18 + Math.max(4, Math.round(delta * 0.45)), 0, 100)
     territory.stability = clamp(territory.stability - 6, 10, 120)
-    playerFaction.influence = round(playerFaction.influence + 3.6, 4)
-    playerFaction.prestige = round(playerFaction.prestige + 2.4, 4)
+    addPlayerFactionMetric('influence', 3.6)
+    addPlayerFactionMetric('prestige', 2.4)
     ctx.adjustRegionStanding(locationId, 1.2)
     if (territory.playerInfluence >= 60) {
       territory.controllerId = playerFaction.id
@@ -311,7 +312,7 @@ export function launchTerritoryCampaign(locationId: string) {
   }
   territory.playerInfluence = clamp(territory.playerInfluence + Math.max(0, 4 + delta), 0, 100)
   territory.stability = clamp(territory.stability + 4, 10, 120)
-  playerFaction.prestige = round(Math.max(0, playerFaction.prestige - 0.8), 4)
+  addPlayerFactionMetric('prestige', -0.8)
   ctx.appendLog(`你在${location.name}试着争路，却被${getTerritoryControllerName(territory)}压了回来。`, 'warn')
 }
 

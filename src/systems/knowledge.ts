@@ -1,6 +1,6 @@
 import { getContext } from '@/core/context'
 import { getKnowledge } from '@/config'
-import { round } from '@/utils'
+import { addPlayerMetric, addPlayerSkill } from '@/core/integerProgress'
 
 function sortKnowledgeIds(ids: string[]) {
   return [...ids].sort((leftId, rightId) => {
@@ -36,14 +36,13 @@ export function getKnowledgeLearnIssues(knowledgeId: string) {
 }
 
 function applyKnowledgeEffect(effect: Record<string, number>) {
-  const player = getContext().game.player
-  if (effect.insight) player.insight = round(player.insight + effect.insight, 4)
-  if (effect.power) player.power = round(player.power + effect.power, 4)
-  if (effect.charisma) player.charisma = round(player.charisma + effect.charisma, 4)
-  if (effect.reputation) player.reputation = round(player.reputation + effect.reputation, 4)
-  if (effect.farming) player.skills.farming = round(player.skills.farming + effect.farming, 4)
-  if (effect.crafting) player.skills.crafting = round(player.skills.crafting + effect.crafting, 4)
-  if (effect.trading) player.skills.trading = round(player.skills.trading + effect.trading, 4)
+  if (effect.insight) addPlayerMetric('insight', effect.insight)
+  if (effect.power) addPlayerMetric('power', effect.power)
+  if (effect.charisma) addPlayerMetric('charisma', effect.charisma)
+  if (effect.reputation) addPlayerMetric('reputation', effect.reputation)
+  if (effect.farming) addPlayerSkill('farming', effect.farming)
+  if (effect.crafting) addPlayerSkill('crafting', effect.crafting)
+  if (effect.trading) addPlayerSkill('trading', effect.trading)
 }
 
 export function learnKnowledge(knowledgeId: string, options: { skipRequirement?: boolean; sourceText?: string } = {}) {

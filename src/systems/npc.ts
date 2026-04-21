@@ -1,4 +1,5 @@
 import { getContext } from '@/core/context'
+import { PLAYER_SECT_ENABLED } from '@/config'
 import { bus } from '@/core/events'
 import { LOCATION_MAP, FACTION_MAP } from '@/config'
 import type { NpcIntelSource } from '@/types/game'
@@ -385,7 +386,7 @@ function processNpcAction(npc: any, action: string) {
     }
     case 'sect':
       npc.lastEvent = npc.sectId === 'player-sect' ? '在宗门内值守听令' : `在${location.name}处理门内事务`
-      if (npc.sectId === 'player-sect' && g.player.sect) g.player.sect.treasury += 4
+      if (PLAYER_SECT_ENABLED && npc.sectId === 'player-sect' && g.player.sect) g.player.sect.treasury += 4
       break
     default:
       npc.lastEvent = `在${location.name}观望局势`
@@ -403,7 +404,7 @@ export function runNpcAI() {
     npc.cooldown -= 1
     if (npc.cooldown > 0) return
 
-    if (npc.masterId === 'player' && g.player.sect && npc.locationId !== g.player.locationId) {
+    if (PLAYER_SECT_ENABLED && npc.masterId === 'player' && g.player.sect && npc.locationId !== g.player.locationId) {
       planNpcTravel(npc, g.player.locationId)
     }
 
@@ -416,7 +417,7 @@ export function runNpcAI() {
     const current = LOCATION_MAP.get(npc.locationId)!
     let chosen = npc.action
 
-    if (npc.masterId === 'player' && g.player.sect && Math.random() < 0.3) {
+    if (PLAYER_SECT_ENABLED && npc.masterId === 'player' && g.player.sect && Math.random() < 0.3) {
       npc.lastEvent = npc.locationId === g.player.locationId ? '赶来宗门听候安排' : '正沿路赶来宗门听候安排'
     } else if (Math.random() < (npc.lifeStage === '老年' ? 0.12 : npc.lifeStage === '少年' ? 0.32 : 0.26)) {
       npc.locationId = sample(current.neighbors)
@@ -428,7 +429,7 @@ export function runNpcAI() {
     if (npc.mood.curiosity > 68 && loc.actions.includes('quest')) chosen = 'quest'
     if (npc.mood.patience > 72 && loc.actions.includes('meditate')) chosen = 'meditate'
     if (npc.lifeStage === '老年' && loc.actions.includes('meditate')) chosen = sample(['meditate', 'trade'])
-    if (npc.sectId === 'player-sect' && Math.random() < 0.3) chosen = 'sect'
+    if (PLAYER_SECT_ENABLED && npc.sectId === 'player-sect' && Math.random() < 0.3) chosen = 'sect'
 
     npc.action = chosen
     processNpcAction(npc, chosen)

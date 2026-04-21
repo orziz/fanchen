@@ -47,6 +47,7 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
+import { PLAYER_SECT_ENABLED } from '@/config'
 import { formatNumber, round } from '@/utils'
 import UiCardHeader from '@/components/ui/UiCardHeader.vue'
 import UiMetricGrid from '@/components/ui/UiMetricGrid.vue'
@@ -65,7 +66,7 @@ const disciples = computed(() =>
 const discipleNames = computed(() => disciples.value.map(n => n!.name).join('、'))
 
 const affiliationLabel = computed(() =>
-  sect.value ? sect.value.name : currentAffiliation.value ? currentAffiliation.value.name : '无'
+  sect.value ? (PLAYER_SECT_ENABLED ? sect.value.name : `${sect.value.name}·封山`) : currentAffiliation.value ? currentAffiliation.value.name : '无'
 )
 
 const lineageText = computed(() => [

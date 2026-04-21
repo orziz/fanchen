@@ -6,7 +6,7 @@
           <p class="section-kicker">角色</p>
           <h2 class="player-name">{{ player.name }}</h2>
           <p class="player-title">
-            {{ player.title }}，现居{{ currentLocation.name }}{{ sect ? `，掌${sect.name}` : currentAffiliation ? `，隶属${currentAffiliation.name}` : '，尚无门路' }}
+            {{ player.title }}，现居{{ currentLocation.name }}{{ sect ? (PLAYER_SECT_ENABLED ? `，掌${sect.name}` : `，旧山门${sect.name}已封山`) : currentAffiliation ? `，隶属${currentAffiliation.name}` : '，尚无门路' }}
           </p>
         </div>
         <UiPillRow>
@@ -38,7 +38,7 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { getGrowthProgressNote } from '@/config'
+import { PLAYER_SECT_ENABLED, getGrowthProgressNote } from '@/config'
 import { formatNumber, round } from '@/utils'
 import MeterBar from './MeterBar.vue'
 import UiMetricGrid from '@/components/ui/UiMetricGrid.vue'
@@ -81,7 +81,7 @@ const statItems = computed(() => [
   { label: '修炼加成', value: `${Math.round((1 + (player.value.cultivationBonus || 0)) * 100)}%` },
   {
     label: '江湖归属',
-    value: sect.value ? sect.value.name : currentAffiliation.value ? currentAffiliation.value.titles[player.value.affiliationRank] : '白身',
+    value: sect.value ? (PLAYER_SECT_ENABLED ? sect.value.name : `${sect.value.name}·封山`) : currentAffiliation.value ? currentAffiliation.value.titles[player.value.affiliationRank] : '白身',
   },
 ])
 </script>

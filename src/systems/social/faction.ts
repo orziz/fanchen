@@ -1,6 +1,6 @@
 import { getContext } from '@/core/context'
+import { addPlayerMetric } from '@/core/integerProgress'
 import { FACTION_MAP, LOCATION_MAP, getItem } from '@/config'
-import { round } from '@/utils'
 import { syncOpeningTutorialState } from '@/systems/tutorial'
 import {
   FACTION_LEAVE_REPUTATION_COST,
@@ -89,21 +89,10 @@ function checkAffiliationRankUp() {
 
 export function adjustFactionStanding(factionId: string, amount: number) {
   const ctx = getContext()
-  const g = ctx.game
   if (!factionId) return 0
-  const faction = FACTION_MAP.get(factionId)
-  g.player.factionStanding[factionId] = round((g.player.factionStanding[factionId] || 0) + amount, 4)
-  if (g.world.factions[factionId]) {
-    g.world.factions[factionId].standing = g.player.factionStanding[factionId]
-    g.world.factions[factionId].favor = round(g.world.factions[factionId].favor + amount * 0.25, 4)
-  }
-  if (faction) {
-    if (isOfficialFaction(faction)) g.world.factionFavor.court = round(g.world.factionFavor.court + amount * 0.2, 4)
-    else if (['guild', 'escort', 'village', 'society'].includes(faction.type)) g.world.factionFavor.merchants = round(g.world.factionFavor.merchants + amount * 0.18, 4)
-    else if (faction.type === 'order') g.world.factionFavor.sect = round(g.world.factionFavor.sect + amount * 0.12, 4)
-  }
+  const standing = ctx.adjustFactionStanding(factionId, amount)
   checkAffiliationRankUp()
-  return g.player.factionStanding[factionId]
+  return standing
 }
 
 function getFactionSupplyProfile(faction: any) {
@@ -122,9 +111,9 @@ function buildAffiliationSupplyTask(faction: any) {
     itemId: supply.itemId,
     quantity: supply.quantity,
     rewardMoney: 42 + faction.joinRequirement.money,
-    rewardReputation: 1.2,
-    rewardStanding: 2.6,
-    rewardRegion: 0.8,
+    rewardReputation: 1,
+    rewardStanding: 3,
+    rewardRegion: 1,
   })
 }
 
@@ -136,9 +125,9 @@ function buildAffiliationPatrolTask(faction: any) {
     staminaCost: isOfficialFaction(faction) ? 16 : 12,
     qiCost: isOfficialFaction(faction) ? 4 : 2,
     rewardMoney: 28 + faction.joinRequirement.rankIndex * 12,
-    rewardReputation: 0.8,
-    rewardStanding: 2.2,
-    rewardRegion: 0.6,
+    rewardReputation: 1,
+    rewardStanding: 2,
+    rewardRegion: 1,
   })
 }
 
@@ -150,9 +139,9 @@ function buildAffiliationLiaisonTask(faction: any) {
     moneyCost: 36 + faction.joinRequirement.money,
     standingNeed: isOfficialFaction(faction) ? 5 : 3,
     rewardMoney: 20,
-    rewardReputation: 1.4,
-    rewardStanding: 3.4,
-    rewardRegion: 1.2,
+    rewardReputation: 2,
+    rewardStanding: 3,
+    rewardRegion: 1,
   })
 }
 
@@ -227,7 +216,7 @@ export function completeAffiliationTask(taskId: string) {
   }
   if (task.kind === 'liaison') g.player.money -= task.moneyCost
   g.player.money += task.rewardMoney
-  g.player.reputation = round(g.player.reputation + task.rewardReputation, 4)
+  addPlayerMetric('reputation', task.rewardReputation)
   adjustFactionStanding(task.factionId, task.rewardStanding)
   ctx.adjustRegionStanding(FACTION_MAP.get(task.factionId)?.locationId || g.player.locationId, task.rewardRegion)
   g.player.stats.affiliationTasksCompleted += 1

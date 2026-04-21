@@ -3,9 +3,12 @@ import { bus } from '@/core/events'
 import {
   RANKS, MODE_OPTIONS, ACTION_META, PROPERTY_DEFS,
   LOCATION_MAP, canUseItemDirectly, getItem, getItemUsageSummary,
+  PLAYER_SECT_ENABLED,
+  PLAYER_SECT_FROZEN_TEXT,
   getBreakthroughDisabledReason,
   getBreakthroughReadyNeed,
 } from '@/config'
+import { addPlayerMetric, addPlayerSkill } from '@/core/integerProgress'
 import { clamp, round, sample, uid } from '@/utils'
 import type { AssetState } from '@/types/game'
 import { getKnowledgeLearnIssues, learnKnowledge } from './knowledge'
@@ -16,18 +19,17 @@ const ASSET_KIND_LABELS: Record<string, string> = { farm: '田产', workshop: '�
 
 function applyItemEffect(effect: Record<string, number>) {
   const ctx = getContext()
-  const player = ctx.game.player
   if (effect.hp) ctx.adjustResource('hp', effect.hp, 'maxHp')
   if (effect.qi) ctx.adjustResource('qi', effect.qi, 'maxQi')
   if (effect.stamina) ctx.adjustResource('stamina', effect.stamina, 'maxStamina')
-  if (effect.reputation) player.reputation = round(player.reputation + effect.reputation, 4)
-  if (effect.breakthrough) player.breakthrough = round(player.breakthrough + effect.breakthrough, 4)
-  if (effect.power) player.power = round(player.power + effect.power, 4)
-  if (effect.insight) player.insight = round(player.insight + effect.insight, 4)
-  if (effect.charisma) player.charisma = round(player.charisma + effect.charisma, 4)
-  if (effect.farming) player.skills.farming = round(player.skills.farming + effect.farming, 4)
-  if (effect.crafting) player.skills.crafting = round(player.skills.crafting + effect.crafting, 4)
-  if (effect.trading) player.skills.trading = round(player.skills.trading + effect.trading, 4)
+  if (effect.reputation) addPlayerMetric('reputation', effect.reputation)
+  if (effect.breakthrough) addPlayerMetric('breakthrough', effect.breakthrough)
+  if (effect.power) addPlayerMetric('power', effect.power)
+  if (effect.insight) addPlayerMetric('insight', effect.insight)
+  if (effect.charisma) addPlayerMetric('charisma', effect.charisma)
+  if (effect.farming) addPlayerSkill('farming', effect.farming)
+  if (effect.crafting) addPlayerSkill('crafting', effect.crafting)
+  if (effect.trading) addPlayerSkill('trading', effect.trading)
 }
 
 function getAssetCollection(kind: string): AssetState[] {
@@ -100,14 +102,16 @@ export function attemptBreakthrough(): boolean {
   }
   const successRate = clamp(p.breakthroughRate + location.aura / 520 + ctx.getPlayerInsight() / 760 + p.breakthrough / (need * 2.8), 0.1, 0.62)
   if (Math.random() < successRate) {
-    p.rankIndex = nextRankIndex; p.breakthrough = round(Math.max(0, p.breakthrough - need * 0.7), 4)
-    p.reputation = round(p.reputation + 2 + nextRankIndex * 2, 4); p.title = `${RANKS[nextRankIndex].name}境修士`
+    p.rankIndex = nextRankIndex
+    p.breakthrough = round(Math.max(0, p.breakthrough - need * 0.7))
+    addPlayerMetric('reputation', 2 + nextRankIndex * 2)
+    p.title = `${RANKS[nextRankIndex].name}境修士`
     ctx.appendLog(`灵机贯体，你成功踏入${RANKS[nextRankIndex].name}境。`, 'loot')
     ctx.updateDerivedStats()
     ctx.adjustResource('hp', p.maxHp, 'maxHp'); ctx.adjustResource('qi', p.maxQi, 'maxQi'); ctx.adjustResource('stamina', p.maxStamina, 'maxStamina')
     return true
   }
-  p.breakthrough = round(p.breakthrough * 0.68, 4); ctx.adjustResource('hp', -12, 'maxHp'); ctx.adjustResource('qi', -16, 'maxQi')
+  p.breakthrough = round(p.breakthrough * 0.68); ctx.adjustResource('hp', -12, 'maxHp'); ctx.adjustResource('qi', -16, 'maxQi')
   ctx.appendLog('冲关受挫，经脉震荡，需要重新稳固根基。', 'warn')
   return false
 }
@@ -160,6 +164,7 @@ export function consumeItem(itemId: string) {
 export function stashManualToSect(itemId: string) {
   const ctx = getContext()
   const p = ctx.game.player
+  if (!PLAYER_SECT_ENABLED) { ctx.appendLog(PLAYER_SECT_FROZEN_TEXT, 'warn'); return }
   if (!p.sect) { ctx.appendLog('你尚未建立宗门，无法入藏功法。', 'warn'); return }
   const item = getItem(itemId)
   const skillId = item?.manualSkillId
@@ -206,16 +211,16 @@ export function applyPassiveAction(actionKey: string) {
     ctx.adjustResource('stamina', 12, 'maxStamina'); ctx.adjustResource('qi', 6, 'maxQi')
     ctx.appendLog('你感到疲惫，于是短暂歇息恢复精力。', 'info'); return
   }
-  if (action.reward.cultivation) p.cultivation = round(p.cultivation + action.reward.cultivation * cultivationBoost, 4)
+  if (action.reward.cultivation) addPlayerMetric('cultivation', action.reward.cultivation * cultivationBoost)
   if (action.reward.qi) ctx.adjustResource('qi', action.reward.qi, 'maxQi')
   if (action.reward.hp) ctx.adjustResource('hp', action.reward.hp, 'maxHp')
   if (action.reward.money) p.money += Math.round(action.reward.money * (1 + p.reputation / 220))
-  if (action.reward.reputation) p.reputation = round(p.reputation + action.reward.reputation, 4)
-  if (action.reward.breakthrough) p.breakthrough = round(p.breakthrough + action.reward.breakthrough * (1 + ctx.getPlayerInsight() / 420), 4)
-  if (action.reward.power) p.power = round(p.power + action.reward.power * 0.08, 4)
+  if (action.reward.reputation) addPlayerMetric('reputation', action.reward.reputation)
+  if (action.reward.breakthrough) addPlayerMetric('breakthrough', action.reward.breakthrough * (1 + ctx.getPlayerInsight() / 420))
+  if (action.reward.power) addPlayerMetric('power', action.reward.power * 0.08)
   if (action.reward.market) p.stats.tradesCompleted += 1
   if (actionKey === 'meditate') { p.stats.meditationSessions += 1; ctx.adjustResource('hp', 1.5, 'maxHp') }
-  if (actionKey === 'train') p.insight = round(p.insight + 0.05, 4)
+  if (actionKey === 'train') addPlayerMetric('insight', 0.05)
   gainHeartMasteryFromAction(actionKey)
   checkRankGrowth()
 }

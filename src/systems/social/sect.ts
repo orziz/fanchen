@@ -1,7 +1,11 @@
 import { getContext } from '@/core/context'
-import { LOCATION_MAP, SECT_BUILDINGS, SECT_EVENT_TEMPLATES, getItem, getTechnique } from '@/config'
+import { LOCATION_MAP, PLAYER_SECT_CREATE_BLOCK_TEXT, PLAYER_SECT_ENABLED, PLAYER_SECT_FROZEN_TEXT, SECT_BUILDINGS, SECT_EVENT_TEMPLATES, getItem, getTechnique } from '@/config'
 import { clamp, round, sample } from '@/utils'
 import { createSectName, createTask } from './shared'
+
+function getSectClosedText(hasSect = Boolean(getContext().game.player.sect)) {
+  return hasSect ? PLAYER_SECT_FROZEN_TEXT : PLAYER_SECT_CREATE_BLOCK_TEXT
+}
 
 function getSectMissions(): any[] {
   const sect = getContext().game.player.sect
@@ -71,6 +75,7 @@ export function refreshSectMissions(force = false) {
   const ctx = getContext()
   const sect = ctx.game.player.sect
   if (!sect) return []
+  if (!PLAYER_SECT_ENABLED) return Array.isArray(sect.missions) ? sect.missions : []
   const missions = getSectMissions()
   if (!force && sect.missionDay === ctx.game.world.day && missions.length >= 3) return missions
   sect.missions = [buildSectGranaryMission(sect), buildSectLectureMission(sect), buildSectRecruitMission(sect)] as any[]
@@ -82,6 +87,7 @@ export function getCreateSectIssues(): string[] {
   const ctx = getContext()
   const g = ctx.game
   const issues: string[] = []
+  if (!PLAYER_SECT_ENABLED) issues.push(PLAYER_SECT_CREATE_BLOCK_TEXT)
   if (g.player.sect) issues.push('你已经建立了自己的宗门')
   if (g.player.rankIndex < 4) issues.push('至少筑基之后，才能撑起一宗门面')
   if (!ctx.findInventoryEntry('sect-banner')) issues.push('缺少立宗旗幡')
@@ -105,6 +111,7 @@ export function getSectMissionIssues(missionId: string): string[] {
   const sect = g.player.sect
   const mission = getSectMissions().find((entry: any) => entry.id === missionId) as any
   if (!sect || !mission) return ['这份宗门差使已经失效。']
+  if (!PLAYER_SECT_ENABLED) return [getSectClosedText(true)]
   const issues: string[] = []
   if (mission.kind === 'granary') {
     const grain = ctx.findInventoryEntry('spirit-grain')?.quantity || 0
@@ -137,6 +144,10 @@ export function explainSectMission(missionId: string) {
 export function completeSectMission(missionId: string) {
   const ctx = getContext()
   const g = ctx.game
+  if (!PLAYER_SECT_ENABLED) {
+    ctx.appendLog(getSectClosedText(true), 'warn')
+    return
+  }
   const sect = g.player.sect!
   const missions = getSectMissions()
   const mission = missions.find((entry: any) => entry.id === missionId) as any
@@ -175,6 +186,10 @@ export function completeSectMission(missionId: string) {
 export function createSect() {
   const ctx = getContext()
   const g = ctx.game
+  if (!PLAYER_SECT_ENABLED) {
+    ctx.appendLog(PLAYER_SECT_CREATE_BLOCK_TEXT, 'warn')
+    return
+  }
   if (!canCreateSect()) {
     ctx.appendLog('开宗立门的条件还没有齐。', 'warn')
     return
@@ -197,6 +212,10 @@ export function createSect() {
 export function upgradeSectBuilding(buildingKey: string) {
   const ctx = getContext()
   const g = ctx.game
+  if (!PLAYER_SECT_ENABLED) {
+    ctx.appendLog(getSectClosedText(true), 'warn')
+    return
+  }
   if (!g.player.sect) {
     ctx.appendLog('你尚未建立宗门。', 'warn')
     return
@@ -218,6 +237,10 @@ export function upgradeSectBuilding(buildingKey: string) {
 export function assignTeaching(npcId: string, skillId: string) {
   const ctx = getContext()
   const g = ctx.game
+  if (!PLAYER_SECT_ENABLED) {
+    ctx.appendLog(getSectClosedText(true), 'warn')
+    return
+  }
   if (!g.player.sect) {
     ctx.appendLog('你尚未建立宗门，无法传功。', 'warn')
     return
@@ -246,6 +269,7 @@ export function assignTeaching(npcId: string, skillId: string) {
 export function processSectTick() {
   const ctx = getContext()
   const g = ctx.game
+  if (!PLAYER_SECT_ENABLED) return
   if (!g.player.sect) return
   const sect = g.player.sect
   if (sect.eventCooldown > 0) sect.eventCooldown -= 1

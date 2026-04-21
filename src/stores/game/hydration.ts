@@ -12,11 +12,13 @@ import type {
 } from '@/types/game'
 import {
   LEGACY_SAVE_KEYS,
+  PLAYER_SECT_ENABLED,
   MAX_LOG,
   SAVE_KEY,
   getTechnique,
   getTechniqueByItemId,
 } from '@/config'
+import { normalizeGameNumericState } from '@/core/integerProgress'
 import { ensureArray } from '@/utils'
 import {
   createGameState,
@@ -294,6 +296,11 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
   game.player.assets.farms = hydrateAssetCollection(game.player.assets.farms)
   game.player.assets.workshops = hydrateAssetCollection(game.player.assets.workshops)
   game.player.assets.shops = hydrateAssetCollection(game.player.assets.shops)
+
+  if (!PLAYER_SECT_ENABLED && game.player.mode === 'sect') {
+    game.player.mode = 'balanced'
+  }
+  normalizeGameNumericState(game)
 
   return game
 }

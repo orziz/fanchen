@@ -1,5 +1,6 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
+import { addPlayerSkill } from '@/core/integerProgress'
 import { LOCATIONS, LOCATION_MAP, getItem } from '@/config'
 import { randomFloat, sample, uid, findRoute, round } from '@/utils'
 import { getTerritoryCommerceEffects } from './social'
@@ -128,7 +129,7 @@ export function settleTradeRun(): boolean {
 
   recordTradeArrival(run.originId, run.destinationId, revenue)
   g.player.money += revenue
-  g.player.skills.trading = round(g.player.skills.trading + 0.55 + run.segments * 0.06, 4)
+  addPlayerSkill('trading', 0.55 + run.segments * 0.06)
   g.player.stats.tradesCompleted += 2
   g.player.stats.tradeRoutesCompleted += 1
   ctx.adjustRegionStanding(run.originId, 0.5)
@@ -173,7 +174,7 @@ export function resolvePassiveTrade() {
   recordPassiveTradeActivity(g.player.locationId, margin)
   g.player.money += margin
   g.player.stats.tradesCompleted += 1
-  g.player.skills.trading = round(g.player.skills.trading + 0.08, 4)
+  addPlayerSkill('trading', 0.08)
   ctx.adjustRegionStanding(g.player.locationId, 0.35)
   ctx.adjustFactionStanding(g.player.affiliationId, 0.45)
   ctx.appendLog(`你顺手倒卖${item.name}，净赚${margin}灵石。`, 'info')

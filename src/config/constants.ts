@@ -5,6 +5,10 @@ export const LEGACY_WINDOW_LAYOUT_KEYS = LEGACY_SAVE_KEYS.map(key => `${key}-win
 export const AUTO_SAVE_INTERVAL = 45000
 export const MAX_LOG = 120
 
+export const PLAYER_SECT_ENABLED = false
+export const PLAYER_SECT_CREATE_BLOCK_TEXT = '山门未启，眼下还不是另立宗门的时候。'
+export const PLAYER_SECT_FROZEN_TEXT = '山门暂封，旧日门内事务先行封存，只留账册与名录备查。'
+
 export const LOOP_INTERVALS: Record<number, number> = {
   0.5: 12000,
   1: 7600,
@@ -61,7 +65,7 @@ export const MODE_OPTIONS: ModeOption[] = [
   { id: 'cultivation', label: '苦修养气', desc: '优先打坐、练体、感气和低风险冲关。' },
   { id: 'merchant', label: '小本营生', desc: '优先跑商、经营摊位和积攒启动资产。' },
   { id: 'adventure', label: '外出闯荡', desc: '优先低阶历练、机缘与战斗。' },
-  { id: 'sect', label: '门内差事', desc: '优先处理宗门任务、产业和门内成长。' },
+  ...(PLAYER_SECT_ENABLED ? [{ id: 'sect', label: '门内差事', desc: '优先处理宗门任务、产业和门内成长。' }] : []),
 ]
 
 export interface ActionMeta {

@@ -104,6 +104,8 @@ import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import {
   MODE_OPTIONS,
+  PLAYER_SECT_ENABLED,
+  PLAYER_SECT_FROZEN_TEXT,
   REALM_TEMPLATES,
   getBreakthroughActionDescription,
   getBreakthroughDisabledReason,
@@ -169,12 +171,13 @@ const dangerClass = computed(() => {
   return d >= 6 ? 'warn' : d >= 4 ? 'steady' : 'good'
 })
 
-const routeLabel = computed(() =>
-  sect.value ? sect.value.name : currentAffiliation.value ? currentAffiliation.value.name : '白身'
-)
+const routeLabel = computed(() => {
+  if (sect.value) return PLAYER_SECT_ENABLED ? sect.value.name : `${sect.value.name}·封山`
+  return currentAffiliation.value ? currentAffiliation.value.name : '白身'
+})
 
 const routeDesc = computed(() => {
-  if (sect.value) return '已立宗门，可直接处理门内事务。'
+  if (sect.value) return PLAYER_SECT_ENABLED ? '已立宗门，可直接处理门内事务。' : PLAYER_SECT_FROZEN_TEXT
   if (currentAffiliation.value) return `现为${currentAffiliation.value.titles[player.value.affiliationRank]}。`
   return `资产 ${assetCount.value} 处，仍需继续摸门路。`
 })
@@ -251,7 +254,7 @@ interface Recommendation {
 const recommendation = computed<Recommendation>(() => {
   const loc = currentLocation.value
   const bp = breakthroughPercent.value
-  const hasSect = !!sect.value
+  const hasSect = PLAYER_SECT_ENABLED && !!sect.value
   const hasAff = !!currentAffiliation.value
 
   if (activeRealm.value) {

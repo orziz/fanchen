@@ -37,7 +37,7 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { getBreakthroughActionDescription, getBreakthroughDisabledReason } from '@/config'
+import { PLAYER_SECT_ENABLED, getBreakthroughActionDescription, getBreakthroughDisabledReason } from '@/config'
 import { useWindows } from '@/composables/useWindows'
 import { attemptBreakthrough } from '@/systems/player'
 import { performAction } from '@/systems/world'
@@ -56,7 +56,8 @@ const canManualBreakthrough = computed(() =>
 
 const manualActions = computed(() => {
   const g = store.game
-  const s = sect.value
+  const s = PLAYER_SECT_ENABLED ? sect.value : null
+  const archivedSect = !PLAYER_SECT_ENABLED ? sect.value : null
   const aff = currentAffiliation.value
   const breakthroughReason = getBreakthroughDisabledReason({
     hasNextRank: hasNextRank.value,
@@ -93,11 +94,11 @@ const manualActions = computed(() => {
     { key: 'rest', label: '短暂调息', desc: '先把状态拉回安全线。', theme: '回状态', disabled: false, reason: '' },
     {
       key: s ? 'sect' : 'affiliation',
-      label: s ? '处理宗门事务' : aff ? '查看门内事务' : '去投门路',
-      desc: s ? '去处理宗门、弟子和传功。' : aff ? '去处理当前门路。' : '先去势力页找个落脚点。',
-      theme: s ? '理宗门' : '看门路',
-      disabled: false,
-      reason: '',
+      label: s ? '处理宗门事务' : archivedSect ? '宗门已封山' : aff ? '查看门内事务' : '去投门路',
+      desc: s ? '去处理宗门、弟子和传功。' : archivedSect ? '旧宗门仅保留旧账与旧人，不再继续运转。' : aff ? '去处理当前门路。' : '先去势力页找个落脚点。',
+      theme: s ? '理宗门' : archivedSect ? '封山门' : '看门路',
+      disabled: Boolean(archivedSect),
+      reason: archivedSect ? '自建宗门暂时关闭，可去宗门页查看封存信息。' : '',
     },
   ]
 })

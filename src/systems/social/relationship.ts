@@ -1,5 +1,6 @@
 import { getContext } from '@/core/context'
-import { LOCATION_MAP, SOCIAL_EVENT_TEMPLATES } from '@/config'
+import { addPlayerMetric } from '@/core/integerProgress'
+import { LOCATION_MAP, PLAYER_SECT_ENABLED, PLAYER_SECT_FROZEN_TEXT, SOCIAL_EVENT_TEMPLATES } from '@/config'
 import { clamp, sample, round } from '@/utils'
 import { rememberNpcIntel } from '../npc'
 import { tryStartNpcVisitStory } from '../story'
@@ -10,7 +11,7 @@ export function processRelationshipTick() {
   g.npcs.forEach(npc => {
     const relation = ctx.ensurePlayerRelation(npc.id)
     if (relation.role === 'partner' && Math.random() < 0.1) {
-      g.player.breakthrough = round(g.player.breakthrough + 1.2, 4)
+      addPlayerMetric('breakthrough', 1.2)
       relation.affinity = clamp(relation.affinity + 1, -100, 100)
       if (Math.random() < 0.24) {
         const template = sample(SOCIAL_EVENT_TEMPLATES.filter(event => event.id === 'partner'))
@@ -18,12 +19,12 @@ export function processRelationshipTick() {
       }
     }
     if (relation.role === 'master' && Math.random() < 0.14) {
-      g.player.cultivation = round(g.player.cultivation + 0.6, 4)
+      addPlayerMetric('cultivation', 0.6)
       relation.trust = clamp(relation.trust + 1, -100, 100)
     }
     if (relation.role === 'rival' && Math.random() < 0.12) {
       relation.rivalry = clamp(relation.rivalry + 2, 0, 100)
-      g.player.reputation = round(g.player.reputation + 0.1, 4)
+      addPlayerMetric('reputation', 0.1)
       if (Math.random() < 0.4) {
         const template = sample(SOCIAL_EVENT_TEMPLATES.filter(event => event.id === 'rival'))
         ctx.appendLog(template.text.split('{npc}').join(npc.name), template.type)
@@ -62,7 +63,7 @@ export function visitNpc(npcId: string) {
     const template = sample(SOCIAL_EVENT_TEMPLATES.filter(event => event.id === 'teaching' || event.id === 'gift'))
     ctx.appendLog(template.text.split('{npc}').join(npc.name), template.type)
     if (template.id === 'gift') ctx.addItemToInventory(sample(['mist-herb', 'spirit-grain', 'jade-spring']), 1)
-    if (template.id === 'teaching') g.player.insight = round(g.player.insight + 0.4, 4)
+    if (template.id === 'teaching') addPlayerMetric('insight', 0.4)
   }
 }
 
@@ -73,6 +74,7 @@ export function getRecruitDiscipleIssues(npcId: string): string[] {
   const relation = ctx.ensurePlayerRelation(npcId)
   if (!npc) return ['此人当前不在江湖册录中。']
   const issues: string[] = []
+  if (!PLAYER_SECT_ENABLED) issues.push(PLAYER_SECT_FROZEN_TEXT)
   if (!g.player.sect) issues.push('你尚未建立宗门')
   if (g.player.sect?.disciples.includes(npcId)) issues.push('对方已经是门下弟子')
   if (relation.affinity < 24) issues.push(`好感不足，还差${24 - relation.affinity}`)
@@ -94,6 +96,10 @@ export function recruitDisciple(npcId: string) {
   const ctx = getContext()
   const npc = ctx.getNpc(npcId)!
   rememberNpcIntel(npcId, 'met')
+  if (!PLAYER_SECT_ENABLED) {
+    ctx.appendLog(PLAYER_SECT_FROZEN_TEXT, 'warn')
+    return
+  }
   if (!canRecruitDisciple(npcId)) {
     ctx.appendLog('对方还没有认可到愿意入你门墙的程度。', 'warn')
     return

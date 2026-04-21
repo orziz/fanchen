@@ -189,7 +189,7 @@
                 {{ getPrimaryActionState(entry.itemId).label }}
               </button>
               <button class="item-button" @click="doSell(entry.itemId)">出售一件</button>
-              <button v-if="player.sect && entry.item.type === 'manual' && entry.item.manualSkillId" class="item-button" @click="doStash(entry.itemId)">收入藏经阁</button>
+              <button v-if="PLAYER_SECT_ENABLED && player.sect && entry.item.type === 'manual' && entry.item.manualSkillId" class="item-button" @click="doStash(entry.itemId)">收入藏经阁</button>
             </UiActionGroup>
           </UiPanelCard>
         </template>
@@ -204,7 +204,7 @@
 import { computed, ref, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { RARITY_META, RANKS, canUseItemDirectly, getItem, getItemUsageSummary, hasAssetClaimEffect, getTechnique } from '@/config'
+import { PLAYER_SECT_ENABLED, RARITY_META, RANKS, canUseItemDirectly, getItem, getItemUsageSummary, hasAssetClaimEffect, getTechnique } from '@/config'
 import { getKnowledgeLearnIssues, getLearnedKnowledges, hasLearnedKnowledge } from '@/systems/knowledge'
 import { describeItemEffect, describeTechniqueEffect, getItemTypeLabel, getTechniqueKindLabel } from '@/composables/useUIHelpers'
 import { consumeItem, sellItem, stashManualToSect } from '@/systems/player'

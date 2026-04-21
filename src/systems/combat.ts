@@ -1,5 +1,6 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
+import { addPlayerMetric } from '@/core/integerProgress'
 import { MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES, DISTRIBUTABLE_ITEMS, LOCATION_MAP, ACTION_META, FACTION_MAP, getItem, getTechnique } from '@/config'
 import { clamp, randomFloat, randomInt, sample, uid, round } from '@/utils'
 import { revivePlayer, checkRankGrowth } from './player'
@@ -247,8 +248,10 @@ function enemyTurn(enemy: EnemyState) {
 function resolveVictory(enemy: EnemyState) {
   const ctx = getContext()
   const p = ctx.game.player
-  p.money += enemy.rewards.money; p.cultivation = round(p.cultivation + enemy.rewards.cultivation, 4)
-  p.breakthrough = round(p.breakthrough + enemy.rewards.breakthrough, 4); p.reputation = round(p.reputation + enemy.rewards.reputation, 4)
+  p.money += enemy.rewards.money
+  addPlayerMetric('cultivation', enemy.rewards.cultivation)
+  addPlayerMetric('breakthrough', enemy.rewards.breakthrough)
+  addPlayerMetric('reputation', enemy.rewards.reputation)
   p.stats.enemiesDefeated += 1
   const dropIds = enemy.rewardItemIds.length ? enemy.rewardItemIds
     : enemy.lootTypes.length ? [chooseRewardItemByTypes(enemy.lootTypes).id] : []

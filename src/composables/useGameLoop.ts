@@ -16,6 +16,7 @@ export function useGameLoop() {
     if (!running.value) return
     store.updateDerivedStats()
     gameStep()
+    store.updateDerivedStats()
   }
 
   function startLoop() {
