@@ -109,7 +109,11 @@ export async function createGameMap(options: GameMapOptions = {}): Promise<GameM
   })
 
   function getFitScale() {
-    return clamp(Math.min(canvasWidth / worldBounds.width, canvasHeight / worldBounds.height), MIN_SCALE, 1.04)
+    return Math.min(canvasWidth / worldBounds.width, canvasHeight / worldBounds.height, 1.04)
+  }
+
+  function getMinScale() {
+    return Math.min(MIN_SCALE, getFitScale())
   }
 
   function emitViewportChange() {
@@ -182,16 +186,22 @@ export async function createGameMap(options: GameMapOptions = {}): Promise<GameM
         if (location.id > neighborId) return
         const neighbor = LOCATION_MAP.get(neighborId)
         if (!neighbor) return
-        const midX = (location.x + neighbor.x) / 2 + (neighbor.y - location.y) * 0.08
-        const midY = (location.y + neighbor.y) / 2 - (neighbor.x - location.x) * 0.05
+        const dx = neighbor.x - location.x
+        const dy = neighbor.y - location.y
+        const distance = Math.hypot(dx, dy) || 1
+        const bend = Math.min(Math.max(distance * 0.04, 8), 18)
+        const midX = (location.x + neighbor.x) / 2 - (dy / distance) * bend
+        const midY = (location.y + neighbor.y) / 2 + (dx / distance) * bend
+        const haloAlpha = distance > 300 ? 0.022 : 0.032
+        const routeAlpha = distance > 300 ? 0.18 : 0.24
         routeGraphics
           .moveTo(location.x, location.y)
           .quadraticCurveTo(midX, midY, neighbor.x, neighbor.y)
-          .stroke({ width: 5, color: 0xffffff, alpha: 0.06 })
+          .stroke({ width: 3.4, color: 0xffffff, alpha: haloAlpha })
         routeGraphics
           .moveTo(location.x, location.y)
           .quadraticCurveTo(midX, midY, neighbor.x, neighbor.y)
-          .stroke({ width: 2.2, color: 0xae8b55, alpha: 0.36 })
+          .stroke({ width: 1.45, color: 0x9f7b49, alpha: routeAlpha })
       })
     })
   }
@@ -269,7 +279,7 @@ export async function createGameMap(options: GameMapOptions = {}): Promise<GameM
   }
 
   function zoomAt(factor: number, anchorX = canvasWidth / 2, anchorY = canvasHeight / 2) {
-    const nextScale = clamp(viewport.scale * factor, MIN_SCALE, MAX_SCALE)
+    const nextScale = clamp(viewport.scale * factor, getMinScale(), MAX_SCALE)
     if (nextScale === viewport.scale) return
     const worldX = (anchorX - viewport.offsetX) / viewport.scale
     const worldY = (anchorY - viewport.offsetY) / viewport.scale
@@ -419,7 +429,7 @@ export async function createGameMap(options: GameMapOptions = {}): Promise<GameM
   function focusOn(locationId: string, scale?: number) {
     const location = LOCATION_MAP.get(locationId)
     if (!location) return
-    viewport.scale = clamp(scale ?? Math.max(viewport.scale, 1), MIN_SCALE, MAX_SCALE)
+    viewport.scale = clamp(scale ?? Math.max(viewport.scale, 1), getMinScale(), MAX_SCALE)
     viewport.offsetX = canvasWidth / 2 - location.x * viewport.scale
     viewport.offsetY = canvasHeight / 2 - location.y * viewport.scale
     viewport = clampViewport(viewport)
