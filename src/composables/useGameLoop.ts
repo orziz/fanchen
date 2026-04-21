@@ -12,8 +12,12 @@ export function useGameLoop() {
   let loopTimer: ReturnType<typeof setInterval> | null = null
   let saveTimer: ReturnType<typeof setInterval> | null = null
 
+  function canAutoTick() {
+    return running.value && store.player.mode !== 'manual'
+  }
+
   function tick() {
-    if (!running.value) return
+    if (!canAutoTick()) return
     store.updateDerivedStats()
     gameStep()
     store.updateDerivedStats()
@@ -21,6 +25,7 @@ export function useGameLoop() {
 
   function startLoop() {
     stopLoop()
+    if (!canAutoTick()) return
     const interval = LOOP_INTERVALS[speed.value] ?? LOOP_INTERVALS[1]
     loopTimer = setInterval(tick, interval)
   }
@@ -45,6 +50,10 @@ export function useGameLoop() {
   }
 
   watch(speed, () => {
+    if (running.value) startLoop()
+  })
+
+  watch(() => store.player.mode, () => {
     if (running.value) startLoop()
   })
 

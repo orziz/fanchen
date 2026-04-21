@@ -8,6 +8,7 @@ import type {
   SectState,
   StoryHistoryEntry,
   StoryProgressEntry,
+  StorySuspendedEntry,
   TerritoryEntry,
 } from '@/types/game'
 import {
@@ -72,6 +73,31 @@ function hydrateNpcIntel(rawPlayer: Partial<PlayerState> | undefined): PlayerSta
       source === 'heard' || source === 'met' ? [[npcId, source]] : []
     )),
   )
+}
+
+function isStoryPresentation(value: unknown): value is StorySuspendedEntry['presentation'] {
+  return value === 'overlay' || value === 'rail' || value === 'embedded' || value === null
+}
+
+function hydrateStorySuspended(rawStory: Partial<GameState['story']> | undefined) {
+  const suspended = rawStory?.suspended as Partial<StorySuspendedEntry> | null | undefined
+  if (!suspended || typeof suspended !== 'object') return null
+  if (typeof suspended.storyId !== 'string' || typeof suspended.nodeId !== 'string' || typeof suspended.progressKey !== 'string') {
+    return null
+  }
+
+  const rawBindings = (suspended.bindings || {}) as Record<string, unknown>
+
+  return {
+    storyId: suspended.storyId,
+    nodeId: suspended.nodeId,
+    progressKey: suspended.progressKey,
+    presentation: isStoryPresentation(suspended.presentation) ? suspended.presentation : null,
+    bindings: {
+      npcId: typeof rawBindings.npcId === 'string' ? rawBindings.npcId : null,
+      locationId: typeof rawBindings.locationId === 'string' ? rawBindings.locationId : null,
+    },
+  } satisfies StorySuspendedEntry
 }
 
 function hydrateTerritories(
@@ -257,6 +283,7 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
     story: {
       ...fresh.story, ...(raw.story || {}),
       bindings: { ...fresh.story.bindings, ...(raw.story?.bindings || {}) },
+      suspended: hydrateStorySuspended(raw.story),
       progress: Object.fromEntries(
         Object.entries(rawStoryProgress).map(([key, value]) => {
           const entry = value as Partial<StoryProgressEntry> | undefined

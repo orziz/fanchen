@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 
 export const STAGE_TABS = [
+  { id: 'story' as const, label: '剧情与委托', shortLabel: '剧情' },
   { id: 'inventory' as const, label: '行囊与功法', shortLabel: '行囊' },
   { id: 'industry' as const, label: '产业经营', shortLabel: '产业' },
   { id: 'market' as const, label: '商店与行商', shortLabel: '商路' },

@@ -63,19 +63,6 @@
       </div>
     </div>
 
-    <div v-if="showStoryRail" class="pin-card pin-card-story">
-      <UiCardHeader kicker="剧情线" title="当前剧情" head-class="pin-card-head pin-card-head--actions">
-        <template #aside>
-          <div class="pin-card-actions">
-            <button class="control-button ghost" type="button" @click="showStoryOverlay()">展开</button>
-            <button v-if="canCloseStoryCard" class="control-button ghost" type="button" @click="closeStory()">收</button>
-          </div>
-        </template>
-      </UiCardHeader>
-      <div class="pin-card-body pin-card-body--story">
-        <StoryScene compact />
-      </div>
-    </div>
   </aside>
 </template>
 
@@ -86,13 +73,10 @@ import { useGameStore } from '@/stores/game'
 import { useWindows } from '@/composables/useWindows'
 import ProfileDetail from './ProfileDetail.vue'
 import CommandDetail from './CommandDetail.vue'
-import StoryScene from './StoryScene.vue'
 import UiCardHeader from '@/components/ui/UiCardHeader.vue'
-import { closeStory, getActiveStoryScene, showStoryOverlay } from '@/systems/story'
-import { canDismissStoryScene } from '@/systems/tutorial'
 
 const store = useGameStore()
-const { log, story } = storeToRefs(store)
+const { log } = storeToRefs(store)
 const { windows: ws, closeWindow } = useWindows()
 
 type LogFilter = 'all' | 'info' | 'loot' | 'warn' | 'npc' | 'action'
@@ -108,14 +92,7 @@ const LOG_FILTER_LABELS: Record<LogFilter, string> = {
 
 const selectedLogFilter = ref<LogFilter>('all')
 
-const activeStoryScene = computed(() => {
-  story.value
-  return getActiveStoryScene()
-})
-
-const showStoryRail = computed(() => Boolean(activeStoryScene.value) && story.value.presentation === 'rail')
-const hasPinned = computed(() => ws.journal.open || ws.profile.open || ws.command.open || showStoryRail.value)
-const canCloseStoryCard = computed(() => canDismissStoryScene(story.value, activeStoryScene.value))
+const hasPinned = computed(() => ws.journal.open || ws.profile.open || ws.command.open)
 const logFilters = computed(() => {
   const entries: LogFilter[] = ['all', 'info', 'loot', 'warn', 'npc', 'action']
   return entries.map((id) => ({

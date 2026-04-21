@@ -3,7 +3,7 @@
   <UiPanelCard tone="combat" standout>
     <UiCardHeader kicker="茶馆酒肆" title="打听消息" title-class="npc-name">
       <template #aside>
-        <UiPill variant="trait">已见闻 {{ knownNpcCount }}/{{ npcs.length }}</UiPill>
+        <UiPill variant="trait">当前可见 {{ visibleNpcCount }}/{{ npcs.length }}</UiPill>
       </template>
     </UiCardHeader>
     <p class="npc-meta">{{ rumorVenueSummary }}</p>
@@ -15,41 +15,51 @@
 
   <div v-if="sortedNpcs.length" class="npc-grid">
     <UiPanelCard v-for="npc in sortedNpcs" :key="npc.id" tone="npc">
-      <UiCardHeader :title="npc.name" title-class="npc-name">
+      <UiCardHeader :title="hasMetNpc(npc.id) ? npc.name : '???'" title-class="npc-name">
         <template #aside>
-          <UiPillRow>
-            <UiPill variant="trait" :tone="getIntelTone(npc.id)">{{ getIntelLabel(npc.id) }}</UiPill>
+          <UiPillRow v-if="hasMetNpc(npc.id)">
             <UiPill variant="trait">身份 {{ getRoleLabel(getRelation(npc.id).role) }}</UiPill>
             <UiPill variant="trait">财富 {{ formatNumber(npc.wealth) }}</UiPill>
           </UiPillRow>
+          <UiPillRow v-else>
+            <UiPill variant="trait">身份 路人</UiPill>
+          </UiPillRow>
         </template>
       </UiCardHeader>
-      <p class="npc-meta">{{ npc.title }} · {{ npc.profession || '江湖人' }} · {{ npc.personalityLabel }} · {{ getRankName(npc.rankIndex) }}</p>
-      <p class="npc-meta">{{ npc.personalityDesc }}</p>
-      <p class="npc-meta">当前位置：{{ getLocationName(npc.locationId) }}，目标：{{ npc.goal }}，最近动向：{{ npc.lastEvent }}</p>
-      <p class="npc-meta">人生阶段：{{ npc.lifeStage }} · {{ npc.age }} 岁{{ npc.factionId ? ` · 所属 ${getFactionName(npc.factionId)}` : ' · 尚无归属' }}</p>
-      <p class="npc-meta">近年经历：{{ (npc.lifeEvents || []).slice(-2).join('；') || '暂无大事' }}</p>
-      <UiPillRow>
-        <UiPill variant="trait">好感 {{ getRelation(npc.id).affinity }}</UiPill>
-        <UiPill variant="trait">信任 {{ getRelation(npc.id).trust }}</UiPill>
-        <UiPill variant="trait">情缘 {{ getRelation(npc.id).romance }}</UiPill>
-        <UiPill variant="trait">仇怨 {{ getRelation(npc.id).rivalry }}</UiPill>
-      </UiPillRow>
-      <UiPillRow>
-        <UiPill variant="trait">贪念 {{ npc.mood.greed }}</UiPill>
-        <UiPill variant="trait">仁心 {{ npc.mood.kindness }}</UiPill>
-        <UiPill variant="trait">胆魄 {{ npc.mood.courage }}</UiPill>
-        <UiPill variant="trait">耐性 {{ npc.mood.patience }}</UiPill>
-      </UiPillRow>
-      <UiActionGroup variant="npc">
-        <button class="npc-button" :disabled="!canVisit(npc.id)" :title="visitReason(npc.id)" @click="doVisit(npc.id)">{{ getVisitLabel(npc.id) }}</button>
-        <button class="npc-button" @click="doFocus(npc.id)">查看所在地点</button>
-        <button class="npc-button" :disabled="!canRecruit(npc.id)" :title="recruitReason(npc.id)" @click="doRecruit(npc.id)">收为弟子</button>
-        <button class="npc-button" :disabled="!canRecruitIntoFaction(npc.id)" :title="recruitFactionReason(npc.id)" @click="doRecruitFaction(npc.id)">招入自家势力</button>
-        <button class="npc-button" :disabled="!canTakeMaster(npc.id)" :title="masterReason(npc.id)" @click="doMaster(npc.id)">拜其为师</button>
-        <button class="npc-button" :disabled="!canTakePartner(npc.id)" :title="partnerReason(npc.id)" @click="doPartner(npc.id)">结为道侣</button>
-        <button class="npc-button" @click="doRival(npc.id)">立为仇敌</button>
-      </UiActionGroup>
+      <template v-if="hasMetNpc(npc.id)">
+        <p class="npc-meta">{{ npc.title }} · {{ npc.profession || '江湖人' }} · {{ npc.personalityLabel }} · {{ getRankName(npc.rankIndex) }}</p>
+        <p class="npc-meta">{{ npc.personalityDesc }}</p>
+        <p class="npc-meta">当前位置：{{ getLocationName(npc.locationId) }}，目标：{{ npc.goal }}，最近动向：{{ npc.lastEvent }}</p>
+        <p class="npc-meta">人生阶段：{{ npc.lifeStage }} · {{ npc.age }} 岁{{ npc.factionId ? ` · 所属 ${getFactionName(npc.factionId)}` : ' · 尚无归属' }}</p>
+        <p class="npc-meta">近年经历：{{ (npc.lifeEvents || []).slice(-2).join('；') || '暂无大事' }}</p>
+        <UiPillRow>
+          <UiPill variant="trait">好感 {{ getRelation(npc.id).affinity }}</UiPill>
+          <UiPill variant="trait">信任 {{ getRelation(npc.id).trust }}</UiPill>
+          <UiPill variant="trait">情缘 {{ getRelation(npc.id).romance }}</UiPill>
+          <UiPill variant="trait">仇怨 {{ getRelation(npc.id).rivalry }}</UiPill>
+        </UiPillRow>
+        <UiPillRow>
+          <UiPill variant="trait">贪念 {{ npc.mood.greed }}</UiPill>
+          <UiPill variant="trait">仁心 {{ npc.mood.kindness }}</UiPill>
+          <UiPill variant="trait">胆魄 {{ npc.mood.courage }}</UiPill>
+          <UiPill variant="trait">耐性 {{ npc.mood.patience }}</UiPill>
+        </UiPillRow>
+        <UiActionGroup variant="npc">
+          <button class="npc-button" :disabled="!canVisit(npc.id)" :title="visitReason(npc.id)" @click="doVisit(npc.id)">{{ getVisitLabel(npc.id) }}</button>
+          <button class="npc-button" @click="doFocus(npc.id)">查看所在地点</button>
+          <button class="npc-button" :disabled="!canRecruit(npc.id)" :title="recruitReason(npc.id)" @click="doRecruit(npc.id)">收为弟子</button>
+          <button class="npc-button" :disabled="!canRecruitIntoFaction(npc.id)" :title="recruitFactionReason(npc.id)" @click="doRecruitFaction(npc.id)">招入自家势力</button>
+          <button class="npc-button" :disabled="!canTakeMaster(npc.id)" :title="masterReason(npc.id)" @click="doMaster(npc.id)">拜其为师</button>
+          <button class="npc-button" :disabled="!canTakePartner(npc.id)" :title="partnerReason(npc.id)" @click="doPartner(npc.id)">结为道侣</button>
+          <button class="npc-button" @click="doRival(npc.id)">立为仇敌</button>
+        </UiActionGroup>
+      </template>
+      <template v-else>
+        <p class="npc-meta">你尚未与此人发生过接触。</p>
+        <UiActionGroup variant="npc">
+          <button class="npc-button" :disabled="!canVisit(npc.id)" :title="visitReason(npc.id)" @click="doVisit(npc.id)">{{ getVisitLabel(npc.id) }}</button>
+        </UiActionGroup>
+      </template>
     </UiPanelCard>
   </div>
   <div v-else class="empty-state">你暂时只听过几句风声，还没真正记住什么江湖人物。先去茶馆酒肆打听，或亲自赶到人前照面。</div>
@@ -104,16 +114,22 @@ const MARKET_BIAS_LABELS: Record<string, string> = {
   ice: '寒材',
 }
 
+function isVisibleNpc(npcId: string, locationId: string) {
+  const intel = getIntelSource(npcId)
+  if (intel === 'met') return true
+  return store.getNpc(npcId)?.locationId === locationId
+}
+
 const sortedNpcs = computed(() =>
   [...npcs.value]
-    .filter(npc => getIntelSource(npc.id))
+    .filter(npc => isVisibleNpc(npc.id, player.value.locationId))
     .sort((a, b) => getRelation(b.id).affinity - getRelation(a.id).affinity)
 )
 
-const knownNpcCount = computed(() => npcs.value.filter(npc => getIntelSource(npc.id)).length)
+const visibleNpcCount = computed(() => sortedNpcs.value.length)
 
 const rumorVenueSummary = computed(() => {
-  const parts = [`当前已见闻 ${knownNpcCount.value} 人`]
+  const parts = [`当前可见 ${visibleNpcCount.value} 人`]
   if (canUseRumorVenue('teahouse')) parts.push('茶馆偏本地门路、税赋与行会口风')
   if (canUseRumorVenue('tavern')) parts.push('酒馆偏外路价面、脚商风声与用人消息')
   if (!parts.length) return '此地暂时没有合适的茶馆酒肆可供你打听消息。'
@@ -128,12 +144,8 @@ function getIntelSource(npcId: string) {
   return player.value.npcIntel[npcId] || null
 }
 
-function getIntelLabel(npcId: string) {
-  return getIntelSource(npcId) === 'met' ? '已见过面' : '只闻其名'
-}
-
-function getIntelTone(npcId: string) {
-  return getIntelSource(npcId) === 'met' ? 'current' : 'route'
+function hasMetNpc(npcId: string) {
+  return getIntelSource(npcId) === 'met'
 }
 
 function getRankName(idx: number) { return RANKS[Math.min(idx, RANKS.length - 1)].name }
@@ -155,7 +167,8 @@ function getTeaOrderLine() {
   const order = world.value.industryOrders[0]
   if (!order) return ''
   const goods = order.requirements.map(req => `${req.quantity}${getItem(req.itemId)?.name || req.itemId}`).join('、')
-  return `茶客低声议论，${order.factionName}近来正在收${goods}。`
+  const locationText = order.locationId ? `${getLocationName(order.locationId)}那边，` : ''
+  return `茶客低声议论，${locationText}${order.factionName}近来正在收${goods}。`
 }
 
 function getTavernRouteLine() {
@@ -178,7 +191,8 @@ function getTavernOrderLine() {
   const order = world.value.industryOrders[1] || world.value.industryOrders[0]
   if (!order) return ''
   const goods = order.requirements.map(req => `${req.quantity}${getItem(req.itemId)?.name || req.itemId}`).join('、')
-  return `酒客说${order.factionName}近来缺${goods}，肯跑腿送货的人更容易摸到门路。`
+  const locationText = order.locationId ? `${getLocationName(order.locationId)}的` : ''
+  return `酒客说${locationText}${order.factionName}近来缺${goods}，肯跑腿送货的人更容易摸到门路。`
 }
 
 function appendVenueIntel(venue: 'teahouse' | 'tavern') {

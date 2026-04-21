@@ -199,12 +199,21 @@ export interface StoryHistoryEntry {
   hour: number
 }
 
+export interface StorySuspendedEntry {
+  storyId: string
+  nodeId: string
+  progressKey: string
+  presentation: 'overlay' | 'rail' | 'embedded' | null
+  bindings: StoryBindings
+}
+
 export interface StoryState {
   activeStoryId: string | null
   activeNodeId: string | null
   activeProgressKey: string | null
   presentation: 'overlay' | 'rail' | 'embedded' | null
   bindings: StoryBindings
+  suspended: StorySuspendedEntry | null
   progress: Record<string, StoryProgressEntry>
   flags: Record<string, boolean>
   history: StoryHistoryEntry[]
@@ -220,6 +229,7 @@ export interface WorldState {
 export interface IndustryOrder {
   id: string; templateId: string; title: string; desc: string
   factionId: string; factionName: string
+  locationId?: string; sourceKind?: string
   requirements: { itemId: string; quantity: number }[]
   rewardMoney: number; rewardReputation: number; standing: number
 }

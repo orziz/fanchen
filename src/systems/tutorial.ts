@@ -122,6 +122,7 @@ export function getOpeningTutorialObjective(story: StoryState, player: Pick<Play
 
 export function getStageTabLockReason(tabId: StageTab, story: StoryState, player: Pick<PlayerState, 'affiliationId'>) {
   if (!isOpeningTutorialActive(story)) return null
+  if (tabId === 'story') return null
   if (tabId === 'inventory') return null
   if (tabId === 'map') {
     return hasFlag(story, OPENING_TUTORIAL_FLAGS.mapUnlocked) ? null : '先听路人把路说清，再看山河图。'

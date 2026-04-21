@@ -5,6 +5,7 @@
 
     <!-- 其余常规面板 -->
     <div v-else class="v3-panel-body">
+      <div v-show="activeTab === 'story'"><StoryTaskPanel /></div>
       <div v-show="activeTab === 'inventory'"><InventoryPanel /></div>
       <div v-show="activeTab === 'industry'"><IndustryPanel /></div>
       <div v-show="activeTab === 'market'"><MarketPanel /></div>
@@ -20,6 +21,7 @@
 <script setup lang="ts">
 import { useStage } from '@/composables/useStage'
 import MapPanel from './MapPanel.vue'
+import StoryTaskPanel from './panels/StoryTaskPanel.vue'
 import InventoryPanel from './panels/InventoryPanel.vue'
 import IndustryPanel from './panels/IndustryPanel.vue'
 import MarketPanel from './panels/MarketPanel.vue'

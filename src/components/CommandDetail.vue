@@ -69,7 +69,7 @@
       </div>
       <div :class="['command-footnote', player.mode === 'manual' ? 'manual' : '']">
         <strong>{{ player.mode === 'manual' ? '手动操作已接管' : `当前自动遵循"${currentModeLabel}"` }}</strong>
-        <span>{{ player.mode === 'manual' ? '世界仍会照常流转，但不会替你自动修炼、跑商或接差事。' : '局势一变，就立刻改换门路，别让人和货空耗在路上。' }}</span>
+        <span>{{ player.mode === 'manual' ? '挂机时间已停住，只有你亲自修炼、赶路、跑商或接差事时，局势才会继续往前走。' : '局势一变，就立刻改换门路，别让人和货空耗在路上。' }}</span>
       </div>
     </section>
 
@@ -299,8 +299,8 @@ const recommendation = computed<Recommendation>(() => {
 
   if (player.value.mode === 'manual') {
     return {
-      title: '当前为手动操作，世界会走，你不再自动出手。',
-      desc: '你亲自盯局时，修炼、跑商和追查都得自己开口。',
+      title: '当前为手动操作，局势暂缓，等你亲自落子。',
+      desc: '你亲自盯局时，修炼、赶路、跑商和追查都要自己发令，时间也只会在你出手时推进。',
       preferredMode: 'manual',
     }
   }

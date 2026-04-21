@@ -288,6 +288,31 @@ export function recordShopTurnover(locationId: string, income: number, stockSpen
   })
 }
 
+export function recordContractDelivery(locationId: string, deliveredItems: Array<{ itemId: string; quantity: number }>, payout = 0) {
+  const location = LOCATION_MAP.get(locationId)
+  if (!location) return
+  let supplyDelta = 0
+  let needDelta = 0
+  let cargoValue = 0
+
+  deliveredItems.forEach(({ itemId, quantity }) => {
+    const item = getItem(itemId)
+    if (!item) return
+    const flow = Math.max(0.8, quantity * Math.max(1, item.baseValue / 16))
+    cargoValue += item.baseValue * quantity
+    supplyDelta += item.type === location.marketBias ? flow * 0.95 : flow * 0.55
+    needDelta -= BASIC_MARKET_TYPES.has(item.type) ? flow * 1.05 : flow * 0.7
+  })
+
+  const turnover = getFlowStrength(Math.max(payout, cargoValue), 0.5)
+  nudgeEconomy(locationId, {
+    prosperity: turnover * 0.24,
+    tradeHeat: turnover * 0.58,
+    localSupply: supplyDelta,
+    needPressure: needDelta,
+  })
+}
+
 export function createDynamicMarketListings(location: LocationData): MarketListing[] {
   const territory = getEconomyState(location.id)
   const importedBiases = getImportedBiases(location, territory)

@@ -2,6 +2,8 @@ import { getContext } from '@/core/context'
 import { addPlayerMetric } from '@/core/integerProgress'
 import { FACTION_MAP, LOCATION_MAP, getItem } from '@/config'
 import { syncOpeningTutorialState } from '@/systems/tutorial'
+import { clamp } from '@/utils'
+import { getLocationEconomyOverview, recordContractDelivery, recordPassiveTradeActivity } from '../worldEconomy'
 import {
   FACTION_LEAVE_REPUTATION_COST,
   FACTION_REJOIN_COOLDOWN_DAYS,
@@ -95,53 +97,120 @@ export function adjustFactionStanding(factionId: string, amount: number) {
   return standing
 }
 
-function getFactionSupplyProfile(faction: any) {
+const SUPPLY_ITEM_BY_BIAS: Record<string, string> = {
+  grain: 'spirit-grain',
+  herb: 'mist-herb',
+  wood: 'timber',
+  ore: 'scrap-iron',
+  cloth: 'cloth-roll',
+  pill: 'herb-paste',
+  relic: 'cloth-roll',
+  fire: 'scrap-iron',
+  ice: 'mist-herb',
+  scroll: 'cloth-roll',
+}
+
+function getAffiliationWorldSignals(faction: any) {
+  const ctx = getContext()
+  const location = LOCATION_MAP.get(faction.locationId)
+  const overview = getLocationEconomyOverview(faction.locationId)
+  const territory = ctx.game.world.territories[faction.locationId]
+  const security = clamp(Math.round(
+    (territory?.stability ?? 24)
+      - (location?.danger || 0) * 5
+      + (location?.tags.includes('court') ? 12 : 0)
+      + (location?.tags.includes('pass') ? 8 : 0)
+      + (isTradeHubLocation(faction.locationId) ? 4 : 0)
+      + overview.prosperity * 0.12
+      + overview.localSupply * 0.08
+      - overview.needPressure * 0.18,
+  ), 8, 100)
+  return {
+    location,
+    overview,
+    security,
+    pressure: overview.needPressure - overview.localSupply,
+  }
+}
+
+function getFactionSupplyProfile(faction: any, pressure: number, location?: { marketBias?: string; tags: string[] } | null) {
   if (!faction) return { itemId: 'spirit-grain', quantity: 2 }
-  if (['guild', 'escort', 'bureau'].includes(faction.type)) return { itemId: 'cloth-roll', quantity: 2 }
-  if (faction.type === 'order') return { itemId: 'mist-herb', quantity: 2 }
-  return { itemId: 'spirit-grain', quantity: 3 }
+  if (location?.tags.includes('sect') || faction.type === 'order') {
+    const itemId = pressure >= 18 ? 'herb-paste' : 'mist-herb'
+    return { itemId, quantity: itemId === 'herb-paste' ? 1 + Number(pressure >= 26) : clamp(2 + Math.floor(Math.max(pressure, 0) / 22), 2, 4) }
+  }
+  if (location?.tags.includes('forge') || location?.tags.includes('pass')) {
+    return { itemId: pressure >= 18 ? 'scrap-iron' : 'timber', quantity: clamp(2 + Math.floor(Math.max(pressure, 0) / 20), 2, 4) }
+  }
+  if (location?.tags.includes('port') || location?.tags.includes('court')) {
+    return { itemId: pressure >= 14 ? 'cloth-roll' : 'spirit-grain', quantity: clamp(2 + Math.floor(Math.max(pressure, 0) / 22), 2, 4) }
+  }
+  const itemId = SUPPLY_ITEM_BY_BIAS[location?.marketBias || ''] || 'spirit-grain'
+  return {
+    itemId,
+    quantity: itemId === 'herb-paste'
+      ? clamp(1 + Math.floor(Math.max(pressure, 0) / 26), 1, 2)
+      : clamp(2 + Math.floor(Math.max(pressure, 0) / 18), 2, 5),
+  }
 }
 
 function buildAffiliationSupplyTask(faction: any) {
-  const supply = getFactionSupplyProfile(faction)
+  const { location, overview, pressure } = getAffiliationWorldSignals(faction)
+  const supply = getFactionSupplyProfile(faction, pressure, location)
+  const item = getItem(supply.itemId)
+  const urgency = Math.max(16, pressure + Math.max(0, overview.needPressure - 42))
   return createTask('affiliation', 'supply', {
     factionId: faction.id,
-    title: `${faction.name}备货差使`,
-    desc: `替${faction.name}补一笔常用资材，先把门内日用补齐。`,
+    sourceLocationId: faction.locationId,
+    worldHint: `${overview.needLabel} · ${overview.supplyLabel}`,
+    urgency,
+    title: `${faction.name}${urgency >= 28 ? '急补备库' : '备货差使'}`,
+    desc: `${LOCATION_MAP.get(faction.locationId)?.name || faction.locationId}${overview.needLabel}，${overview.supplyLabel}，先替${faction.name}把周转物资补齐。`,
     itemId: supply.itemId,
     quantity: supply.quantity,
-    rewardMoney: 42 + faction.joinRequirement.money,
+    rewardMoney: Math.max(36, supply.quantity * (item?.baseValue || 14) + 24 + (location?.marketTier || 0) * 10 + Math.max(0, pressure)),
     rewardReputation: 1,
-    rewardStanding: 3,
-    rewardRegion: 1,
+    rewardStanding: clamp(2 + Math.floor(Math.max(0, pressure) / 18) + Number(isOfficialFaction(faction)), 2, 5),
+    rewardRegion: urgency >= 28 ? 2 : 1,
   })
 }
 
 function buildAffiliationPatrolTask(faction: any) {
+  const { location, overview, security } = getAffiliationWorldSignals(faction)
+  const unrest = Math.max(0, 58 - security)
   return createTask('affiliation', 'patrol', {
     factionId: faction.id,
-    title: `${faction.name}值役巡查`,
-    desc: `回${LOCATION_MAP.get(faction.locationId)?.name || faction.locationId}跑一趟值役，把门路站稳。`,
-    staminaCost: isOfficialFaction(faction) ? 16 : 12,
-    qiCost: isOfficialFaction(faction) ? 4 : 2,
-    rewardMoney: 28 + faction.joinRequirement.rankIndex * 12,
+    sourceLocationId: faction.locationId,
+    worldHint: `${overview.heatLabel} · 街面${security < 50 ? '未稳' : '尚稳'}`,
+    urgency: unrest + overview.tradeHeat,
+    title: `${faction.name}${overview.tradeHeat >= 60 ? '护路巡查' : '值役巡查'}`,
+    desc: `回${LOCATION_MAP.get(faction.locationId)?.name || faction.locationId}压一圈地头。那边近来${overview.heatLabel}，${security < 46 ? '街面未稳' : security < 62 ? '人心略浮' : '门路正忙'}。`,
+    staminaCost: 10 + (location?.danger || 0) * 2 + Math.ceil(unrest / 9),
+    qiCost: (isOfficialFaction(faction) ? 2 : 1) + Math.ceil(unrest / 20),
+    rewardMoney: 24 + (location?.marketTier || 0) * 14 + unrest * 2,
     rewardReputation: 1,
-    rewardStanding: 2,
-    rewardRegion: 1,
+    rewardStanding: clamp(2 + Math.floor(unrest / 14) + Number(overview.tradeHeat >= 60), 2, 5),
+    rewardRegion: security < 50 ? 2 : 1,
   })
 }
 
 function buildAffiliationLiaisonTask(faction: any) {
+  const { location, overview } = getAffiliationWorldSignals(faction)
+  const traffic = overview.tradeHeat + overview.prosperity
+  const standingNeed = clamp((isOfficialFaction(faction) ? 4 : 2) + (location?.marketTier || 0) + Number(overview.tradeHeat >= 60), 2, 10)
   return createTask('affiliation', 'liaison', {
     factionId: faction.id,
-    title: `${faction.name}疏通门路`,
-    desc: `备一笔人情与路费，替${faction.name}去打点本地往来。`,
-    moneyCost: 36 + faction.joinRequirement.money,
-    standingNeed: isOfficialFaction(faction) ? 5 : 3,
-    rewardMoney: 20,
+    sourceLocationId: faction.locationId,
+    worldHint: `${overview.heatLabel} · ${overview.prosperityLabel}`,
+    urgency: traffic + (isTradeHubLocation(faction.locationId) ? 8 : 0),
+    title: `${faction.name}${isTradeHubLocation(faction.locationId) ? '商路疏通' : '往来疏通'}`,
+    desc: `${LOCATION_MAP.get(faction.locationId)?.name || faction.locationId}${overview.heatLabel}，${overview.prosperityLabel}。备一笔路费人情，替${faction.name}把来往门路走顺。`,
+    moneyCost: 32 + (location?.marketTier || 0) * 14 + Math.max(0, Math.round(traffic / 6)),
+    standingNeed,
+    rewardMoney: 16 + (location?.marketTier || 0) * 10 + Math.round(traffic / 4),
     rewardReputation: 2,
-    rewardStanding: 3,
-    rewardRegion: 1,
+    rewardStanding: clamp(2 + Math.floor(traffic / 55) + Number(isOfficialFaction(faction)), 2, 5),
+    rewardRegion: isTradeHubLocation(faction.locationId) ? 2 : 1,
   })
 }
 
@@ -155,12 +224,13 @@ export function refreshAffiliationTasks(force = false) {
     return []
   }
   const tasks = Array.isArray(g.player.affiliationTasks) ? g.player.affiliationTasks : []
-  if (!force && g.player.affiliationTaskDay === g.world.day && tasks.length >= 2) return tasks
+  const hasDynamicShape = tasks.every((task: any) => typeof task.sourceLocationId === 'string')
+  if (!force && g.player.affiliationTaskDay === g.world.day && tasks.length >= 2 && hasDynamicShape) return tasks
   g.player.affiliationTasks = [
     buildAffiliationSupplyTask(faction),
     buildAffiliationPatrolTask(faction),
     buildAffiliationLiaisonTask(faction),
-  ].sort(() => Math.random() - 0.5).slice(0, 2) as any[]
+  ].sort((left: any, right: any) => Number(right.urgency || 0) - Number(left.urgency || 0)).slice(0, 2) as any[]
   g.player.affiliationTaskDay = g.world.day
   return g.player.affiliationTasks
 }
@@ -173,8 +243,9 @@ export function getAffiliationTaskIssues(taskId: string): string[] {
   if (!task) return ['这份势力差使已经失效。']
   const faction = FACTION_MAP.get(task.factionId)
   if (!faction || g.player.affiliationId !== faction.id) return ['你当前已不在这方势力中。']
+  const taskLocationId = task.sourceLocationId || faction.locationId
   const issues: string[] = []
-  if (g.player.locationId !== faction.locationId) issues.push(`需先前往${LOCATION_MAP.get(faction.locationId)?.name || faction.locationId}`)
+  if (g.player.locationId !== taskLocationId) issues.push(`需先前往${LOCATION_MAP.get(taskLocationId)?.name || taskLocationId}`)
   if (task.kind === 'supply') {
     const current = ctx.findInventoryEntry(task.itemId)?.quantity || 0
     if (current < task.quantity) issues.push(`缺少${getItem(task.itemId)?.name || task.itemId} ${task.quantity - current}件`)
@@ -215,10 +286,17 @@ export function completeAffiliationTask(taskId: string) {
     ctx.adjustResource('qi', -task.qiCost, 'maxQi')
   }
   if (task.kind === 'liaison') g.player.money -= task.moneyCost
+  const taskLocationId = task.sourceLocationId || FACTION_MAP.get(task.factionId)?.locationId || g.player.locationId
+  if (task.kind === 'supply') recordContractDelivery(taskLocationId, [{ itemId: task.itemId, quantity: task.quantity }], task.rewardMoney)
+  if (task.kind === 'patrol') {
+    const territory = g.world.territories[taskLocationId]
+    if (territory) territory.stability = clamp(territory.stability + 4 + Math.ceil((task.rewardStanding || 0) / 2), 8, 120)
+  }
+  if (task.kind === 'liaison') recordPassiveTradeActivity(taskLocationId, (task.moneyCost || 0) + task.rewardMoney)
   g.player.money += task.rewardMoney
   addPlayerMetric('reputation', task.rewardReputation)
   adjustFactionStanding(task.factionId, task.rewardStanding)
-  ctx.adjustRegionStanding(FACTION_MAP.get(task.factionId)?.locationId || g.player.locationId, task.rewardRegion)
+  ctx.adjustRegionStanding(taskLocationId, task.rewardRegion)
   g.player.stats.affiliationTasksCompleted += 1
   g.player.affiliationTasks = tasks.filter((entry: any) => entry.id !== taskId)
   ctx.appendLog(`你替${FACTION_MAP.get(task.factionId)?.name || '势力'}办妥"${task.title}"，门路更稳了。`, 'loot')

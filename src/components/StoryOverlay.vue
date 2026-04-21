@@ -8,8 +8,8 @@
           <h2>当前剧情</h2>
         </div>
         <div class="story-overlay__actions">
-          <button class="control-button ghost" type="button" @click="showStoryInRail()">收入侧栏</button>
-          <button v-if="canClose" class="control-button ghost" type="button" @click="closeStory()">结束</button>
+          <button class="control-button ghost" type="button" @click="moveToStoryPanel()">转入剧情与委托</button>
+          <button v-if="canClose" class="control-button ghost" type="button" @click="closeStory()">收起</button>
         </div>
       </div>
       <StoryScene />
@@ -20,11 +20,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useStage } from '@/composables/useStage'
 import { useGameStore } from '@/stores/game'
 import StoryScene from './StoryScene.vue'
 import { closeStory, getActiveStoryScene, showStoryInRail } from '@/systems/story'
 import { canDismissStoryScene } from '@/systems/tutorial'
 
+const { setTab } = useStage()
 const store = useGameStore()
 const { story } = storeToRefs(store)
 
@@ -38,4 +40,9 @@ const isVisible = computed(() => {
 })
 
 const canClose = computed(() => canDismissStoryScene(story.value, scene.value))
+
+function moveToStoryPanel() {
+  showStoryInRail()
+  setTab('story')
+}
 </script>

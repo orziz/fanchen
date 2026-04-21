@@ -277,6 +277,7 @@ function createInitialStory(): StoryState {
     activeProgressKey: null,
     presentation: null,
     bindings: { npcId: null, locationId: null },
+    suspended: null,
     progress: {},
     flags: {},
     history: [],

@@ -11,7 +11,7 @@ import {
 } from '@/config/story'
 import { OPENING_TUTORIAL_SCRIPT_IDS } from '@/config/tutorial'
 import { getContext } from '@/core/context'
-import type { StoryBindings, StoryHistoryEntry, StoryProgressEntry } from '@/types/game'
+import type { StoryBindings, StoryHistoryEntry, StoryProgressEntry, StorySuspendedEntry } from '@/types/game'
 import { fillTemplate } from '@/utils'
 import {
   grantOpeningTutorialStarterPack,
@@ -103,6 +103,35 @@ function getActiveNode() {
   return definition && state.activeNodeId ? definition.nodes[state.activeNodeId] || null : null
 }
 
+function buildStoryScene(
+  definition: StoryDefinition,
+  node: StoryNodeSpec,
+  bindings: StoryBindings,
+  presentation: StoryPresentationMode,
+): ActiveStoryScene {
+  const choices = (node.choices || []).map(choice => {
+    const conditionCheck = conditionsPass(choice.conditions, bindings, { definition, node })
+    return {
+      id: choice.id,
+      text: choice.text,
+      disabled: !conditionCheck.passed,
+      reason: conditionCheck.reason,
+    }
+  })
+
+  return {
+    storyId: definition.id,
+    title: definition.title,
+    summary: definition.summary,
+    speaker: resolveSpeaker(node, bindings),
+    text: resolveText(node.text, bindings),
+    choices,
+    canContinue: !choices.length && Boolean(node.next),
+    isTerminal: !choices.length && !node.next,
+    presentation,
+  }
+}
+
 function getTemplatePayload(bindings: StoryBindings) {
   const ctx = getContext()
   const npc = bindings.npcId ? ctx.getNpc(bindings.npcId) : null
@@ -152,7 +181,11 @@ function runScript(scriptId: string | undefined, payload: StoryScriptPayload) {
   return handler(payload) !== false
 }
 
-function getConditionFailure(condition: StoryConditionSpec, bindings: StoryBindings): string | null {
+function getConditionFailure(
+  condition: StoryConditionSpec,
+  bindings: StoryBindings,
+  options: { definition?: StoryDefinition | null; node?: StoryNodeSpec | null } = {},
+): string | null {
   const ctx = getContext()
   const state = getStoryState()
   const relation = bindings.npcId ? ctx.ensurePlayerRelation(bindings.npcId) : null
@@ -173,9 +206,10 @@ function getConditionFailure(condition: StoryConditionSpec, bindings: StoryBindi
     return state.flags[condition.flag || ''] === expected ? null : '前置未满足'
   }
   if (condition.kind === 'script') {
+    const definition = options.definition || getActiveDefinition() || STORY_DEFINITIONS[0]
     return runScript(condition.scriptId, {
-      definition: getActiveDefinition() || STORY_DEFINITIONS[0],
-      node: getActiveNode(),
+      definition,
+      node: options.node ?? getActiveNode(),
       choice: null,
       bindings,
     }) ? null : '当前还不能这么做'
@@ -183,8 +217,12 @@ function getConditionFailure(condition: StoryConditionSpec, bindings: StoryBindi
   return null
 }
 
-function conditionsPass(conditions: StoryConditionSpec[] | undefined, bindings: StoryBindings) {
-  const firstFailure = conditions?.map(condition => getConditionFailure(condition, bindings)).find(Boolean) || null
+function conditionsPass(
+  conditions: StoryConditionSpec[] | undefined,
+  bindings: StoryBindings,
+  options: { definition?: StoryDefinition | null; node?: StoryNodeSpec | null } = {},
+) {
+  const firstFailure = conditions?.map(condition => getConditionFailure(condition, bindings, options)).find(Boolean) || null
   return { passed: !firstFailure, reason: firstFailure }
 }
 
@@ -270,6 +308,22 @@ function clearActiveStoryState() {
   state.bindings = { npcId: null, locationId: null }
 }
 
+function suspendActiveStory() {
+  const state = getStoryState()
+  if (!state.activeStoryId || !state.activeNodeId || !state.activeProgressKey) {
+    state.suspended = null
+    return
+  }
+
+  state.suspended = {
+    storyId: state.activeStoryId,
+    nodeId: state.activeNodeId,
+    progressKey: state.activeProgressKey,
+    presentation: state.presentation,
+    bindings: { ...state.bindings },
+  } satisfies StorySuspendedEntry
+}
+
 function completeActiveStory() {
   const state = getStoryState()
   if (state.activeProgressKey) {
@@ -277,6 +331,7 @@ function completeActiveStory() {
     progress.status = 'completed'
     progress.lastNodeId = state.activeNodeId
   }
+  state.suspended = null
   clearActiveStoryState()
 }
 
@@ -300,7 +355,10 @@ export function canStartStory(storyId: string, bindings: Partial<StoryBindings> 
   const progress = state.progress[progressKey]
   if (definition.trigger?.once && progress?.status === 'completed') return false
   if (definition.trigger?.kind === 'npc-visit' && !nextBindings.npcId) return false
-  const conditionCheck = conditionsPass(definition.trigger?.conditions, nextBindings)
+  const conditionCheck = conditionsPass(definition.trigger?.conditions, nextBindings, {
+    definition,
+    node: definition.nodes[definition.startNodeId] || null,
+  })
   if (!conditionCheck.passed) return false
   return runScript(definition.trigger?.scriptId, {
     definition,
@@ -316,6 +374,7 @@ export function startStory(storyId: string, bindings: Partial<StoryBindings> = {
   const nextBindings = normalizeBindings(bindings)
   if (!canStartStory(storyId, nextBindings)) return false
   const state = getStoryState()
+  state.suspended = null
   const progressKey = resolveProgressKey(definition, nextBindings)
   const progress = ensureProgress(progressKey)
   progress.status = 'active'
@@ -351,7 +410,7 @@ export function chooseStoryOption(choiceId: string) {
   if (!definition || !node) return false
   const choice = node.choices?.find(entry => entry.id === choiceId)
   if (!choice) return false
-  const conditionCheck = conditionsPass(choice.conditions, state.bindings)
+  const conditionCheck = conditionsPass(choice.conditions, state.bindings, { definition, node })
   if (!conditionCheck.passed) return false
   applyEffects(choice.effects, definition, node, choice, state.bindings)
   return setActiveNode(choice.next ?? null)
@@ -366,12 +425,40 @@ export function continueStory() {
 export function closeStory() {
   const state = getStoryState()
   const node = getActiveNode()
+  const isTerminal = Boolean(node && !node.choices?.length && !node.next)
   if (state.activeProgressKey) {
     const progress = ensureProgress(state.activeProgressKey)
     progress.lastNodeId = state.activeNodeId
-    progress.status = node && !node.choices?.length && !node.next ? 'completed' : 'idle'
+    progress.status = isTerminal ? 'completed' : 'idle'
   }
+  if (isTerminal) state.suspended = null
+  else suspendActiveStory()
   clearActiveStoryState()
+}
+
+export function resumeSuspendedStory(presentation: StoryPresentationMode = 'overlay') {
+  const state = getStoryState()
+  const suspended = state.suspended
+  if (!suspended || state.activeStoryId) return false
+
+  const definition = getStoryDefinition(suspended.storyId)
+  const node = definition?.nodes[suspended.nodeId] || null
+  if (!definition || !node) {
+    state.suspended = null
+    return false
+  }
+
+  const progress = ensureProgress(suspended.progressKey)
+  progress.status = 'active'
+  progress.lastNodeId = suspended.nodeId
+
+  state.activeStoryId = suspended.storyId
+  state.activeNodeId = suspended.nodeId
+  state.activeProgressKey = suspended.progressKey
+  state.presentation = presentation || suspended.presentation || definition.defaultPresentation
+  state.bindings = { ...suspended.bindings }
+  state.suspended = null
+  return true
 }
 
 export function showStoryOverlay() {
@@ -386,29 +473,27 @@ export function showStoryInRail() {
   state.presentation = 'rail'
 }
 
+export function getSuspendedStoryScene(): ActiveStoryScene | null {
+  const state = getStoryState()
+  const suspended = state.suspended
+  if (!suspended) return null
+
+  const definition = getStoryDefinition(suspended.storyId)
+  const node = definition?.nodes[suspended.nodeId] || null
+  if (!definition || !node) return null
+
+  return buildStoryScene(
+    definition,
+    node,
+    suspended.bindings,
+    suspended.presentation || definition.defaultPresentation,
+  )
+}
+
 export function getActiveStoryScene(): ActiveStoryScene | null {
   const state = getStoryState()
   const definition = getActiveDefinition()
   const node = getActiveNode()
   if (!definition || !node) return null
-  const choices = (node.choices || []).map(choice => {
-    const conditionCheck = conditionsPass(choice.conditions, state.bindings)
-    return {
-      id: choice.id,
-      text: choice.text,
-      disabled: !conditionCheck.passed,
-      reason: conditionCheck.reason,
-    }
-  })
-  return {
-    storyId: definition.id,
-    title: definition.title,
-    summary: definition.summary,
-    speaker: resolveSpeaker(node, state.bindings),
-    text: resolveText(node.text, state.bindings),
-    choices,
-    canContinue: !choices.length && Boolean(node.next),
-    isTerminal: !choices.length && !node.next,
-    presentation: state.presentation || definition.defaultPresentation,
-  }
+  return buildStoryScene(definition, node, state.bindings, state.presentation || definition.defaultPresentation)
 }

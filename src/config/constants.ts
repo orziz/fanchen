@@ -60,7 +60,7 @@ export interface ModeOption {
 }
 
 export const MODE_OPTIONS: ModeOption[] = [
-  { id: 'manual', label: '手动操作', desc: '世界照常推进，但不会替你自动执行日常动作。' },
+  { id: 'manual', label: '手动操作', desc: '暂停挂机时间流逝，只有你亲自出手时才会推进。' },
   { id: 'balanced', label: '维生求进', desc: '在生计、修炼、跑腿和关系之间谨慎平衡。' },
   { id: 'cultivation', label: '苦修养气', desc: '优先打坐、练体、感气和低风险冲关。' },
   { id: 'merchant', label: '小本营生', desc: '优先跑商、经营摊位和积攒启动资产。' },
