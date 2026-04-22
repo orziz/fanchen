@@ -2,6 +2,7 @@ import type { ItemData } from '../../config/items'
 import type { LocationData } from '../../config/world'
 
 import type { EditableItem } from './itemFile'
+import type { EditableStoryDefinition } from './storyFile'
 
 async function postJson<T>(url: string, payload: Record<string, unknown>) {
   const response = await fetch(url, {
@@ -24,4 +25,8 @@ export function saveWorld(locations: LocationData[]) {
 
 export function saveItems(items: EditableItem[] | ItemData[]) {
   return postJson<{ ok: true; count: number }>('/__tools/save-items', { items })
+}
+
+export function saveStories(stories: EditableStoryDefinition[]) {
+  return postJson<{ ok: true; count: number }>('/__tools/save-stories', { stories })
 }

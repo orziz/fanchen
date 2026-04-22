@@ -3,6 +3,7 @@
   --tool-bg: #f2e8d2;
   --tool-bg-soft: rgba(255, 251, 242, 0.88);
   --tool-paper: rgba(252, 248, 239, 0.94);
+  --tool-paper-deep: rgba(247, 239, 223, 0.98);
   --tool-line: #d9c7a3;
   --tool-line-strong: #b99862;
   --tool-text: #443624;
@@ -17,6 +18,33 @@
 
 * {
   box-sizing: border-box;
+  min-width: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(179, 133, 43, 0.25) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(179, 133, 43, 0.22);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(179, 133, 43, 0.38);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 body {
@@ -24,6 +52,7 @@ body {
   min-height: 100vh;
   color: var(--tool-text);
   background:
+    radial-gradient(circle at 50% 0%, rgba(255, 247, 230, 0.88), transparent 34%),
     radial-gradient(circle at 14% 18%, rgba(196, 162, 107, 0.18), transparent 24%),
     radial-gradient(circle at 82% 12%, rgba(133, 168, 150, 0.15), transparent 28%),
     linear-gradient(180deg, #efe4cb 0%, #f5edda 48%, #efe5cf 100%);
@@ -31,6 +60,7 @@ body {
 
 a {
   color: inherit;
+  text-decoration: none;
 }
 
 button,
@@ -48,10 +78,12 @@ textarea {
 .tool-frame {
   max-width: 1680px;
   margin: 0 auto;
-  background: var(--tool-paper);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 241, 0.98), rgba(248, 239, 222, 0.96)),
+    radial-gradient(circle at top right, rgba(141, 91, 45, 0.06), transparent 28%);
   border: 1px solid rgba(185, 152, 98, 0.45);
   border-radius: 28px;
-  box-shadow: var(--tool-shadow);
+  box-shadow: var(--tool-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   overflow: hidden;
 }
 
@@ -63,18 +95,39 @@ textarea {
 }
 
 .tool-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   gap: 24px;
   padding: 24px 28px 18px;
   border-bottom: 1px solid rgba(185, 152, 98, 0.28);
-  background: linear-gradient(180deg, rgba(255, 251, 242, 0.92), rgba(244, 235, 217, 0.92));
+  background:
+    linear-gradient(180deg, rgba(255, 251, 242, 0.96), rgba(244, 235, 217, 0.94)),
+    radial-gradient(circle at right top, rgba(141, 91, 45, 0.08), transparent 26%);
+}
+
+.tool-header::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto auto;
+  width: 180px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(141, 91, 45, 0.1), transparent 70%);
+  pointer-events: none;
+}
+
+.tool-kicker {
+  margin: 0 0 8px;
+  color: var(--tool-accent);
+  font-size: 12px;
+  letter-spacing: 0.18em;
 }
 
 .tool-title {
   margin: 0;
   font-size: 30px;
   line-height: 1.1;
+  letter-spacing: 0.04em;
 }
 
 .tool-subtitle {
@@ -97,6 +150,7 @@ textarea {
   background: rgba(255, 251, 242, 0.88);
   color: var(--tool-text);
   cursor: pointer;
+  box-shadow: 0 8px 18px rgba(141, 91, 45, 0.08);
   transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
 }
 
@@ -106,7 +160,7 @@ textarea {
 }
 
 .tool-button.is-primary {
-  background: linear-gradient(180deg, #a06a35, #845126);
+  background: linear-gradient(180deg, #b07134, #85501f 72%);
   color: #fff7ec;
   border-color: transparent;
 }
@@ -149,19 +203,22 @@ textarea {
 
 .tool-panel {
   min-height: 0;
-  background: var(--tool-bg-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 251, 242, 0.92), rgba(247, 239, 223, 0.92));
   border: 1px solid rgba(185, 152, 98, 0.28);
   border-radius: 22px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 10px 24px rgba(141, 91, 45, 0.08);
 }
 
 .tool-panel--scroll {
   height: calc(100vh - 228px);
   max-height: calc(100vh - 228px);
   overflow: auto;
+  scrollbar-gutter: stable;
 }
 
 .tool-panel--map {
@@ -180,15 +237,34 @@ textarea {
   font-size: 18px;
 }
 
+.tool-panel__copy {
+  margin: -2px 0 2px;
+  color: var(--tool-text-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .tool-input,
 .tool-select,
 .tool-textarea {
   width: 100%;
   border: 1px solid rgba(185, 152, 98, 0.34);
   border-radius: 14px;
-  background: rgba(255, 252, 246, 0.92);
+  background: rgba(255, 252, 246, 0.96);
   color: var(--tool-text);
   padding: 10px 12px;
+  box-shadow: inset 0 1px 2px rgba(141, 91, 45, 0.06);
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.tool-input:focus-visible,
+.tool-select:focus-visible,
+.tool-textarea:focus-visible,
+.tool-button:focus-visible,
+.tool-card:focus-visible {
+  outline: none;
+  border-color: rgba(141, 91, 45, 0.58);
+  box-shadow: 0 0 0 3px rgba(141, 91, 45, 0.12), inset 0 1px 2px rgba(141, 91, 45, 0.06);
 }
 
 .tool-textarea {
@@ -197,15 +273,19 @@ textarea {
 }
 
 .tool-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: max-content;
   gap: 8px;
+  align-content: start;
   min-height: 0;
   overflow: auto;
   padding-right: 4px;
+  scrollbar-gutter: stable;
 }
 
 .tool-list__item {
+  position: relative;
   display: grid;
   gap: 4px;
   padding: 12px 14px;
@@ -214,6 +294,26 @@ textarea {
   background: rgba(255, 251, 243, 0.84);
   text-align: left;
   cursor: pointer;
+  overflow: hidden;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.tool-list__item > * {
+  min-width: 0;
+}
+
+.tool-list__item::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, rgba(141, 91, 45, 0.16), rgba(63, 111, 91, 0.14));
+}
+
+.tool-list__item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(141, 91, 45, 0.38);
+  box-shadow: 0 12px 22px rgba(141, 91, 45, 0.08);
 }
 
 .tool-list__item.is-selected {
@@ -228,6 +328,12 @@ textarea {
   font-size: 13px;
 }
 
+.tool-list__item strong,
+.tool-list__meta {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
 .tool-pill-row {
   display: flex;
   flex-wrap: wrap;
@@ -237,7 +343,7 @@ textarea {
 .tool-pill {
   border-radius: 999px;
   padding: 4px 10px;
-  background: rgba(141, 91, 45, 0.12);
+  background: linear-gradient(180deg, rgba(255, 247, 233, 0.98), rgba(240, 223, 190, 0.72));
   color: var(--tool-accent);
   font-size: 12px;
 }
@@ -386,6 +492,8 @@ textarea {
   gap: 18px;
   align-items: center;
   padding: 0 18px 18px;
+  border-top: 1px solid rgba(185, 152, 98, 0.2);
+  background: linear-gradient(180deg, rgba(252, 247, 237, 0), rgba(252, 247, 237, 0.92));
 }
 
 .tool-status.is-success {
@@ -408,9 +516,22 @@ textarea {
   gap: 12px;
   padding: 22px;
   border-radius: 24px;
-  background: rgba(255, 251, 243, 0.9);
+  background:
+    linear-gradient(180deg, rgba(255, 251, 243, 0.96), rgba(246, 237, 221, 0.92));
   border: 1px solid rgba(185, 152, 98, 0.22);
   text-decoration: none;
+  box-shadow: 0 16px 32px rgba(141, 91, 45, 0.08);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.tool-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(141, 91, 45, 0.4);
+  box-shadow: 0 22px 38px rgba(141, 91, 45, 0.12);
+}
+
+.tool-card strong {
+  font-size: 22px;
 }
 
 @media (max-width: 1360px) {

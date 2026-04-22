@@ -213,6 +213,20 @@ export function clampView(view: MapView) {
 }
 
 export function getSvgPoint(event: MouseEvent | PointerEvent | WheelEvent, canvas: SVGSVGElement): ScreenPoint {
+  const screenPoint = canvas.createSVGPoint()
+  const screenCtm = canvas.getScreenCTM()
+
+  screenPoint.x = event.clientX
+  screenPoint.y = event.clientY
+
+  if (screenCtm) {
+    const mappedPoint = screenPoint.matrixTransform(screenCtm.inverse())
+    return {
+      x: mappedPoint.x,
+      y: mappedPoint.y,
+    }
+  }
+
   const rect = canvas.getBoundingClientRect()
   return {
     x: ((event.clientX - rect.left) / rect.width) * VIEW_WIDTH,

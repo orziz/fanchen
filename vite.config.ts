@@ -5,6 +5,7 @@ import vue from "@vitejs/plugin-vue";
 import { defineConfig, type ViteDevServer } from "vite";
 
 import { serializeItemFile } from "./src/tools/shared/itemFile";
+import { serializeStoryFile } from "./src/tools/shared/storyFile";
 import { serializeWorldFile } from "./src/tools/shared/worldFile";
 
 const distDir = resolve("dist");
@@ -65,8 +66,9 @@ function fanchenToolsPlugin() {
         const url = new URL(req.url || "/", "http://localhost");
         const isSaveWorld = url.pathname === "/__tools/save-world";
         const isSaveItems = url.pathname === "/__tools/save-items";
+        const isSaveStories = url.pathname === "/__tools/save-stories";
 
-        if (!isSaveWorld && !isSaveItems) {
+        if (!isSaveWorld && !isSaveItems && !isSaveStories) {
           next();
           return;
         }
@@ -83,6 +85,13 @@ function fanchenToolsPlugin() {
             if (!Array.isArray(payload.locations)) throw new Error("invalid_locations_payload");
             writeFileSync(resolve("src/config/world.ts"), serializeWorldFile(payload.locations), "utf8");
             sendJson(res, 200, { ok: true, count: payload.locations.length });
+            return;
+          }
+
+          if (isSaveStories) {
+            if (!Array.isArray(payload.stories)) throw new Error("invalid_stories_payload");
+            writeFileSync(resolve("src/config/story.ts"), serializeStoryFile(payload.stories), "utf8");
+            sendJson(res, 200, { ok: true, count: payload.stories.length });
             return;
           }
 
