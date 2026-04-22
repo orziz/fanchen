@@ -220,7 +220,7 @@ function onChallengeRealm() {
 }
 
 function describeViaIds(viaIds: string[]) {
-  return viaIds.map(id => LOCATION_MAP.get(id)?.short || id).join('、')
+  return viaIds.map(id => LOCATION_MAP.get(id)?.name || id).join('、')
 }
 
 function residentLabel(npc: { id: string; name: string; personalityLabel: string }) {

@@ -1,8 +1,11 @@
-import { writeFileSync, readdirSync } from "node:fs";
+import { readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import vue from "@vitejs/plugin-vue";
-import { defineConfig } from "vite";
+import { defineConfig, type ViteDevServer } from "vite";
+
+import { serializeItemFile } from "./src/tools/shared/itemFile";
+import { serializeWorldFile } from "./src/tools/shared/worldFile";
 
 const distDir = resolve("dist");
 
@@ -36,8 +39,66 @@ function fanchenFileBuildPlugin() {
   };
 }
 
+function fanchenToolsPlugin() {
+  function readRequestBody(req: ViteDevServer["middlewares"] extends { use: (...args: infer T) => unknown } ? T[0] : never) {
+    return new Promise<string>((resolveBody, rejectBody) => {
+      let body = "";
+      req.on("data", chunk => {
+        body += chunk;
+      });
+      req.on("end", () => resolveBody(body));
+      req.on("error", rejectBody);
+    });
+  }
+
+  function sendJson(res: Parameters<ViteDevServer["middlewares"]["use"]>[1], statusCode: number, payload: Record<string, unknown>) {
+    res.statusCode = statusCode;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.end(JSON.stringify(payload));
+  }
+
+  return {
+    name: "fanchen-tools-plugin",
+    apply: "serve" as const,
+    configureServer(server: ViteDevServer) {
+      server.middlewares.use(async (req, res, next) => {
+        const url = new URL(req.url || "/", "http://localhost");
+        const isSaveWorld = url.pathname === "/__tools/save-world";
+        const isSaveItems = url.pathname === "/__tools/save-items";
+
+        if (!isSaveWorld && !isSaveItems) {
+          next();
+          return;
+        }
+
+        if (req.method !== "POST") {
+          sendJson(res, 405, { ok: false, error: "method_not_allowed" });
+          return;
+        }
+
+        try {
+          const payload = JSON.parse((await readRequestBody(req)) || "{}");
+
+          if (isSaveWorld) {
+            if (!Array.isArray(payload.locations)) throw new Error("invalid_locations_payload");
+            writeFileSync(resolve("src/config/world.ts"), serializeWorldFile(payload.locations), "utf8");
+            sendJson(res, 200, { ok: true, count: payload.locations.length });
+            return;
+          }
+
+          if (!Array.isArray(payload.items)) throw new Error("invalid_items_payload");
+          writeFileSync(resolve("src/config/items.ts"), serializeItemFile(payload.items), "utf8");
+          sendJson(res, 200, { ok: true, count: payload.items.length });
+        } catch (error) {
+          sendJson(res, 400, { ok: false, error: error instanceof Error ? error.message : "save_failed" });
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [vue(), fanchenFileBuildPlugin()],
+  plugins: [vue(), fanchenFileBuildPlugin(), fanchenToolsPlugin()],
   publicDir: false,
   resolve: {
     alias: {

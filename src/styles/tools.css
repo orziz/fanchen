@@ -1,0 +1,458 @@
+:root {
+  color-scheme: light;
+  --tool-bg: #f2e8d2;
+  --tool-bg-soft: rgba(255, 251, 242, 0.88);
+  --tool-paper: rgba(252, 248, 239, 0.94);
+  --tool-line: #d9c7a3;
+  --tool-line-strong: #b99862;
+  --tool-text: #443624;
+  --tool-text-soft: #7a6a54;
+  --tool-accent: #8d5b2d;
+  --tool-accent-soft: #f0dfbe;
+  --tool-green: #3f6f5b;
+  --tool-red: #995645;
+  --tool-shadow: 0 18px 40px rgba(103, 72, 36, 0.13);
+  font-family: 'STKaiti', 'Kaiti SC', 'KaiTi', 'FangSong', serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--tool-text);
+  background:
+    radial-gradient(circle at 14% 18%, rgba(196, 162, 107, 0.18), transparent 24%),
+    radial-gradient(circle at 82% 12%, rgba(133, 168, 150, 0.15), transparent 28%),
+    linear-gradient(180deg, #efe4cb 0%, #f5edda 48%, #efe5cf 100%);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.tool-shell {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.tool-frame {
+  max-width: 1680px;
+  margin: 0 auto;
+  background: var(--tool-paper);
+  border: 1px solid rgba(185, 152, 98, 0.45);
+  border-radius: 28px;
+  box-shadow: var(--tool-shadow);
+  overflow: hidden;
+}
+
+.tool-frame--editor {
+  height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.tool-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid rgba(185, 152, 98, 0.28);
+  background: linear-gradient(180deg, rgba(255, 251, 242, 0.92), rgba(244, 235, 217, 0.92));
+}
+
+.tool-title {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.1;
+}
+
+.tool-subtitle {
+  margin: 8px 0 0;
+  color: var(--tool-text-soft);
+  font-size: 14px;
+}
+
+.tool-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.tool-button {
+  border: 1px solid rgba(141, 91, 45, 0.24);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: rgba(255, 251, 242, 0.88);
+  color: var(--tool-text);
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.tool-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(141, 91, 45, 0.5);
+}
+
+.tool-button.is-primary {
+  background: linear-gradient(180deg, #a06a35, #845126);
+  color: #fff7ec;
+  border-color: transparent;
+}
+
+.tool-button.is-active {
+  background: var(--tool-accent-soft);
+  border-color: rgba(141, 91, 45, 0.5);
+}
+
+.tool-button.is-danger {
+  color: var(--tool-red);
+}
+
+.tool-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
+.tool-body {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+}
+
+.tool-body--editor {
+  flex: 1;
+  min-height: 0;
+  align-items: start;
+  overflow: hidden;
+}
+
+.tool-body.tool-body--three {
+  grid-template-columns: 280px minmax(0, 1fr) 360px;
+}
+
+.tool-body.tool-body--two {
+  grid-template-columns: 320px minmax(0, 1fr);
+}
+
+.tool-panel {
+  min-height: 0;
+  background: var(--tool-bg-soft);
+  border: 1px solid rgba(185, 152, 98, 0.28);
+  border-radius: 22px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tool-panel--scroll {
+  height: calc(100vh - 228px);
+  max-height: calc(100vh - 228px);
+  overflow: auto;
+}
+
+.tool-panel--map {
+  position: sticky;
+  top: 18px;
+  align-self: start;
+  height: calc(100vh - 228px);
+  max-height: calc(100vh - 228px);
+}
+
+.tool-panel__title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  font-size: 18px;
+}
+
+.tool-input,
+.tool-select,
+.tool-textarea {
+  width: 100%;
+  border: 1px solid rgba(185, 152, 98, 0.34);
+  border-radius: 14px;
+  background: rgba(255, 252, 246, 0.92);
+  color: var(--tool-text);
+  padding: 10px 12px;
+}
+
+.tool-textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.tool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.tool-list__item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid rgba(185, 152, 98, 0.22);
+  border-radius: 16px;
+  background: rgba(255, 251, 243, 0.84);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tool-list__item.is-selected {
+  border-color: rgba(141, 91, 45, 0.56);
+  background: rgba(240, 223, 190, 0.76);
+}
+
+.tool-list__meta,
+.tool-meta,
+.tool-status {
+  color: var(--tool-text-soft);
+  font-size: 13px;
+}
+
+.tool-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tool-pill {
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(141, 91, 45, 0.12);
+  color: var(--tool-accent);
+  font-size: 12px;
+}
+
+.tool-map-shell {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  border-radius: 22px;
+  border: 1px solid rgba(185, 152, 98, 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 240, 0.98), rgba(243, 233, 211, 0.94)),
+    repeating-linear-gradient(0deg, rgba(175, 144, 96, 0.06), rgba(175, 144, 96, 0.06) 1px, transparent 1px, transparent 48px),
+    repeating-linear-gradient(90deg, rgba(175, 144, 96, 0.06), rgba(175, 144, 96, 0.06) 1px, transparent 1px, transparent 48px);
+  overflow: hidden;
+}
+
+.tool-map {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.tool-route {
+  stroke: rgba(141, 91, 45, 0.32);
+  stroke-width: 4;
+}
+
+.tool-route.is-active {
+  stroke: rgba(63, 111, 91, 0.54);
+}
+
+.tool-selection-box {
+  fill: rgba(141, 91, 45, 0.12);
+  stroke: rgba(141, 91, 45, 0.64);
+  stroke-width: 2;
+  stroke-dasharray: 10 6;
+}
+
+.tool-node circle:first-child {
+  fill: rgba(255, 249, 238, 0.98);
+  stroke: rgba(118, 162, 180, 0.62);
+  stroke-width: 4;
+}
+
+.tool-node circle:last-child {
+  fill: rgba(118, 162, 180, 0.9);
+}
+
+.tool-node text {
+  font-family: 'STKaiti', 'Kaiti SC', 'KaiTi', 'FangSong', serif;
+  font-size: 16px;
+  text-anchor: middle;
+  fill: #5b4731;
+}
+
+.tool-node.is-selected circle:first-child,
+.tool-node.is-anchor circle:first-child {
+  stroke: rgba(141, 91, 45, 0.72);
+}
+
+.tool-node.is-selected circle:last-child,
+.tool-node.is-anchor circle:last-child {
+  fill: rgba(141, 91, 45, 0.94);
+}
+
+.tool-node.is-neighbor circle:first-child {
+  stroke: rgba(63, 111, 91, 0.72);
+}
+
+.tool-node.is-neighbor circle:last-child {
+  fill: rgba(63, 111, 91, 0.88);
+}
+
+.tool-form {
+  display: grid;
+  gap: 10px;
+}
+
+.tool-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tool-field {
+  display: grid;
+  gap: 6px;
+}
+
+.tool-field--full {
+  grid-column: 1 / -1;
+}
+
+.tool-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tool-text-soft);
+}
+
+.tool-divider {
+  height: 1px;
+  background: rgba(185, 152, 98, 0.18);
+}
+
+.tool-list-editor {
+  display: grid;
+  gap: 10px;
+}
+
+.tool-list-editor__items {
+  display: grid;
+  gap: 8px;
+}
+
+.tool-list-editor__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(185, 152, 98, 0.24);
+  background: rgba(255, 251, 243, 0.82);
+}
+
+.tool-list-editor__controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.tool-issues {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--tool-text-soft);
+  display: grid;
+  gap: 6px;
+}
+
+.tool-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding: 0 18px 18px;
+}
+
+.tool-status.is-success {
+  color: var(--tool-green);
+}
+
+.tool-status.is-error {
+  color: var(--tool-red);
+}
+
+.tool-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  padding: 18px;
+}
+
+.tool-card {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  border-radius: 24px;
+  background: rgba(255, 251, 243, 0.9);
+  border: 1px solid rgba(185, 152, 98, 0.22);
+  text-decoration: none;
+}
+
+@media (max-width: 1360px) {
+  .tool-body.tool-body--three {
+    grid-template-columns: 240px minmax(0, 1fr) 320px;
+  }
+}
+
+@media (max-width: 1120px) {
+  .tool-body.tool-body--three {
+    grid-template-columns: 220px minmax(0, 1fr) 280px;
+  }
+}
+
+@media (max-width: 980px) {
+  .tool-shell {
+    padding: 12px;
+  }
+
+  .tool-header,
+  .tool-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tool-body.tool-body--three,
+  .tool-body.tool-body--two {
+    grid-template-columns: 1fr;
+  }
+
+  .tool-map-shell {
+    height: auto;
+    min-height: 420px;
+  }
+
+  .tool-panel--map,
+  .tool-panel--scroll {
+    position: static;
+    max-height: none;
+  }
+
+  .tool-list-editor__controls {
+    grid-template-columns: 1fr;
+  }
+}

@@ -113,7 +113,7 @@
           <p class="market-meta">卖家：{{ listing.seller }}</p>
           <UiActionGroup variant="market">
             <button v-if="selectedMarketEntry.locationId === currentLocation.id" class="item-button" @click="doBuy(listing.listingId)">立即购入</button>
-            <button v-else class="item-button" @click="doTravel(selectedMarketEntry.locationId)">前往{{ getLocationShort(selectedMarketEntry.locationId) }}</button>
+            <button v-else class="item-button" @click="doTravel(selectedMarketEntry.locationId)">前往{{ getLocationName(selectedMarketEntry.locationId) }}</button>
           </UiActionGroup>
         </UiPanelCard>
         </template>
@@ -251,7 +251,7 @@ const sortedMarkets = computed(() => {
 const marketLocationOptions = computed(() =>
   sortedMarkets.value.map(([locationId, listings]) => ({
     id: locationId,
-    label: locationId === currentLocation.value.id ? `${getLocationShort(locationId)} · 当前` : getLocationShort(locationId),
+    label: locationId === currentLocation.value.id ? `${getLocationName(locationId)} · 当前` : getLocationName(locationId),
     count: listings.length,
   }))
 )
@@ -273,7 +273,6 @@ const selectedMarketEntry = computed(() => {
 
 function getLocation(id: string) { return LOCATION_MAP.get(id) }
 function getLocationName(id: string) { return LOCATION_MAP.get(id)?.name || id }
-function getLocationShort(id: string) { return LOCATION_MAP.get(id)?.short || id }
 function getEconomySummary(id: string) { return getLocationEconomyOverview(id).summary }
 function getEconomyHeat(id: string) { return getLocationEconomyOverview(id).heatLabel }
 function itemOf(itemId: string) { return getItem(itemId)! }

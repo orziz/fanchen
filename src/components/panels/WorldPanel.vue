@@ -131,7 +131,7 @@ function getTravelHint(locId: string) {
   const preview = getTravelPreview(locId)
   if (!preview.route) return preview.blockedReason || ''
   if (preview.segments <= 1) return '一段路可达。'
-  const via = preview.viaIds.map(id => LOCATION_MAP.get(id)?.short || id).join('、')
+  const via = preview.viaIds.map(id => LOCATION_MAP.get(id)?.name || id).join('、')
   return via ? `需走 ${preview.segments} 段，经由 ${via}。` : `需走 ${preview.segments} 段。`
 }
 

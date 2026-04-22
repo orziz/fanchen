@@ -151,7 +151,7 @@ function resolvePlayerRoute(startId: string, endId: string): TravelPreview {
 }
 
 function describeVia(viaIds: string[]) {
-  return viaIds.map(id => LOCATION_MAP.get(id)?.short || id).join('、')
+  return viaIds.map(id => LOCATION_MAP.get(id)?.name || id).join('、')
 }
 
 function resolveArrivalAction(token: string) {
@@ -284,7 +284,7 @@ function advancePlayerTravelStep(): TravelAdvanceResult {
     }
   }
 
-  const remaining = activePlan.route.slice(activePlan.nextIndex).map(id => LOCATION_MAP.get(id)?.short || id).join('、')
+  const remaining = activePlan.route.slice(activePlan.nextIndex).map(id => LOCATION_MAP.get(id)?.name || id).join('、')
   ctx.appendLog(`你先赶到${nextStop.name}落脚，去${activePlan.destinationName}还得继续经${remaining}。`, 'info')
   return { moved: true, arrived: false, waiting: false, pendingAction: null }
 }
