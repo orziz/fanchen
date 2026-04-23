@@ -1,0 +1,444 @@
+﻿.app-runtime.ui-mode-jianghu .jianghu-stage-canvas {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(270px, 336px) 1fr minmax(260px, 312px);
+  gap: 18px;
+  min-height: 0;
+  padding: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(21, 22, 24, 0.58);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-stage-canvas.is-sheet-mode {
+  display: block;
+}
+
+.app-runtime.ui-mode-jianghu .stage-paper,
+.app-runtime.ui-mode-jianghu .hero-backdrop,
+.app-runtime.ui-mode-jianghu .hero-mist,
+.app-runtime.ui-mode-jianghu .location-card__skyline,
+.app-runtime.ui-mode-jianghu .hero-placeholder,
+.app-runtime.ui-mode-jianghu .stage-ink {
+  position: absolute;
+}
+
+.app-runtime.ui-mode-jianghu .stage-paper {
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(240, 235, 226, 0.9), rgba(214, 208, 196, 0.92)),
+    radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.32), transparent 28%);
+}
+
+.app-runtime.ui-mode-jianghu .stage-ink {
+  left: 0;
+  right: 0;
+  height: 34px;
+  background: linear-gradient(90deg, rgba(20, 20, 20, 0.85), rgba(20, 20, 20, 0.15), rgba(20, 20, 20, 0.85));
+  opacity: 0.45;
+}
+
+.app-runtime.ui-mode-jianghu .stage-ink--top {
+  top: 0;
+}
+
+.app-runtime.ui-mode-jianghu .stage-ink--bottom {
+  bottom: 0;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-profile-sheet,
+.app-runtime.ui-mode-jianghu .jianghu-side-sheet,
+.app-runtime.ui-mode-jianghu .jianghu-stage-sheet,
+.app-runtime.ui-mode-jianghu .hero-calligraphy,
+.app-runtime.ui-mode-jianghu .jianghu-rumor-sheet,
+.app-runtime.ui-mode-jianghu .location-card {
+  position: relative;
+  z-index: 1;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-profile-sheet,
+.app-runtime.ui-mode-jianghu .jianghu-side-sheet,
+.app-runtime.ui-mode-jianghu .jianghu-stage-sheet,
+.app-runtime.ui-mode-jianghu .jianghu-rumor-sheet,
+.app-runtime.ui-mode-jianghu .location-card {
+  border: 1px solid var(--jh-paper-line);
+  background: rgba(238, 233, 223, 0.74);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-profile-sheet,
+.app-runtime.ui-mode-jianghu .jianghu-side-sheet,
+.app-runtime.ui-mode-jianghu .jianghu-rumor-sheet {
+  padding: 18px;
+}
+
+.app-runtime.ui-mode-jianghu .sheet-brush-title {
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.app-runtime.ui-mode-jianghu .sheet-brush-title::before {
+  content: '';
+  width: 92px;
+  height: 18px;
+  background: linear-gradient(90deg, rgba(31, 28, 25, 0.9), rgba(31, 28, 25, 0.16));
+}
+
+.app-runtime.ui-mode-jianghu .sheet-brush-title.is-subtle::before {
+  width: 82px;
+  opacity: 0.62;
+}
+
+.app-runtime.ui-mode-jianghu .profile-emblem,
+.app-runtime.ui-mode-jianghu .skill-card__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+}
+
+.app-runtime.ui-mode-jianghu .profile-emblem {
+  width: 58px;
+  height: 58px;
+  border: 1px solid rgba(31, 28, 25, 0.18);
+  background: rgba(255, 255, 255, 0.34);
+  font-family: var(--font-title);
+  font-size: 24px;
+  color: var(--jh-ink-soft);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-profile-bars,
+.app-runtime.ui-mode-jianghu .skill-stack,
+.app-runtime.ui-mode-jianghu .memo-stack,
+.app-runtime.ui-mode-jianghu .rumor-list {
+  gap: 12px;
+}
+
+.app-runtime.ui-mode-jianghu .profile-bar-row {
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.app-runtime.ui-mode-jianghu .profile-bar-row span,
+.app-runtime.ui-mode-jianghu .profile-bar-row strong,
+.app-runtime.ui-mode-jianghu .attr-item strong,
+.app-runtime.ui-mode-jianghu .memo-card strong,
+.app-runtime.ui-mode-jianghu .location-card strong {
+  color: var(--jh-ink);
+}
+
+.app-runtime.ui-mode-jianghu .profile-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(29, 27, 25, 0.12);
+}
+
+.app-runtime.ui-mode-jianghu .profile-bar-fill {
+  height: 100%;
+}
+
+.app-runtime.ui-mode-jianghu .profile-bar-fill.is-hp {
+  background: linear-gradient(90deg, #a55a54, #cf776b);
+}
+
+.app-runtime.ui-mode-jianghu .profile-bar-fill.is-qi {
+  background: linear-gradient(90deg, #6a8798, #85a7b8);
+}
+
+.app-runtime.ui-mode-jianghu .profile-bar-fill.is-exp {
+  background: linear-gradient(90deg, #665544, #9f8460);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-attr-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.app-runtime.ui-mode-jianghu .attr-item,
+.app-runtime.ui-mode-jianghu .memo-card {
+  display: grid;
+  gap: 4px;
+}
+
+.app-runtime.ui-mode-jianghu .hero-backdrop,
+.app-runtime.ui-mode-jianghu .hero-mist {
+  inset: 0;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-hero-stage {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app-runtime.ui-mode-jianghu .hero-backdrop {
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.56), transparent 24%),
+    linear-gradient(180deg, rgba(190, 185, 176, 0.22), rgba(110, 110, 108, 0.2)),
+    linear-gradient(180deg, rgba(58, 58, 60, 0.16), transparent 40%);
+}
+
+.app-runtime.ui-mode-jianghu .hero-mist {
+  background:
+    radial-gradient(circle at 50% 68%, rgba(70, 72, 78, 0.18), transparent 38%),
+    linear-gradient(180deg, transparent 0%, rgba(40, 42, 45, 0.12) 100%);
+}
+
+.app-runtime.ui-mode-jianghu .hero-placeholder {
+  border: 1px dashed rgba(40, 36, 31, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.app-runtime.ui-mode-jianghu .hero-placeholder--crest {
+  top: 56px;
+  right: 96px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+}
+
+.app-runtime.ui-mode-jianghu .hero-placeholder--companion {
+  right: 40px;
+  bottom: 54px;
+  width: 124px;
+  height: 196px;
+}
+
+.app-runtime.ui-mode-jianghu .hero-figure {
+  position: absolute;
+  right: -2%;
+  bottom: 0;
+  width: 74%;
+  height: 94%;
+  background:
+    radial-gradient(circle at 48% 13%, rgba(28, 29, 33, 0.92) 0 9%, transparent 10%),
+    radial-gradient(ellipse at 49% 33%, rgba(24, 25, 29, 0.95) 0 18%, transparent 19%),
+    radial-gradient(ellipse at 48% 62%, rgba(20, 21, 25, 0.96) 0 26%, transparent 27%),
+    radial-gradient(ellipse at 56% 61%, rgba(18, 19, 22, 0.9) 0 14%, transparent 15%),
+    linear-gradient(180deg, rgba(18, 19, 22, 0) 0 18%, rgba(18, 19, 22, 0.96) 19% 100%);
+  background-position: center 6%, center 24%, center 62%, 66% 58%, center bottom;
+  background-repeat: no-repeat;
+  background-size: 18% 18%, 38% 34%, 56% 58%, 20% 30%, 74% 100%;
+  filter: grayscale(0.08) contrast(1.05);
+}
+
+.app-runtime.ui-mode-jianghu .hero-calligraphy {
+  top: 52px;
+  right: 15%;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  gap: 16px;
+}
+
+.app-runtime.ui-mode-jianghu .hero-calligraphy h2 {
+  font-size: clamp(44px, 4vw, 70px);
+  letter-spacing: 0.22em;
+}
+
+.app-runtime.ui-mode-jianghu .hero-calligraphy p {
+  color: rgba(29, 27, 25, 0.84);
+  font-size: 18px;
+  letter-spacing: 0.16em;
+}
+
+.app-runtime.ui-mode-jianghu .skill-card {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(40, 36, 31, 0.08);
+}
+
+.app-runtime.ui-mode-jianghu .skill-card:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.app-runtime.ui-mode-jianghu .skill-card__icon {
+  width: 54px;
+  height: 54px;
+  background: rgba(255, 255, 255, 0.36);
+  border: 1px solid rgba(40, 36, 31, 0.14);
+  font-family: var(--font-title);
+  font-size: 22px;
+  color: var(--jh-ink-soft);
+}
+
+.app-runtime.ui-mode-jianghu .skill-card__copy {
+  display: grid;
+  gap: 4px;
+}
+
+.app-runtime.ui-mode-jianghu .skill-card__tag {
+  padding: 3px 8px;
+  border: 1px solid rgba(40, 36, 31, 0.14);
+  background: rgba(255, 255, 255, 0.28);
+  color: var(--jh-ink-soft);
+  font-size: 11px;
+}
+
+.app-runtime.ui-mode-jianghu .memo-card {
+  padding-top: 10px;
+  border-top: 1px solid rgba(40, 36, 31, 0.08);
+}
+
+.app-runtime.ui-mode-jianghu .memo-card:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-stage-sheet {
+  height: 100%;
+  min-height: 0;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-panel-host,
+.app-runtime.ui-mode-jianghu .jianghu-stage-sheet > * {
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-stage-sheet .card {
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-stage-footer {
+  gap: 14px;
+  min-height: 0;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-rumor-sheet {
+  flex: 1.12;
+  min-width: 0;
+}
+
+.app-runtime.ui-mode-jianghu .rumor-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-runtime.ui-mode-jianghu .rumor-item {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 10px;
+}
+
+.app-runtime.ui-mode-jianghu .rumor-item__type {
+  color: var(--jh-red);
+  font-size: 12px;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-world-strip {
+  flex: 1.38;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.app-runtime.ui-mode-jianghu .world-digest-card {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-height: 132px;
+  padding: 14px 16px;
+  overflow: hidden;
+  border: 1px solid var(--jh-paper-line);
+  background:
+    linear-gradient(180deg, rgba(238, 233, 223, 0.8), rgba(229, 223, 211, 0.7)),
+    radial-gradient(circle at 86% 18%, rgba(159, 132, 96, 0.1), transparent 26%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.app-runtime.ui-mode-jianghu .world-digest-card span {
+  color: var(--jh-ink-soft);
+  font-size: 12px;
+}
+
+.app-runtime.ui-mode-jianghu .world-digest-card strong {
+  color: var(--jh-ink);
+  font-size: 20px;
+}
+
+.app-runtime.ui-mode-jianghu .world-digest-card p {
+  margin: 0;
+  color: var(--jh-ink-soft);
+  line-height: 1.6;
+}
+
+@media (max-width: 1480px) {
+  .app-runtime.ui-mode-jianghu .jianghu-stage-canvas {
+    grid-template-columns: minmax(240px, 286px) 1fr minmax(236px, 272px);
+  }
+
+  .app-runtime.ui-mode-jianghu .jianghu-stage-shell {
+    --jh-topbar-budget: 204px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .app-runtime.ui-mode-jianghu .jianghu-topbar-main {
+    grid-template-columns: 1fr;
+  }
+
+  .app-runtime.ui-mode-jianghu .jianghu-stage-shell {
+    --jh-topbar-budget: 274px;
+  }
+
+  .app-runtime.ui-mode-jianghu .jianghu-resource-strip,
+  .app-runtime.ui-mode-jianghu .jianghu-nav-strip,
+  .app-runtime.ui-mode-jianghu .heading-chips {
+    justify-content: flex-start;
+  }
+
+  .app-runtime.ui-mode-jianghu .jianghu-nav-strip {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .app-runtime.ui-mode-jianghu .jianghu-stage-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-runtime.ui-mode-jianghu .hero-calligraphy {
+    right: 8%;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-runtime.ui-mode-jianghu .jianghu-shell {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .app-runtime.ui-mode-jianghu .jianghu-stage-shell {
+    --jh-topbar-budget: 366px;
+  }
+
+  .app-runtime.ui-mode-jianghu .jianghu-nav-strip,
+  .app-runtime.ui-mode-jianghu .jianghu-world-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-runtime.ui-mode-jianghu .hero-figure {
+    width: 92%;
+    right: -12%;
+  }
+
+  .app-runtime.ui-mode-jianghu .hero-calligraphy {
+    top: 24px;
+    right: 18px;
+  }
+
+  .app-runtime.ui-mode-jianghu .hero-calligraphy h2 {
+    font-size: 34px;
+  }
+
+  .app-runtime.ui-mode-jianghu .jianghu-topbar {
+    padding: 10px 12px;
+  }
+}

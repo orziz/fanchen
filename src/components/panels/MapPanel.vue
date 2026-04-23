@@ -58,7 +58,7 @@ import { ACTION_META } from '@/config'
 import { useStage } from '@/composables/useStage'
 import { getModeLabel } from '@/composables/useUIHelpers'
 import { createGameMap, type GameMap } from '@/pixi/map'
-import LocationDetail from './LocationDetail.vue'
+import LocationDetail from '@/components/panels/LocationDetail.vue'
 
 const store = useGameStore()
 const { player, currentLocation, selectedLocationId } = storeToRefs(store)

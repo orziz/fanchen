@@ -1,5 +1,5 @@
-import { ACTION_META } from '../../config/constants'
-import { FACTIONS } from '../../config/economy'
+import { ACTION_META } from '@/config/constants'
+import { FACTIONS } from '@/config/economy'
 
 export interface EditorOption {
   value: string

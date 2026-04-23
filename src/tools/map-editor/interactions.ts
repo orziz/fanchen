@@ -1,7 +1,7 @@
-import type { LocationData } from '../../config/world'
+import type { LocationData } from '@/config/world'
 
-import { saveWorld } from '../shared/api'
-import { normalizeLocations } from '../shared/worldFile'
+import { saveWorld } from '@/tools/shared/api'
+import { normalizeLocations } from '@/tools/shared/worldFile'
 
 import {
   clamp,
@@ -17,8 +17,8 @@ import {
   screenToWorld,
   type ListFieldName,
   type StatusTone,
-} from './support'
-import type { EditorState, MapEditorElements } from './types'
+} from '@/tools/map-editor/support'
+import type { EditorState, MapEditorElements } from '@/tools/map-editor/types'
 
 interface InteractionContext {
   state: EditorState

@@ -3,7 +3,7 @@ import { addPlayerMetric } from '@/core/integerProgress'
 import { FACTION_MAP, LOCATION_MAP, getItem } from '@/config'
 import { syncOpeningTutorialState } from '@/systems/tutorial'
 import { clamp } from '@/utils'
-import { getLocationEconomyOverview, recordContractDelivery, recordPassiveTradeActivity } from '../worldEconomy'
+import { getLocationEconomyOverview, recordContractDelivery, recordPassiveTradeActivity } from '@/systems/worldEconomy'
 import {
   FACTION_LEAVE_REPUTATION_COST,
   FACTION_REJOIN_COOLDOWN_DAYS,
@@ -11,7 +11,7 @@ import {
   OFFICIAL_FACTION_TYPES,
   OFFICIAL_PURSUIT_DAYS,
   createTask,
-} from './shared'
+} from '@/systems/social/shared'
 
 export function isOfficialFaction(factionOrId: any): boolean {
   const faction = typeof factionOrId === 'string' ? FACTION_MAP.get(factionOrId) : factionOrId

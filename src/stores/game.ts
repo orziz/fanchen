@@ -1,1 +1,1 @@
-export { useGameStore } from './game/store'
+export { useGameStore } from '@/stores/game/store'

@@ -1,14 +1,14 @@
-import '../../styles/tools.css'
+import '@/styles/tools.css'
 
 import {
   EQUIPMENT_ITEMS,
   MATERIAL_RESOURCE_ITEMS,
   TECHNIQUE_MANUAL_ITEMS,
   UTILITY_ITEMS,
-} from '../../config/items'
+} from '@/config/items'
 
-import { saveItems } from '../shared/api'
-import { normalizeEditableItems, type EditableItem, type ItemBucket } from '../shared/itemFile'
+import { saveItems } from '@/tools/shared/api'
+import { normalizeEditableItems, type EditableItem, type ItemBucket } from '@/tools/shared/itemFile'
 
 type StatusTone = 'neutral' | 'success' | 'error'
 

@@ -3,8 +3,8 @@ import { bus } from '@/core/events'
 import { addPlayerFactionMetric, addPlayerMetric, addPlayerSkill } from '@/core/integerProgress'
 import { LOCATION_MAP, PLAYER_SECT_ENABLED, PROPERTY_DEFS, PROPERTY_MAP, FACTION_MAP, CROPS, CROP_MAP, CRAFT_RECIPES, RECIPE_MAP, describeIndustryUpgradeResult, getItem, type LocationData } from '@/config'
 import { uid, clamp, round } from '@/utils'
-import { isTradeHubLocation, getGovernmentOfficeName, getPlayerTerritoryModifier, getTerritoryCommerceEffects, adjustFactionStanding, getTerritorySecurity } from './social'
-import { getLocationEconomyOverview, recordContractDelivery, recordHarvestOutput, recordShopTurnover, recordWorkshopCycle } from './worldEconomy'
+import { isTradeHubLocation, getGovernmentOfficeName, getPlayerTerritoryModifier, getTerritoryCommerceEffects, adjustFactionStanding, getTerritorySecurity } from '@/systems/social'
+import { getLocationEconomyOverview, recordContractDelivery, recordHarvestOutput, recordShopTurnover, recordWorkshopCycle } from '@/systems/worldEconomy'
 import type { AssetState } from '@/types/game'
 
 /* ═══════════════════ Constants ═══════════════════ */

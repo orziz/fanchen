@@ -1,6 +1,6 @@
-import type { StoryConditionSpec, StoryEffectSpec } from '../../config/story'
+import type { StoryConditionSpec, StoryEffectSpec } from '@/config/story'
 
-import type { EditableStoryChoice, EditableStoryDefinition, EditableStoryNode, StoryIssue } from '../shared/storyFile'
+import type { EditableStoryChoice, EditableStoryDefinition, EditableStoryNode, StoryIssue } from '@/tools/shared/storyFile'
 
 import {
   STORY_EDITOR_CONDITION_KINDS,
@@ -9,8 +9,8 @@ import {
   STORY_EDITOR_PRESENTATIONS,
   STORY_EDITOR_SPEAKER_MODES,
   getSpeakerModeLabel,
-} from './enums'
-import type { EditorState, StoryGraphLayout, StoryGraphNode } from './types'
+} from '@/tools/story-editor/enums'
+import type { EditorState, StoryGraphLayout, StoryGraphNode } from '@/tools/story-editor/types'
 
 export function query<T extends Element>(selector: string) {
   const element = document.querySelector<T>(selector)

@@ -3,9 +3,9 @@ import { bus } from '@/core/events'
 import { addPlayerSkill } from '@/core/integerProgress'
 import { LOCATIONS, LOCATION_MAP, getItem } from '@/config'
 import { randomFloat, sample, uid, findRoute, round } from '@/utils'
-import { getTerritoryCommerceEffects } from './social'
-import { travelTo } from './world'
-import { recordMarketPurchase, recordPassiveTradeActivity, recordTradeArrival, recordTradeDeparture } from './worldEconomy'
+import { getTerritoryCommerceEffects } from '@/systems/social'
+import { travelTo } from '@/systems/world'
+import { recordMarketPurchase, recordPassiveTradeActivity, recordTradeArrival, recordTradeDeparture } from '@/systems/worldEconomy'
 
 /* ─── Constants ─── */
 

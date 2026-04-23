@@ -1,6 +1,6 @@
-import type { StoryBindingKey, StoryConditionSpec, StoryEffectSpec } from '../../config/story'
+import type { StoryBindingKey, StoryConditionSpec, StoryEffectSpec } from '@/config/story'
 
-import type { EditableStoryDefinition, EditableStoryNode, StoryIssue } from '../shared/storyFile'
+import type { EditableStoryDefinition, EditableStoryNode, StoryIssue } from '@/tools/shared/storyFile'
 
 import {
   type ConditionGroup,
@@ -13,8 +13,8 @@ import {
   STORY_EDITOR_PRESENTATION_OPTIONS,
   type StoryEditorOption,
   getSpeakerModeLabel,
-} from './enums'
-import type { StoryGraphLayout } from './types'
+} from '@/tools/story-editor/enums'
+import type { StoryGraphLayout } from '@/tools/story-editor/types'
 
 export function renderStoryListMarkup(stories: EditableStoryDefinition[], search: string, selectedStoryId: string | null) {
   const normalizedSearch = search.trim().toLowerCase()

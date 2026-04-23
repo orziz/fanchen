@@ -3,7 +3,7 @@ import { addPlayerFactionMetric } from '@/core/integerProgress'
 import { FACTION_MAP, LOCATION_MAP } from '@/config'
 import type { TerritoryEntry } from '@/types/game'
 import { clamp, randomInt, round } from '@/utils'
-import { isTradeHubLocation } from './faction'
+import { isTradeHubLocation } from '@/systems/social/faction'
 
 function createTerritoryEntry(locationId: string): TerritoryEntry {
   const loc = LOCATION_MAP.get(locationId)

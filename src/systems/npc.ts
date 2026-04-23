@@ -4,7 +4,7 @@ import { bus } from '@/core/events'
 import { LOCATION_MAP, FACTION_MAP } from '@/config'
 import type { NpcIntelSource } from '@/types/game'
 import { sample, randomFloat, randomInt, findRoute } from '@/utils'
-import { recordNpcEconomicAction } from './worldEconomy'
+import { recordNpcEconomicAction } from '@/systems/worldEconomy'
 
 const RUMOR_VENUE_COSTS = {
   teahouse: 4,

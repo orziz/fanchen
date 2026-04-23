@@ -1,6 +1,6 @@
-import type { LocationData } from '../../config/world'
+import type { LocationData } from '@/config/world'
 
-import { normalizeLocations } from '../shared/worldFile'
+import { normalizeLocations } from '@/tools/shared/worldFile'
 
 export type StatusTone = 'neutral' | 'success' | 'error'
 export type ListFieldName = 'actions' | 'tags' | 'factionIds'

@@ -1,16 +1,16 @@
-import '../../styles/tools.css'
-import '../../styles/story-editor.css'
+import '@/styles/tools.css'
+import '@/styles/story-editor.css'
 
-import { STORY_DEFINITIONS } from '../../config/story'
+import { STORY_DEFINITIONS } from '@/config/story'
 
-import { saveStories } from '../shared/api'
+import { saveStories } from '@/tools/shared/api'
 import {
   cloneStories,
   collectStoryIssues,
   normalizeStoryDefinitions,
   toEditableStoryDefinitions,
   type EditableStoryDefinition,
-} from '../shared/storyFile'
+} from '@/tools/shared/storyFile'
 
 import {
   renderBindingsMarkup,
@@ -22,7 +22,7 @@ import {
   renderNodeListMarkup,
   renderPreviewMarkup,
   renderStoryListMarkup,
-} from './render'
+} from '@/tools/story-editor/render'
 import {
   buildStoryGraphLayout,
   createChoice,
@@ -39,7 +39,7 @@ import {
   removeNode,
   renameNode,
   syncSelection,
-} from './support'
+} from '@/tools/story-editor/support'
 import {
   type ConditionGroup,
   type EffectGroup,
@@ -51,9 +51,9 @@ import {
   STORY_EDITOR_PRESENTATIONS,
   STORY_EDITOR_STATUS_TONES,
   STORY_EDITOR_TRIGGER_KINDS,
-} from './enums'
-import { createStoryEditorTemplate } from './template'
-import type { EditorState, StoryEditorElements } from './types'
+} from '@/tools/story-editor/enums'
+import { createStoryEditorTemplate } from '@/tools/story-editor/template'
+import type { EditorState, StoryEditorElements } from '@/tools/story-editor/types'
 
 const root = document.querySelector<HTMLDivElement>('#app')
 

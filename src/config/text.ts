@@ -4,7 +4,7 @@ import {
   getCultivationBreakthroughFloor,
   getCultivationGateNeed,
   getRealmPowerBonus,
-} from './progression'
+} from '@/config/progression'
 
 interface GrowthCopyInput {
   hasNextRank: boolean

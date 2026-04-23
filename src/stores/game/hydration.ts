@@ -28,7 +28,7 @@ import {
   createInitialTechniqueState,
   createNPC,
   createRelationState,
-} from './factories'
+} from '@/stores/game/factories'
 
 type TeachingState = SectState['teachings'][number]
 type LegacyEquipmentState = Partial<PlayerState['equipment']> & { manual?: string | null | undefined }

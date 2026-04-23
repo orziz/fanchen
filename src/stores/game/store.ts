@@ -44,8 +44,8 @@ import {
   createNPC,
   createRelationState,
   deriveLifeStage,
-} from './factories'
-import { OBSOLETE_SAVE_STORAGE_KEYS, hydrateGameState, readStoredSave } from './hydration'
+} from '@/stores/game/factories'
+import { OBSOLETE_SAVE_STORAGE_KEYS, hydrateGameState, readStoredSave } from '@/stores/game/hydration'
 
 const STALE_SAVE_KEYS = [...LEGACY_SAVE_KEYS, ...OBSOLETE_SAVE_STORAGE_KEYS]
 

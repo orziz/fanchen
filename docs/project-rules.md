@@ -67,9 +67,13 @@
 
 ### 3.1 主题
 
-- 当前唯一主题：**素雅水墨 / 宣纸轻量风**（Light Ink）。
-- 所有可见色值必须通过 `var(--xxx)` 引用 `base.css` 中的 CSS 变量，禁止硬编码 `#333`、`rgba(0,0,0,0.x)` 等暗色系值。
-- 背景使用 `var(--card)` / `var(--card-soft)` / `var(--bg-ink)`，不使用纯白或深灰。
+- 表现层采用双轨主题，不再强制全仓单一视觉方向。
+- v1（导轨 / 文本布局）保持 **素雅水墨 / 宣纸轻量风**（Light Ink），强调阅读、留白、低对比和轻量 HUD。
+- v2（舞台布局）使用 **冷峻深墨的国风水墨主舞台**（Immortal Stage），允许更深的底色、云海与山门留白、轻阵纹、器物剪影和更明显的空间层次，但必须压低页游式金边、强发光描边、手游化圆图标和运营页式满屏入口堆叠。
+- v2 的点睛色只能少量使用淡金或玉色，不得把鎏金描边、厚重金属边框和高频按钮高亮做成主视觉骨架。
+- v1 和 v2 的界面、表现、风格完全隔离；共享的只有玩法语义、状态、存档与数据，不共享同一套视觉规范。
+- 所有可见色值都必须先走 token。v1 优先复用 `base.css`；v2 可在 `src/styles/v2/` 或 mode-scoped 样式中定义独立变量，再按作用域引用。
+- v1 背景使用 `var(--card)` / `var(--card-soft)` / `var(--bg-ink)`；v2 背景可使用独立舞台变量与深色氛围层，但不能退化成纯黑铺底或通用后台深灰。
 
 ### 3.2 CSS 文件职责
 
@@ -80,6 +84,8 @@
 | `windows.css` | Pin-rail、pin-card、canvas-shell、toolbar |
 | `panels.css` | 面板内公用结构（card / grid / summary / actions） |
 | `command.css` | 策略盘专用 |
+| `modes.css` | 运行时模式容器与跨模式共用样式 |
+| `jianghu-mode.css` / `src/styles/v2/` | v2 舞台模式入口、独立变量与壳 / 舞台分层样式 |
 | `responsive.css` | 所有 `@media` 断点，以宽度渐进降级 |
 | `runtime-overlay.css` | 首屏启动覆盖层 |
 

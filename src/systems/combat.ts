@@ -3,8 +3,8 @@ import { bus } from '@/core/events'
 import { addPlayerMetric } from '@/core/integerProgress'
 import { MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES, DISTRIBUTABLE_ITEMS, LOCATION_MAP, ACTION_META, FACTION_MAP, getItem, getTechnique } from '@/config'
 import { clamp, randomFloat, randomInt, sample, uid, round } from '@/utils'
-import { revivePlayer, checkRankGrowth } from './player'
-import { gainTechniqueMastery, getPreferredSpellId, getTechniqueEffectValue } from './techniques'
+import { revivePlayer, checkRankGrowth } from '@/systems/player'
+import { gainTechniqueMastery, getPreferredSpellId, getTechniqueEffectValue } from '@/systems/techniques'
 import type { EnemyState } from '@/types/game'
 
 function getAffix(affixId: string) { return MONSTER_AFFIXES.find(a => a.id === affixId) || null }

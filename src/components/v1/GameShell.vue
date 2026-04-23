@@ -1,5 +1,4 @@
 <template>
-  <div class="backdrop"></div>
   <div class="v3-shell-wrapper">
     <div class="v3-shell">
       <!-- 顶部 HUD 栏 -->
@@ -26,25 +25,18 @@
 
       <!-- 底部导航 Dock -->
       <GameDock />
-
-      <StoryOverlay />
-
-      <!-- 全局提示 -->
-      <ToastStack />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useStage } from '@/composables/useStage'
-import HudBar from './HudBar.vue'
-import GameWorkbench from './GameWorkbench.vue'
-import GameDock from './GameDock.vue'
-import PinRail from './PinRail.vue'
-import PlayerPanel from './PlayerPanel.vue'
-import StoryOverlay from './StoryOverlay.vue'
-import ToastStack from './ToastStack.vue'
-import InventoryPanel from './panels/InventoryPanel.vue'
+import HudBar from '@/components/v1/HudBar.vue'
+import GameWorkbench from '@/components/v1/GameWorkbench.vue'
+import GameDock from '@/components/v1/GameDock.vue'
+import PinRail from '@/components/v1/PinRail.vue'
+import PlayerPanel from '@/components/v1/PlayerPanel.vue'
+import InventoryPanel from '@/components/panels/InventoryPanel.vue'
 
 const { contextPanels } = useStage()
 </script>

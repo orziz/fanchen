@@ -1,8 +1,8 @@
-import type { LocationData } from '../../config/world'
+import type { LocationData } from '@/config/world'
 
-import type { EditorOption } from './options'
-import type { ListFieldName, MapView, SelectionBox } from './support'
-import { escapeHtml, getBoxBounds } from './support'
+import type { EditorOption } from '@/tools/map-editor/options'
+import type { ListFieldName, MapView, SelectionBox } from '@/tools/map-editor/support'
+import { escapeHtml, getBoxBounds } from '@/tools/map-editor/support'
 
 interface LocationListArgs {
   locations: LocationData[]

@@ -2,7 +2,7 @@ import { getContext } from '@/core/context'
 import { DISTRIBUTABLE_ITEMS, LOCATION_MAP, getItem, type LocationData } from '@/config'
 import type { MarketListing, NpcState, TerritoryEntry } from '@/types/game'
 import { clamp, randomFloat, randomInt, round, uid } from '@/utils'
-import { getTerritoryState } from './social/territory'
+import { getTerritoryState } from '@/systems/social/territory'
 
 const BASIC_MARKET_TYPES = new Set(['grain', 'herb', 'wood', 'ore', 'cloth', 'pill'])
 const CULTIVATION_MARKET_TYPES = new Set(['pill', 'scroll', 'ice', 'fire'])

@@ -17,7 +17,7 @@ import {
   grantOpeningTutorialStarterPack,
   openOpeningTutorialAffiliationView,
   openOpeningTutorialMapView,
-} from './tutorial'
+} from '@/systems/tutorial'
 
 const STORY_HISTORY_LIMIT = 24
 

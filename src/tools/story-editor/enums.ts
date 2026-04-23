@@ -6,7 +6,7 @@ import type {
   StorySpeakerMode,
   StoryTriggerKind,
   StoryTriggerScope,
-} from '../../config/story'
+} from '@/config/story'
 
 type ValueOf<T> = T[keyof T]
 

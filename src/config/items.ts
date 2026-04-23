@@ -1,4 +1,4 @@
-import { KNOWLEDGE_ENTRIES } from './knowledge'
+import { KNOWLEDGE_ENTRIES } from '@/config/knowledge'
 
 export type ManualCategory = 'heart' | 'spell' | 'knowledge'
 

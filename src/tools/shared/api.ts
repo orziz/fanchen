@@ -1,8 +1,8 @@
-import type { ItemData } from '../../config/items'
-import type { LocationData } from '../../config/world'
+import type { ItemData } from '@/config/items'
+import type { LocationData } from '@/config/world'
 
-import type { EditableItem } from './itemFile'
-import type { EditableStoryDefinition } from './storyFile'
+import type { EditableItem } from '@/tools/shared/itemFile'
+import type { EditableStoryDefinition } from '@/tools/shared/storyFile'
 
 async function postJson<T>(url: string, payload: Record<string, unknown>) {
   const response = await fetch(url, {

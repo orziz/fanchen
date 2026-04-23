@@ -10,7 +10,7 @@ import type {
   TerritoryEntry,
 } from '@/types/game'
 import type { LocationData, RankData } from '@/config'
-import type { EventBus } from './events'
+import type { EventBus } from '@/core/events'
 
 export interface GameContext {
   /* ─── State ─── */

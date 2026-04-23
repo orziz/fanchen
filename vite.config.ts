@@ -1,4 +1,4 @@
-import { readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import vue from "@vitejs/plugin-vue";
@@ -9,6 +9,23 @@ import { serializeStoryFile } from "./src/tools/shared/storyFile";
 import { serializeWorldFile } from "./src/tools/shared/worldFile";
 
 const distDir = resolve("dist");
+const publicAssetsDir = resolve("public", "assets");
+
+function copyDirContents(sourceDir: string, targetDir: string) {
+  mkdirSync(targetDir, { recursive: true });
+
+  for (const entry of readdirSync(sourceDir, { withFileTypes: true })) {
+    const sourcePath = resolve(sourceDir, entry.name);
+    const targetPath = resolve(targetDir, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDirContents(sourcePath, targetPath);
+      continue;
+    }
+
+    copyFileSync(sourcePath, targetPath);
+  }
+}
 
 function createIndexHtml(cssFile?: string) {
   const cssLink = cssFile ? `\n  <link rel="stylesheet" href="./assets/${cssFile}">` : '';
@@ -34,6 +51,11 @@ function fanchenFileBuildPlugin() {
     apply: "build" as const,
     closeBundle() {
       const assetsDir = resolve(distDir, "assets");
+
+      if (existsSync(publicAssetsDir)) {
+        copyDirContents(publicAssetsDir, assetsDir);
+      }
+
       const cssFile = readdirSync(assetsDir).find(f => f.endsWith(".css"));
       writeFileSync(resolve(distDir, "index.html"), createIndexHtml(cssFile), "utf8");
     },

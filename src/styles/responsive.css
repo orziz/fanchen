@@ -91,6 +91,19 @@
   .dock-hotbar-copy {
     flex-wrap: wrap;
   }
+
+  .jianghu-topbar {
+    grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1fr);
+  }
+
+  .jianghu-top-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .jianghu-resource-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1360px) {
@@ -116,6 +129,10 @@
   .industry-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .map-panel-full { grid-template-columns: minmax(0, 1.16fr) minmax(320px, 0.84fr); }
   .map-stage-full .canvas-shell { min-height: clamp(360px, 56vh, 720px); }
+
+  .jianghu-body {
+    grid-template-columns: 136px minmax(0, 1fr) minmax(300px, 340px);
+  }
 }
 
 /* ── 中等屏幕：隐藏副栏，精简HUD ── */
@@ -152,6 +169,38 @@
   .map-stage-full .canvas-shell { min-height: min(56vh, 520px); }
   .location-panel-side { display: grid; max-height: none; }
   .toast-stack { top: auto; bottom: 82px; }
+
+  .jianghu-shell {
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+
+  .jianghu-topbar {
+    grid-template-columns: 1fr;
+  }
+
+  .jianghu-resource-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .jianghu-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) minmax(280px, auto);
+  }
+
+  .jianghu-nav {
+    grid-template-rows: auto auto;
+  }
+
+  .jianghu-nav-list {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(132px, 1fr);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .jianghu-footer {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── 小横屏：Dock换行，Pin-rail收窄 ── */
@@ -233,6 +282,26 @@
   .world-grid { grid-template-columns: 1fr; }
   .market-grid,
   .auction-list { grid-template-columns: 1fr; }
+
+  .ui-mode-switch {
+    top: auto;
+    bottom: 18px;
+  }
+
+  .jianghu-shell {
+    padding: 12px;
+  }
+
+  .jianghu-resource-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .jianghu-stage-head,
+  .jianghu-footer,
+  .jianghu-topbar,
+  .jianghu-nav {
+    padding: 14px;
+  }
 }
 
 /* ── 最小横屏 / 大手机横屏 ── */
@@ -301,6 +370,38 @@
   .profile-fact-grid,
   .profile-summary-grid,
   .two-column { grid-template-columns: 1fr; }
+
+  .ui-mode-switch {
+    right: 10px;
+    bottom: 10px;
+    padding: 6px;
+  }
+
+  .ui-mode-switch__label {
+    display: none;
+  }
+
+  .ui-mode-switch__button {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .jianghu-shell {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .jianghu-resource-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .jianghu-nav-list {
+    grid-auto-columns: minmax(110px, 1fr);
+  }
+
+  .jianghu-stage-panel .v3-panel-body {
+    padding: 12px 14px;
+  }
 }
 
 @media (max-width: 560px) {

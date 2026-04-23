@@ -1,0 +1,310 @@
+﻿body[data-ui-mode='jianghu'] {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 34%),
+    #111214;
+  color: #d2c4af;
+}
+
+.app-runtime.ui-mode-jianghu {
+  --jh-bg: #111214;
+  --jh-bg-deep: #18191d;
+  --jh-paper: #d8d2c6;
+  --jh-paper-soft: rgba(220, 214, 202, 0.88);
+  --jh-paper-line: rgba(40, 36, 31, 0.22);
+  --jh-ink: #1d1b19;
+  --jh-ink-soft: rgba(29, 27, 25, 0.72);
+  --jh-gold: #9f8460;
+  --jh-gold-soft: rgba(159, 132, 96, 0.4);
+  --jh-red: #8c564f;
+  --jh-shadow: 0 28px 70px rgba(0, 0, 0, 0.45);
+}
+
+.app-runtime.ui-mode-jianghu .backdrop {
+  background:
+    linear-gradient(180deg, rgba(10, 10, 12, 0.72), rgba(10, 10, 12, 0.92)),
+    radial-gradient(circle at 18% 18%, rgba(203, 182, 146, 0.16), transparent 22%),
+    radial-gradient(circle at 78% 16%, rgba(255, 255, 255, 0.08), transparent 20%),
+    linear-gradient(135deg, rgba(41, 33, 27, 0.46), rgba(15, 16, 19, 0.78));
+  filter: saturate(0.55) brightness(0.42);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 14px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 16px 20px 20px;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-topbar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: stretch;
+  padding: 14px 18px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(17, 18, 20, 0.96), rgba(17, 18, 20, 0.8));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-topbar-main {
+  display: grid;
+  grid-template-columns: minmax(220px, auto) 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-brand-block,
+.app-runtime.ui-mode-jianghu .jianghu-brand-mark,
+.app-runtime.ui-mode-jianghu .jianghu-time-weather,
+.app-runtime.ui-mode-jianghu .jianghu-resource-strip,
+.app-runtime.ui-mode-jianghu .jianghu-nav-strip,
+.app-runtime.ui-mode-jianghu .jianghu-stage-heading,
+.app-runtime.ui-mode-jianghu .heading-chips,
+.app-runtime.ui-mode-jianghu .sheet-brush-title,
+.app-runtime.ui-mode-jianghu .jianghu-profile-head,
+.app-runtime.ui-mode-jianghu .skill-card__title-row,
+.app-runtime.ui-mode-jianghu .profile-bar-row,
+.app-runtime.ui-mode-jianghu .jianghu-stage-footer,
+.app-runtime.ui-mode-jianghu .jianghu-location-strip {
+  display: flex;
+  align-items: center;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-brand-block,
+.app-runtime.ui-mode-jianghu .heading-copy,
+.app-runtime.ui-mode-jianghu .jianghu-rumor-sheet,
+.app-runtime.ui-mode-jianghu .jianghu-side-sheet,
+.app-runtime.ui-mode-jianghu .memo-stack,
+.app-runtime.ui-mode-jianghu .skill-stack,
+.app-runtime.ui-mode-jianghu .jianghu-profile-sheet,
+.app-runtime.ui-mode-jianghu .jianghu-profile-bars {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-brand-mark {
+  gap: 10px;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-brand-mark h1 {
+  margin: 0;
+  color: #f4ead8;
+  font-family: var(--font-title);
+  font-size: clamp(30px, 2.5vw, 42px);
+  letter-spacing: 0.12em;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-brand-seal {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(159, 132, 96, 0.45);
+  background: rgba(140, 86, 79, 0.2);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-time-weather {
+  gap: 8px;
+  color: rgba(244, 234, 216, 0.78);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.app-runtime.ui-mode-jianghu .divider {
+  opacity: 0.35;
+}
+
+.app-runtime.ui-mode-jianghu .weather-pill,
+.app-runtime.ui-mode-jianghu .heading-chip,
+.app-runtime.ui-mode-jianghu .skill-card__tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.app-runtime.ui-mode-jianghu .weather-pill {
+  padding: 4px 10px;
+  background: rgba(140, 86, 79, 0.22);
+  color: #f0d7c5;
+  font-size: 12px;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-resource-strip {
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.app-runtime.ui-mode-jianghu .resource-chip {
+  min-width: 110px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.app-runtime.ui-mode-jianghu .resource-chip span,
+.app-runtime.ui-mode-jianghu .jianghu-nav-button__label,
+.app-runtime.ui-mode-jianghu .rumor-item__type,
+.app-runtime.ui-mode-jianghu .memo-card span,
+.app-runtime.ui-mode-jianghu .attr-item span {
+  letter-spacing: 0.08em;
+}
+
+.app-runtime.ui-mode-jianghu .resource-chip span {
+  display: block;
+  color: rgba(244, 234, 216, 0.62);
+  font-size: 11px;
+}
+
+.app-runtime.ui-mode-jianghu .resource-chip strong {
+  color: #f4ead8;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-nav-strip {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 11px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(244, 234, 216, 0.74);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-nav-button:hover {
+  transform: translateY(-1px);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-nav-button.is-active {
+  border-color: rgba(159, 132, 96, 0.55);
+  background: linear-gradient(180deg, rgba(216, 191, 153, 0.18), rgba(159, 132, 96, 0.08));
+  color: #f6ecda;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-nav-button__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 234, 216, 0.34);
+  background: rgba(244, 234, 216, 0.12);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-nav-button.is-active .jianghu-nav-button__dot {
+  border-color: rgba(159, 132, 96, 0.9);
+  background: rgba(159, 132, 96, 0.9);
+  box-shadow: 0 0 10px rgba(159, 132, 96, 0.32);
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-nav-button__label {
+  font-size: 13px;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-stage-shell {
+  --jh-stage-width: 1680px;
+  --jh-stage-height: 945px;
+  --jh-topbar-budget: 186px;
+  --jh-stage-scale: min(1, calc((100vw - 40px) / 1680px), calc((100dvh - var(--jh-topbar-budget)) / 945px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  height: calc(var(--jh-stage-height) * var(--jh-stage-scale));
+  overflow: hidden;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-stage-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: var(--jh-stage-width);
+  height: var(--jh-stage-height);
+  min-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(180deg, rgba(11, 12, 14, 0.88), rgba(11, 12, 14, 0.76));
+  box-shadow: var(--jh-shadow);
+  transform: scale(var(--jh-stage-scale));
+  transform-origin: top center;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-stage-main {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 18px;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-stage-main--full {
+  padding: 22px;
+}
+
+.app-runtime.ui-mode-jianghu .jianghu-stage-heading {
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.app-runtime.ui-mode-jianghu .heading-copy {
+  gap: 6px;
+}
+
+.app-runtime.ui-mode-jianghu .heading-kicker,
+.app-runtime.ui-mode-jianghu .sheet-brush-title span {
+  margin: 0;
+  color: var(--jh-ink-soft);
+  font-size: 13px;
+}
+
+.app-runtime.ui-mode-jianghu .heading-copy h2,
+.app-runtime.ui-mode-jianghu .hero-calligraphy h2,
+.app-runtime.ui-mode-jianghu .jianghu-profile-head h3 {
+  margin: 0;
+  color: var(--jh-ink);
+  font-family: var(--font-title);
+}
+
+.app-runtime.ui-mode-jianghu .heading-copy h2 {
+  font-size: clamp(28px, 2.4vw, 42px);
+}
+
+.app-runtime.ui-mode-jianghu .heading-copy p,
+.app-runtime.ui-mode-jianghu .hero-calligraphy p,
+.app-runtime.ui-mode-jianghu .memo-card p,
+.app-runtime.ui-mode-jianghu .rumor-item p,
+.app-runtime.ui-mode-jianghu .rumor-empty,
+.app-runtime.ui-mode-jianghu .jianghu-profile-head p {
+  margin: 0;
+  color: var(--jh-ink-soft);
+  line-height: 1.65;
+}
+
+.app-runtime.ui-mode-jianghu .heading-chips {
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.app-runtime.ui-mode-jianghu .heading-chip {
+  padding: 6px 12px;
+  background: rgba(216, 210, 198, 0.7);
+  border: 1px solid rgba(40, 36, 31, 0.12);
+  color: var(--jh-ink-soft);
+  font-size: 12px;
+}
+

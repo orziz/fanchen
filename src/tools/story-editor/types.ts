@@ -1,5 +1,5 @@
-import type { EditableStoryDefinition } from '../shared/storyFile'
-import type { ConditionGroup, EffectGroup, StatusTone, StoryGraphEdgeTone } from './enums'
+import type { EditableStoryDefinition } from '@/tools/shared/storyFile'
+import type { ConditionGroup, EffectGroup, StatusTone, StoryGraphEdgeTone } from '@/tools/story-editor/enums'
 
 export interface EditorState {
   stories: EditableStoryDefinition[]

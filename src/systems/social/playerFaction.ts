@@ -2,9 +2,9 @@ import { getContext } from '@/core/context'
 import { addPlayerFactionMetric } from '@/core/integerProgress'
 import { LOCATION_MAP } from '@/config'
 import { clamp, randomInt, round } from '@/utils'
-import { getGovernmentOfficeName, isTradeHubLocation } from './faction'
-import { getPlayerFactionTerritories, getTerritoryState } from './territory'
-import { PLAYER_FACTION_BRANCHES, createFactionName, createTask } from './shared'
+import { getGovernmentOfficeName, isTradeHubLocation } from '@/systems/social/faction'
+import { getPlayerFactionTerritories, getTerritoryState } from '@/systems/social/territory'
+import { PLAYER_FACTION_BRANCHES, createFactionName, createTask } from '@/systems/social/shared'
 
 export function getCreatePlayerFactionIssues(): string[] {
   const g = getContext().game

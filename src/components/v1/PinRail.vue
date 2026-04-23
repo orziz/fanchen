@@ -71,8 +71,8 @@ import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useWindows } from '@/composables/useWindows'
-import ProfileDetail from './ProfileDetail.vue'
-import CommandDetail from './CommandDetail.vue'
+import ProfileDetail from '@/components/v1/ProfileDetail.vue'
+import CommandDetail from '@/components/v1/CommandDetail.vue'
 import UiCardHeader from '@/components/ui/UiCardHeader.vue'
 
 const store = useGameStore()

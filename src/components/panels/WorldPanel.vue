@@ -1,7 +1,18 @@
 <template>
-  <p class="panel-intro">天机簿汇总天气、异象、各地资源与秘境动向，方便你决定挂机策略和路线。</p>
+  <p class="panel-intro">这里汇总天气、异象、各地资源与秘境动向，方便你决定挂机策略和路线。</p>
 
   <UiMetricGrid :items="worldSummaryItems" />
+
+  <h3 class="subsection-title">界面方案</h3>
+  <UiPanelCard tone="world" standout>
+    <UiCardHeader kicker="显示设置" title="界面布局" title-class="world-card-title">
+      <template #aside>
+        <UiPill variant="trait" tone="route">两套界面共用</UiPill>
+      </template>
+    </UiCardHeader>
+    <p class="item-meta">这里只切换界面布局，不会改动玩法、资源、存档和系统口径。</p>
+    <UiModeSwitch />
+  </UiPanelCard>
 
   <!-- Active realm -->
   <template v-if="activeRealm">
@@ -72,6 +83,7 @@ import UiCardHeader from '@/components/ui/UiCardHeader.vue'
 import UiMetricGrid from '@/components/ui/UiMetricGrid.vue'
 import UiPanelCard from '@/components/ui/UiPanelCard.vue'
 import UiPill from '@/components/ui/UiPill.vue'
+import UiModeSwitch from '@/components/UiModeSwitch.vue'
 
 const store = useGameStore()
 const { player, world, selectedLocationId } = storeToRefs(store)

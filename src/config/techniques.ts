@@ -1,5 +1,5 @@
 import { round } from '@/utils'
-import { getItem, getManualItemBySkillId } from './items'
+import { getItem, getManualItemBySkillId } from '@/config/items'
 import type { LearnedTechniqueState, TechniqueKind } from '@/types/game'
 
 export interface TechniqueScribeCost {

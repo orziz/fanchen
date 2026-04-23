@@ -1,6 +1,6 @@
-import type { LocationData } from '../../config/world'
+import type { LocationData } from '@/config/world'
 
-import type { MapView, NodeDrag, SelectionBox, StatusTone, ViewPan } from './support'
+import type { MapView, NodeDrag, SelectionBox, StatusTone, ViewPan } from '@/tools/map-editor/support'
 
 export interface EditorState {
   locations: LocationData[]

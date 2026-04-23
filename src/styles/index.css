@@ -3,5 +3,7 @@
 @import url('./windows.css');
 @import url('./panels.css');
 @import url('./command.css');
+@import url('./modes.css');
 @import url('./responsive.css');
+@import url('./jianghu-mode.css');
 @import url('./runtime-overlay.css');

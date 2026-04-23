@@ -2,8 +2,8 @@ import { getContext } from '@/core/context'
 import { addPlayerMetric } from '@/core/integerProgress'
 import { LOCATION_MAP, PLAYER_SECT_ENABLED, PLAYER_SECT_FROZEN_TEXT, SOCIAL_EVENT_TEMPLATES } from '@/config'
 import { clamp, sample, round } from '@/utils'
-import { rememberNpcIntel } from '../npc'
-import { tryStartNpcVisitStory } from '../story'
+import { rememberNpcIntel } from '@/systems/npc'
+import { tryStartNpcVisitStory } from '@/systems/story'
 
 export function processRelationshipTick() {
   const ctx = getContext()

@@ -20,16 +20,16 @@
 
 <script setup lang="ts">
 import { useStage } from '@/composables/useStage'
-import MapPanel from './MapPanel.vue'
-import StoryTaskPanel from './panels/StoryTaskPanel.vue'
-import InventoryPanel from './panels/InventoryPanel.vue'
-import IndustryPanel from './panels/IndustryPanel.vue'
-import MarketPanel from './panels/MarketPanel.vue'
-import AuctionPanel from './panels/AuctionPanel.vue'
-import CombatPanel from './panels/CombatPanel.vue'
-import NpcPanel from './panels/NpcPanel.vue'
-import SectPanel from './panels/SectPanel.vue'
-import WorldPanel from './panels/WorldPanel.vue'
+import MapPanel from '@/components/panels/MapPanel.vue'
+import StoryTaskPanel from '@/components/panels/StoryTaskPanel.vue'
+import InventoryPanel from '@/components/panels/InventoryPanel.vue'
+import IndustryPanel from '@/components/panels/IndustryPanel.vue'
+import MarketPanel from '@/components/panels/MarketPanel.vue'
+import AuctionPanel from '@/components/panels/AuctionPanel.vue'
+import CombatPanel from '@/components/panels/CombatPanel.vue'
+import NpcPanel from '@/components/panels/NpcPanel.vue'
+import SectPanel from '@/components/panels/SectPanel.vue'
+import WorldPanel from '@/components/panels/WorldPanel.vue'
 
 const { activeTab } = useStage()
 </script>

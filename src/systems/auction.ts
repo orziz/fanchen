@@ -6,7 +6,7 @@ import {
   getItem,
 } from '@/config'
 import { sample, randomInt, fillTemplate, round } from '@/utils'
-import { createDynamicMarketListings } from './worldEconomy'
+import { createDynamicMarketListings } from '@/systems/worldEconomy'
 
 /* ─── Reserved Funds ─── */
 

@@ -22,7 +22,7 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useStage } from '@/composables/useStage'
 import { useGameStore } from '@/stores/game'
-import StoryScene from './StoryScene.vue'
+import StoryScene from '@/components/StoryScene.vue'
 import { closeStory, getActiveStoryScene, showStoryInRail } from '@/systems/story'
 import { canDismissStoryScene } from '@/systems/tutorial'
 

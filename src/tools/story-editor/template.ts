@@ -4,7 +4,7 @@ import {
   STORY_EDITOR_TRIGGER_KIND_OPTIONS,
   STORY_EDITOR_TRIGGER_SCOPE_OPTIONS,
   renderOptionsMarkup,
-} from './enums'
+} from '@/tools/story-editor/enums'
 
 export function createStoryEditorTemplate() {
   return `

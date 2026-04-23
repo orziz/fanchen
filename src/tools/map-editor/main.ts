@@ -1,18 +1,18 @@
-import '../../styles/tools.css'
+import '@/styles/tools.css'
 
-import { LOCATIONS } from '../../config/world'
+import { LOCATIONS } from '@/config/world'
 
-import { normalizeLocations } from '../shared/worldFile'
+import { normalizeLocations } from '@/tools/shared/worldFile'
 
-import { ACTION_OPTIONS, FACTION_OPTIONS, TAG_OPTIONS } from './options'
-import { bindMapEditorEvents } from './interactions'
+import { ACTION_OPTIONS, FACTION_OPTIONS, TAG_OPTIONS } from '@/tools/map-editor/options'
+import { bindMapEditorEvents } from '@/tools/map-editor/interactions'
 import {
   renderCanvasMarkup,
   renderIssuesMarkup,
   renderListEditorMarkup,
   renderLocationListMarkup,
   renderNeighborMarkup,
-} from './render'
+} from '@/tools/map-editor/render'
 import {
   FORM_FIELD_NAMES,
   MAX_SCALE,
@@ -32,9 +32,9 @@ import {
   syncSelection,
   type ListFieldName,
   type StatusTone,
-} from './support'
-import { createMapEditorTemplate } from './template'
-import type { EditorState, MapEditorElements } from './types'
+} from '@/tools/map-editor/support'
+import { createMapEditorTemplate } from '@/tools/map-editor/template'
+import type { EditorState, MapEditorElements } from '@/tools/map-editor/types'
 
 const root = document.querySelector<HTMLDivElement>('#app')
 

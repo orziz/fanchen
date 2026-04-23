@@ -18,7 +18,7 @@ export {
   processFactionStatusTick,
   refreshAffiliationTasks,
   completeAffiliationTask,
-} from './social/faction'
+} from '@/systems/social/faction'
 export {
   canLaunchTerritoryCampaign,
   canStabilizeTerritory,
@@ -36,7 +36,7 @@ export {
   launchTerritoryCampaign,
   processTerritoryStatusTick,
   stabilizeTerritory,
-} from './social/territory'
+} from '@/systems/social/territory'
 export {
   canBecomeMaster,
   canBecomePartner,
@@ -53,7 +53,7 @@ export {
   processRelationshipTick,
   recruitDisciple,
   visitNpc,
-} from './social/relationship'
+} from '@/systems/social/relationship'
 export {
   canCompletePlayerFactionMission,
   canCreatePlayerFaction,
@@ -70,7 +70,7 @@ export {
   recruitFactionMember,
   refreshPlayerFactionMissions,
   upgradePlayerFactionBranch,
-} from './social/playerFaction'
+} from '@/systems/social/playerFaction'
 export {
   assignTeaching,
   canCreateSect,
@@ -84,5 +84,5 @@ export {
   processSectTick,
   refreshSectMissions,
   upgradeSectBuilding,
-} from './social/sect'
-export { PLAYER_FACTION_BRANCHES } from './social/shared'
+} from '@/systems/social/sect'
+export { PLAYER_FACTION_BRANCHES } from '@/systems/social/shared'

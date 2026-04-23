@@ -1,4 +1,4 @@
-import { OPENING_TUTORIAL_FLAGS, OPENING_TUTORIAL_SCRIPT_IDS } from './tutorial'
+import { OPENING_TUTORIAL_FLAGS, OPENING_TUTORIAL_SCRIPT_IDS } from '@/config/tutorial'
 
 export type StoryPresentationMode = 'overlay' | 'rail' | 'embedded'
 export type StoryBindingKey = 'npc' | 'location'

@@ -7,14 +7,14 @@ import {
   ACTION_META, PLAYER_SECT_ENABLED, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
 } from '@/config'
 import { sample, randomInt, fillTemplate, findRoute as resolveRoute, round } from '@/utils'
-import { applyPassiveAction, attemptBreakthrough, revivePlayer } from './player'
-import { autoCombatTick, maybeStartEncounter, startPursuitEncounter, challengeRealm } from './combat'
-import { advanceTradeRun, resolvePassiveTrade, isTradeHub, maybeStartBestTradeRun } from './trade'
-import { resolveAuctionVisit, resolveAuctionTurn, refreshMarketIfNeeded, maybeActivateRealm } from './auction'
-import { hasActiveFactionPursuit, processRelationshipTick, processSectTick, processPlayerFactionTick, processFactionStatusTick, processTerritoryStatusTick } from './social'
-import { meetNpcsAtLocation, processNpcLifeTick, runNpcAI } from './npc'
-import { processIndustryTick } from './industry'
-import { processWorldEconomyTick } from './worldEconomy'
+import { applyPassiveAction, attemptBreakthrough, revivePlayer } from '@/systems/player'
+import { autoCombatTick, maybeStartEncounter, startPursuitEncounter, challengeRealm } from '@/systems/combat'
+import { advanceTradeRun, resolvePassiveTrade, isTradeHub, maybeStartBestTradeRun } from '@/systems/trade'
+import { resolveAuctionVisit, resolveAuctionTurn, refreshMarketIfNeeded, maybeActivateRealm } from '@/systems/auction'
+import { hasActiveFactionPursuit, processRelationshipTick, processSectTick, processPlayerFactionTick, processFactionStatusTick, processTerritoryStatusTick } from '@/systems/social'
+import { meetNpcsAtLocation, processNpcLifeTick, runNpcAI } from '@/systems/npc'
+import { processIndustryTick } from '@/systems/industry'
+import { processWorldEconomyTick } from '@/systems/worldEconomy'
 
 /* ─── Travel Events ─── */
 

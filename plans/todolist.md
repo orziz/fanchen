@@ -31,6 +31,12 @@
 - [x] 产业 和 宗门 的界面太杂乱了，东西太多了。想办法优化一下
 - [x] 因为JS可能有浮点数精度问题，所以不应该出现小数，所有的数值系统都要重新算一下
 
+- [x] 两套风格的界面层完全分离，我已经加了 v1、v2 和 common 文件夹了，但是理论上common不会有东西才对，毕竟完全不一样了
+- [x] 引入文件不要用 ../ 的方式了，用 @/ 吧，比如 组件就是 @/components
+- [x] 江湖这套里有很多历史遗留的问题，包括一些属性什么的，全部清掉，就按照项目原本的来，有什么功能就放什么功能
+- [x] 江湖有报错：Uncaught TypeError: Cannot read properties of undefined (reading 'strength') at ComputedRefImpl.fn (JianghuShell.vue:320:33) at Proxy._sfc_render (JianghuShell.vue:119:43) 问题应该是和上一条一样
+- [x] 第二套的界面风格就是完整的游戏风格，既然是 16：9 ,那就按照这个做，所以不应该出现横/纵 的滚动条，应该是舞台整体的缩放
+
 ## 阶段一必须收口
 
 - [ ] 让 gd 完整地过一遍所有功能和界面，要求视觉对齐，统一优化处理下

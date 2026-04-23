@@ -15,8 +15,8 @@ export {
 	RANKS,
 	MODE_OPTIONS,
 	ACTION_META,
-} from './constants'
-export type { RankData, ModeOption, ActionMeta } from './constants'
+} from '@/config/constants'
+export type { RankData, ModeOption, ActionMeta } from '@/config/constants'
 
 export {
 	REALM_POWER_PER_RANK,
@@ -24,7 +24,7 @@ export {
 	getBreakthroughReadyNeed,
 	getRealmPowerBonus,
 	getCultivationBreakthroughFloor,
-} from './progression'
+} from '@/config/progression'
 
 export {
 	getCultivationStatusCopy,
@@ -36,14 +36,14 @@ export {
 	describeIndustryAssetEffect,
 	describeIndustryNextUpgrade,
 	describeIndustryUpgradeResult,
-} from './text'
+} from '@/config/text'
 
-export { ITEMS, ITEM_MAP, DISTRIBUTABLE_ITEMS, canUseItemDirectly, getItem, getItemUsageSummary, getManualItemBySkillId, hasAssetClaimEffect } from './items'
-export { getKnowledgeItemById } from './items'
-export type { ItemData, ManualCategory } from './items'
+export { ITEMS, ITEM_MAP, DISTRIBUTABLE_ITEMS, canUseItemDirectly, getItem, getItemUsageSummary, getManualItemBySkillId, hasAssetClaimEffect } from '@/config/items'
+export { getKnowledgeItemById } from '@/config/items'
+export type { ItemData, ManualCategory } from '@/config/items'
 
-export { KNOWLEDGE_ENTRIES, KNOWLEDGE_MAP, getKnowledge } from './knowledge'
-export type { KnowledgeData } from './knowledge'
+export { KNOWLEDGE_ENTRIES, KNOWLEDGE_MAP, getKnowledge } from '@/config/knowledge'
+export type { KnowledgeData } from '@/config/knowledge'
 
 export {
 	TECHNIQUES,
@@ -53,25 +53,25 @@ export {
 	getTechnique,
 	getTechniqueByItemId,
 	getTechniqueBookItem,
-} from './techniques'
-export type { TechniqueData, TechniqueDiscoveryRecipe, TechniqueScribeCost } from './techniques'
+} from '@/config/techniques'
+export type { TechniqueData, TechniqueDiscoveryRecipe, TechniqueScribeCost } from '@/config/techniques'
 
-export { LOCATIONS, LOCATION_MAP, getLocation } from './world'
-export type { LocationData } from './world'
+export { LOCATIONS, LOCATION_MAP, getLocation } from '@/config/world'
+export type { LocationData } from '@/config/world'
 
-export { PERSONALITIES, NPC_ARCHETYPES, RELATION_ROLES, SECT_NAME_PARTS, SECT_BUILDINGS } from './npcs'
-export type { PersonalityData, NpcArchetype, SectBuildingDef } from './npcs'
+export { PERSONALITIES, NPC_ARCHETYPES, RELATION_ROLES, SECT_NAME_PARTS, SECT_BUILDINGS } from '@/config/npcs'
+export type { PersonalityData, NpcArchetype, SectBuildingDef } from '@/config/npcs'
 
-export { MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES } from './combat'
-export type { MonsterTemplate, MonsterAffix, RealmTemplate, RealmBoss } from './combat'
+export { MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES } from '@/config/combat'
+export type { MonsterTemplate, MonsterAffix, RealmTemplate, RealmBoss } from '@/config/combat'
 
-export { FACTIONS, FACTION_MAP, getFactionData, PROPERTY_DEFS, PROPERTY_MAP, getPropertyDefData, CROPS, CROP_MAP, getCropData, CRAFT_RECIPES, RECIPE_MAP, getRecipeData } from './economy'
-export type { FactionData, PropertyDef, CropData, CraftRecipe, CraftInput } from './economy'
+export { FACTIONS, FACTION_MAP, getFactionData, PROPERTY_DEFS, PROPERTY_MAP, getPropertyDefData, CROPS, CROP_MAP, getCropData, CRAFT_RECIPES, RECIPE_MAP, getRecipeData } from '@/config/economy'
+export type { FactionData, PropertyDef, CropData, CraftRecipe, CraftInput } from '@/config/economy'
 
-export { WORLD_EVENT_TEMPLATES, TRAVEL_EVENT_TEMPLATES, SOCIAL_EVENT_TEMPLATES, SECT_EVENT_TEMPLATES } from './events'
-export type { WorldEventTemplate, TravelEventTemplate, SocialEventTemplate, SectEventTemplate } from './events'
+export { WORLD_EVENT_TEMPLATES, TRAVEL_EVENT_TEMPLATES, SOCIAL_EVENT_TEMPLATES, SECT_EVENT_TEMPLATES } from '@/config/events'
+export type { WorldEventTemplate, TravelEventTemplate, SocialEventTemplate, SectEventTemplate } from '@/config/events'
 
-export { STORY_DEFINITIONS, STORY_MAP } from './story'
+export { STORY_DEFINITIONS, STORY_MAP } from '@/config/story'
 export {
 	OPENING_TUTORIAL_FLAGS,
 	OPENING_TUTORIAL_SCRIPT_IDS,
@@ -79,7 +79,7 @@ export {
 	OPENING_TUTORIAL_STARTING_MONEY,
 	OPENING_TUTORIAL_STARTING_TITLE,
 	OPENING_TUTORIAL_STORY_ID,
-} from './tutorial'
+} from '@/config/tutorial'
 export type {
 	StoryPresentationMode,
 	StoryBindingKey,
@@ -92,4 +92,4 @@ export type {
 	StoryNodeSpec,
 	StoryTriggerSpec,
 	StoryDefinition,
-} from './story'
+} from '@/config/story'

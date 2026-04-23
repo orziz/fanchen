@@ -11,8 +11,8 @@ import {
 import { addPlayerMetric, addPlayerSkill } from '@/core/integerProgress'
 import { clamp, round, sample, uid } from '@/utils'
 import type { AssetState } from '@/types/game'
-import { getKnowledgeLearnIssues, learnKnowledge } from './knowledge'
-import { gainHeartMasteryFromAction, getTechniqueLearnIssues, learnTechnique } from './techniques'
+import { getKnowledgeLearnIssues, learnKnowledge } from '@/systems/knowledge'
+import { gainHeartMasteryFromAction, getTechniqueLearnIssues, learnTechnique } from '@/systems/techniques'
 
 const ASSET_EFFECT_KIND_MAP: Record<string, string> = { assetFarm: 'farm', assetWorkshop: 'workshop', assetShop: 'shop' }
 const ASSET_KIND_LABELS: Record<string, string> = { farm: '田产', workshop: '工坊', shop: '铺面' }

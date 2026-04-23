@@ -1,7 +1,7 @@
 import { getContext } from '@/core/context'
 import { LOCATION_MAP, PLAYER_SECT_CREATE_BLOCK_TEXT, PLAYER_SECT_ENABLED, PLAYER_SECT_FROZEN_TEXT, SECT_BUILDINGS, SECT_EVENT_TEMPLATES, getItem, getTechnique } from '@/config'
 import { clamp, round, sample } from '@/utils'
-import { createSectName, createTask } from './shared'
+import { createSectName, createTask } from '@/systems/social/shared'
 
 function getSectClosedText(hasSect = Boolean(getContext().game.player.sect)) {
   return hasSect ? PLAYER_SECT_FROZEN_TEXT : PLAYER_SECT_CREATE_BLOCK_TEXT
