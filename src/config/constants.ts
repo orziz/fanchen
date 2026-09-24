@@ -62,7 +62,7 @@ export interface ModeOption {
 export const MODE_OPTIONS: ModeOption[] = [
   { id: 'manual', label: '手动操作', desc: '暂停挂机时间流逝，只有你亲自出手时才会推进。' },
   { id: 'balanced', label: '维生求进', desc: '在生计、修炼、跑腿和关系之间谨慎平衡。' },
-  { id: 'cultivation', label: '苦修养气', desc: '优先打坐、练体、感气和低风险冲关。' },
+  { id: 'cultivation', label: '苦修养气', desc: '优先打坐、练体、感气和低风险冲关；心无旁骛，所得更多。' },
   { id: 'merchant', label: '小本营生', desc: '优先跑商、经营摊位和积攒启动资产。' },
   { id: 'adventure', label: '外出闯荡', desc: '优先低阶历练、机缘与战斗。' },
   ...(PLAYER_SECT_ENABLED ? [{ id: 'sect', label: '门内差事', desc: '优先处理宗门任务、产业和门内成长。' }] : []),

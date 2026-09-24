@@ -40,6 +40,21 @@ describe('autoplay loop', () => {
     expect(store.player.cultivation).toBeGreaterThan(midway)
   })
 
+  it('leaves a breakthrough site that has no place to meditate instead of resting there forever', () => {
+    const store = useGameStore()
+    store.story.flags['tutorial.opening.active'] = false
+    store.player.affiliationId = 'qinghe-commons'
+    store.player.locationId = 'starfall'
+    store.player.rankIndex = 3
+    setMode('cultivation')
+    const start = store.player.cultivation
+
+    runTicks(TICKS_PER_DAY * 3)
+
+    expect(store.player.locationId).not.toBe('starfall')
+    expect(store.player.cultivation).toBeGreaterThan(start)
+  })
+
   it.each(['merchant', 'adventure'])('keeps time moving in %s mode before the opening affiliation', (mode) => {
     const store = useGameStore()
     store.story.flags['tutorial.opening.active'] = true

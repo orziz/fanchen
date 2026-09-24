@@ -63,7 +63,7 @@ export type { LocationData } from '@/config/world'
 export { PERSONALITIES, NPC_ARCHETYPES, RELATION_ROLES, SECT_NAME_PARTS, SECT_BUILDINGS } from '@/config/npcs'
 export type { PersonalityData, NpcArchetype, SectBuildingDef } from '@/config/npcs'
 
-export { MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES } from '@/config/combat'
+export { MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES, getDangerBaseline } from '@/config/combat'
 export type { MonsterTemplate, MonsterAffix, RealmTemplate, RealmBoss } from '@/config/combat'
 
 export { FACTIONS, FACTION_MAP, getFactionData, PROPERTY_DEFS, PROPERTY_MAP, getPropertyDefData, CROPS, CROP_MAP, getCropData, CRAFT_RECIPES, RECIPE_MAP, getRecipeData } from '@/config/economy'

@@ -1,24 +1,52 @@
+/**
+ * 妖物：强弱由所在地点的险度决定（见 getDangerBaseline），模板只带相对特色——
+ * 皮厚、力大、真气足，以及掉落门类。region 为专属出没地，没有专属妖物的地方，
+ * 按险度从 tier 相近的妖物里挑。
+ */
 export interface MonsterTemplate {
   id: string
   name: string
   region: string
-  baseHp: number
-  basePower: number
-  baseQi: number
-  rewards: { money: number; cultivation: number }
+  /** 常见于几级险地 */
+  tier: number
+  hpMul: number
+  powerMul: number
+  qiMul: number
   lootTypes: string[]
 }
 
 export const MONSTER_TEMPLATES: MonsterTemplate[] = [
-  { id: 'marsh-lizard', name: '沼鳞妖蜥', region: 'yunze', baseHp: 58, basePower: 10, baseQi: 18, rewards: { money: 10, cultivation: 4 }, lootTypes: ['herb', 'grain'] },
-  { id: 'mist-wolf', name: '雾隐狼妖', region: 'misty', baseHp: 76, basePower: 14, baseQi: 24, rewards: { money: 14, cultivation: 6 }, lootTypes: ['herb', 'wood'] },
-  { id: 'forge-puppet', name: '玄铁傀儡', region: 'blackforge', baseHp: 92, basePower: 17, baseQi: 26, rewards: { money: 16, cultivation: 7 }, lootTypes: ['ore', 'weapon'] },
-  { id: 'snow-ape', name: '寒脊雪猿', region: 'snowpeak', baseHp: 112, basePower: 21, baseQi: 32, rewards: { money: 20, cultivation: 9 }, lootTypes: ['ice', 'pill'] },
-  { id: 'reef-specter', name: '潮渊海魇', region: 'lantern', baseHp: 124, basePower: 24, baseQi: 36, rewards: { money: 24, cultivation: 10 }, lootTypes: ['relic', 'scroll'] },
-  { id: 'blaze-bird', name: '赤翎炎雀', region: 'redcliff', baseHp: 156, basePower: 30, baseQi: 42, rewards: { money: 30, cultivation: 12 }, lootTypes: ['fire', 'ore'] },
-  { id: 'star-devourer', name: '噬星古兽', region: 'starfall', baseHp: 192, basePower: 36, baseQi: 50, rewards: { money: 38, cultivation: 15 }, lootTypes: ['scroll', 'manual'] },
-  { id: 'jade-traitor', name: '玉阙叛徒', region: 'jadegate', baseHp: 148, basePower: 28, baseQi: 40, rewards: { money: 28, cultivation: 11 }, lootTypes: ['pill', 'manual'] },
+  /* 乡野小患：险一二之地 */
+  { id: 'feral-dog', name: '野岭恶犬', region: '', tier: 1, hpMul: 0.85, powerMul: 0.9, qiMul: 0.8, lootTypes: ['leather', 'grain'] },
+  { id: 'road-bandit', name: '拦路毛贼', region: '', tier: 1, hpMul: 1, powerMul: 1, qiMul: 0.9, lootTypes: ['cloth', 'weapon'] },
+  { id: 'marsh-viper', name: '泽地青蛇', region: '', tier: 1, hpMul: 0.75, powerMul: 1.12, qiMul: 1, lootTypes: ['herb'] },
+  { id: 'hill-boar', name: '山野獠猪', region: '', tier: 2, hpMul: 1.15, powerMul: 0.92, qiMul: 0.8, lootTypes: ['leather', 'grain'] },
+  /* 各地专属 */
+  { id: 'marsh-lizard', name: '沼鳞妖蜥', region: 'yunze', tier: 1, hpMul: 1.05, powerMul: 0.95, qiMul: 1, lootTypes: ['herb', 'grain'] },
+  { id: 'mist-wolf', name: '雾隐狼妖', region: 'misty', tier: 2, hpMul: 1, powerMul: 1.08, qiMul: 1, lootTypes: ['herb', 'wood'] },
+  { id: 'forge-puppet', name: '玄铁傀儡', region: 'blackforge', tier: 3, hpMul: 1.2, powerMul: 0.92, qiMul: 0.8, lootTypes: ['ore', 'weapon'] },
+  { id: 'jade-traitor', name: '玉阙叛徒', region: 'jadegate', tier: 3, hpMul: 0.95, powerMul: 1.1, qiMul: 1.2, lootTypes: ['pill', 'manual'] },
+  { id: 'snow-ape', name: '寒脊雪猿', region: 'snowpeak', tier: 4, hpMul: 1.15, powerMul: 1, qiMul: 1, lootTypes: ['ice', 'pill'] },
+  { id: 'reef-specter', name: '潮渊海魇', region: 'lantern', tier: 4, hpMul: 0.9, powerMul: 1.1, qiMul: 1.3, lootTypes: ['relic', 'scroll'] },
+  { id: 'blaze-bird', name: '赤翎炎雀', region: 'redcliff', tier: 5, hpMul: 0.9, powerMul: 1.15, qiMul: 1.1, lootTypes: ['fire', 'ore'] },
+  { id: 'star-devourer', name: '噬星古兽', region: 'starfall', tier: 6, hpMul: 1.25, powerMul: 1.05, qiMul: 1.1, lootTypes: ['scroll', 'manual'] },
 ]
+
+/**
+ * 险度基准：险 d 之地一只寻常妖物的气血、力道、真气与所得。
+ * 大致对应境界 d-1、未添装备的修士五六招内可胜、折损四成上下气血；再高一级便凶多吉少。
+ */
+export function getDangerBaseline(danger: number) {
+  const d = Math.max(1, danger)
+  return {
+    hp: 22 + 20 * (d - 1),
+    power: 5.5 + 1.0 * (d - 1) + 0.3 * (d - 1) ** 2,
+    qi: 10 + 8 * (d - 1),
+    money: 8 + 8 * (d - 1),
+    cultivation: 3 + 3 * (d - 1),
+    breakthrough: 1.2 + 0.8 * (d - 1),
+  }
+}
 
 export interface MonsterAffix {
   id: string
@@ -37,11 +65,11 @@ export const MONSTER_AFFIXES: MonsterAffix[] = [
   { id: 'frostmail', label: '霜甲', desc: '攻击附带凝滞，降低体力恢复。', mod: { chill: 2, defense: 0.1 } },
 ]
 
+/** 秘境首领：以所在地险度加一为基准，皮更厚、力更沉。 */
 export interface RealmBoss {
   name: string
-  baseHp: number
-  basePower: number
-  baseQi: number
+  hpMul: number
+  powerMul: number
   affixes: string[]
 }
 
@@ -59,37 +87,37 @@ export const REALM_TEMPLATES: RealmTemplate[] = [
   {
     id: 'marsh-manor', name: '云梦遗府', locationId: 'yunze', unlockRep: 0,
     desc: '泽底旧府偶现光影，守关首领会掉落早期珍材。',
-    boss: { name: '泽主残魂', baseHp: 220, basePower: 24, baseQi: 44, affixes: ['mirror-step', 'soul-drain'] },
+    boss: { name: '泽主残魂', hpMul: 2.2, powerMul: 1.1, affixes: ['mirror-step', 'soul-drain'] },
     rewards: { money: 70, prestige: 4, items: ['mist-herb', 'compass-realm'] },
   },
   {
     id: 'mist-hunt', name: '迷林狩境', locationId: 'misty', unlockRep: 8,
     desc: '迷雾林深处开启猎场，狼王与迷行剑魄同在。',
-    boss: { name: '魇雾狼王', baseHp: 290, basePower: 30, baseQi: 56, affixes: ['swift', 'feral'] },
+    boss: { name: '魇雾狼王', hpMul: 2.2, powerMul: 1.15, affixes: ['swift', 'feral'] },
     rewards: { money: 92, prestige: 6, items: ['wind-sword', 'mist-herb'] },
   },
   {
     id: 'ice-cavern', name: '寒魄冰窟', locationId: 'snowpeak', unlockRep: 18,
     desc: '万年冰窟灵压极重，适合冲关者搏一线机缘。',
-    boss: { name: '裂冰古猿', baseHp: 380, basePower: 38, baseQi: 62, affixes: ['ironhide', 'frostmail'] },
+    boss: { name: '裂冰古猿', hpMul: 2.4, powerMul: 1.1, affixes: ['ironhide', 'frostmail'] },
     rewards: { money: 120, prestige: 8, items: ['cold-crystal', 'jade-spring'] },
   },
   {
     id: 'tide-ruins', name: '潮渊遗墟', locationId: 'lantern', unlockRep: 14,
     desc: '港外遗墟在涨潮时露出入口，海魇首领守着旧朝宝库。',
-    boss: { name: '深潮主祭', baseHp: 350, basePower: 34, baseQi: 70, affixes: ['soul-drain', 'mirror-step'] },
+    boss: { name: '深潮主祭', hpMul: 2.2, powerMul: 1.15, affixes: ['soul-drain', 'mirror-step'] },
     rewards: { money: 132, prestige: 7, items: ['tide-amber', 'star-scroll'] },
   },
   {
     id: 'ember-palace', name: '赤焰宫阙', locationId: 'redcliff', unlockRep: 26,
     desc: '赤霞崖地火漫天，宫阙一现便意味着大机缘与大凶险。',
-    boss: { name: '离火真君遗魄', baseHp: 480, basePower: 46, baseQi: 90, affixes: ['ember', 'feral', 'ironhide'] },
+    boss: { name: '离火真君遗魄', hpMul: 2.4, powerMul: 1.18, affixes: ['ember', 'feral', 'ironhide'] },
     rewards: { money: 180, prestige: 12, items: ['flame-sand', 'manual-sect'] },
   },
   {
     id: 'star-sanctum', name: '星陨圣阙', locationId: 'starfall', unlockRep: 40,
     desc: '最强秘境之一，只有真正的大修才敢踏入。',
-    boss: { name: '吞星龙骸', baseHp: 680, basePower: 58, baseQi: 118, affixes: ['swift', 'soul-drain', 'ember', 'mirror-step'] },
+    boss: { name: '吞星龙骸', hpMul: 2.6, powerMul: 1.2, affixes: ['swift', 'soul-drain', 'ember', 'mirror-step'] },
     rewards: { money: 260, prestige: 18, items: ['manual-sun', 'manual-moon', 'bond-token'] },
   },
 ]

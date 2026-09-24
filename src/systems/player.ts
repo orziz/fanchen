@@ -112,7 +112,7 @@ export function attemptBreakthrough(): boolean {
     bus.emit('player:breakthrough', { success: true, rankIndex: nextRankIndex })
     return true
   }
-  p.breakthrough = round(p.breakthrough * 0.68); ctx.adjustResource('hp', -12, 'maxHp'); ctx.adjustResource('qi', -16, 'maxQi')
+  p.breakthrough = round(p.breakthrough * 0.8); ctx.adjustResource('hp', -12, 'maxHp'); ctx.adjustResource('qi', -16, 'maxQi')
   ctx.appendLog('冲关受挫，经脉震荡，需要重新稳固根基。', 'warn')
   bus.emit('player:breakthrough', { success: false, rankIndex: p.rankIndex })
   return false
@@ -218,7 +218,9 @@ export function applyPassiveAction(actionKey: string) {
   if (!action) return
   p.action = actionKey
   const costMultiplier = 1 + ctx.getCurrentLocation().danger * 0.03
-  const cultivationBoost = 1 + (p.cultivationBonus || 0) + ctx.getCurrentLocation().aura / 520
+  // 苦修时心无旁骛，打坐练体的所得多出两成半。
+  const focus = p.mode === 'cultivation' && (actionKey === 'meditate' || actionKey === 'train') ? 1.25 : 1
+  const cultivationBoost = (1 + (p.cultivationBonus || 0) + ctx.getCurrentLocation().aura / 520) * focus
   if (action.cost.stamina) ctx.adjustResource('stamina', -action.cost.stamina * costMultiplier, 'maxStamina')
   if (action.cost.qi) ctx.adjustResource('qi', -action.cost.qi * costMultiplier, 'maxQi')
   if (p.stamina <= 5) {
@@ -231,7 +233,7 @@ export function applyPassiveAction(actionKey: string) {
   if (action.reward.stamina) ctx.adjustResource('stamina', action.reward.stamina, 'maxStamina')
   if (action.reward.money) p.money += Math.round(action.reward.money * (1 + p.reputation / 220))
   if (action.reward.reputation) addPlayerMetric('reputation', action.reward.reputation)
-  if (action.reward.breakthrough) addPlayerMetric('breakthrough', action.reward.breakthrough * (1 + ctx.getPlayerInsight() / 420))
+  if (action.reward.breakthrough) addPlayerMetric('breakthrough', action.reward.breakthrough * (1 + ctx.getPlayerInsight() / 420) * focus)
   if (action.reward.power) addPlayerMetric('power', action.reward.power * 0.08)
   if (action.reward.market) p.stats.tradesCompleted += 1
   if (actionKey === 'meditate') { p.stats.meditationSessions += 1; ctx.adjustResource('hp', 1.5, 'maxHp') }

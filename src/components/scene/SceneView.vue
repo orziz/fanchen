@@ -16,7 +16,7 @@
             <div class="scene-floats scene-floats--enemy">
               <span v-for="item in enemyFloats" :key="item.id" class="float-text" :class="`float-text--${item.tone}`">{{ item.text }}</span>
             </div>
-            <EnemyFigure :shape="enemyShape" :boss="enemy.boss" :aura="enemyAura" :motion="fx.enemyMotion" />
+            <EnemyFigure :shape="enemyShape" :size="enemySize" :boss="enemy.boss" :aura="enemyAura" :motion="fx.enemyMotion" />
           </div>
         </Transition>
       </div>
@@ -43,7 +43,7 @@ import { resolveArchetype } from '@/art/scene/archetype'
 import { resolveLight, resolveWeather } from '@/art/scene/palette'
 import { SceneRenderer } from '@/art/scene/renderer'
 import { poseForAction } from '@/art/figures/hero'
-import { shapeForEnemy } from '@/art/figures/enemies'
+import { shapeForEnemy, sizeForEnemy } from '@/art/figures/enemies'
 import { useFx } from '@/composables/useFx'
 import { useSettings } from '@/composables/useSettings'
 import GameIcon from '@/components/common/GameIcon.vue'
@@ -67,6 +67,7 @@ const fighting = computed(() => Boolean(combat.value.currentEnemy))
 const enemy = computed(() => combat.value.currentEnemy)
 const pose = computed(() => poseForAction(player.value.action, traveling.value, fighting.value))
 const enemyShape = computed(() => shapeForEnemy(enemy.value?.realmId || enemy.value?.templateId))
+const enemySize = computed(() => sizeForEnemy(enemy.value?.templateId))
 const enemyAura = computed(() => {
   const affixes = enemy.value?.affixIds || []
   if (affixes.includes('ember')) return 'rgba(200, 90, 50, 0.45)'

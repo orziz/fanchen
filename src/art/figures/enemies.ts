@@ -127,6 +127,10 @@ export const ENEMY_FIGURES: Record<EnemyShape, EnemyFigure> = {
 }
 
 const TEMPLATE_SHAPES: Record<string, EnemyShape> = {
+  'feral-dog': 'wolf',
+  'road-bandit': 'humanoid',
+  'marsh-viper': 'lizard',
+  'hill-boar': 'beast',
   'marsh-lizard': 'lizard',
   'mist-wolf': 'wolf',
   'forge-puppet': 'humanoid',
@@ -147,6 +151,18 @@ export function shapeForEnemy(templateId: string | null | undefined): EnemyShape
   if (!templateId) return 'humanoid'
   if (templateId.startsWith('pursuit-')) return 'officer'
   return TEMPLATE_SHAPES[templateId] || 'humanoid'
+}
+
+/** 同一剪影的体型差：野犬比狼妖小一圈，獠猪远不及古兽。 */
+const TEMPLATE_SIZES: Record<string, number> = {
+  'feral-dog': 0.78,
+  'marsh-viper': 0.85,
+  'hill-boar': 0.6,
+  'road-bandit': 0.95,
+}
+
+export function sizeForEnemy(templateId: string | null | undefined) {
+  return TEMPLATE_SIZES[templateId || ''] || 1
 }
 
 export type { FigurePart }

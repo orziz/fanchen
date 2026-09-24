@@ -1,7 +1,7 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
 import { addPlayerMetric } from '@/core/integerProgress'
-import { MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES, DISTRIBUTABLE_ITEMS, LOCATION_MAP, ACTION_META, FACTION_MAP, getItem, getTechnique } from '@/config'
+import { MONSTER_TEMPLATES, MONSTER_AFFIXES, REALM_TEMPLATES, DISTRIBUTABLE_ITEMS, LOCATION_MAP, ACTION_META, FACTION_MAP, getDangerBaseline, getItem, getTechnique } from '@/config'
 import { clamp, randomFloat, randomInt, sample, uid, round } from '@/utils'
 import { revivePlayer, checkRankGrowth } from '@/systems/player'
 import { gainTechniqueMastery, getPreferredSpellId, getTechniqueEffectValue } from '@/systems/techniques'
@@ -21,33 +21,46 @@ function chooseRewardItemByTypes(types: string[]) {
   return sample(pool.length ? pool : DISTRIBUTABLE_ITEMS)
 }
 
-function buildEnemyFromTemplate(
-  template: { id?: string; name: string; baseHp: number; basePower: number; baseQi?: number; rewards?: { money?: number; cultivation?: number }; lootTypes?: string[] },
-  options: { boss?: boolean; realmId?: string; regionId?: string; danger?: number; affixIds?: string[]; rewardItemIds?: string[] } = {},
-): EnemyState {
-  const ctx = getContext()
-  const playerRank = ctx.game.player.rankIndex
-  const scale = 1 + playerRank * 0.16 + (options.danger || 0) * 0.08 + (options.boss ? 0.3 : 0)
+interface EnemyBlueprint {
+  id: string
+  name: string
+  hpMul: number
+  powerMul: number
+  qiMul?: number
+  lootTypes: string[]
+}
+
+interface EnemyOptions {
+  boss?: boolean
+  realmId?: string
+  regionId?: string
+  affixIds?: string[]
+  rewardItemIds?: string[]
+}
+
+/** 按险度基准与模板特色造一只敌手；首领所得翻三倍。 */
+function buildEnemy(bp: EnemyBlueprint, danger: number, options: EnemyOptions = {}): EnemyState {
+  const base = getDangerBaseline(danger)
+  const boss = Boolean(options.boss)
   const affixIds = options.affixIds || []
-  const affixes = affixIds.map(getAffix).filter(Boolean)
+  const qi = Math.round(base.qi * (bp.qiMul || 1) * (boss ? 1.2 : 1))
   const enemy: EnemyState = {
-    id: uid(options.boss ? 'boss' : 'enemy'), templateId: template.id || template.name, name: template.name,
-    boss: Boolean(options.boss), realmId: options.realmId || null, regionId: options.regionId || null, affixIds,
-    maxHp: Math.round(template.baseHp * scale), hp: Math.round(template.baseHp * scale),
-    maxQi: Math.round((template.baseQi || 20) * (1 + (options.boss ? 0.18 : 0))),
-    qi: Math.round((template.baseQi || 20) * (1 + (options.boss ? 0.18 : 0))),
-    power: round(template.basePower * scale), dodge: 0.04, defense: 0.04, crit: 0.05,
+    id: uid(boss ? 'boss' : 'enemy'), templateId: bp.id, name: bp.name,
+    boss, realmId: options.realmId || null, regionId: options.regionId || null, affixIds,
+    maxHp: Math.round(base.hp * bp.hpMul), hp: Math.round(base.hp * bp.hpMul),
+    maxQi: qi, qi,
+    power: round(base.power * bp.powerMul), dodge: 0.04, defense: 0.04, crit: 0.05,
     burnOnHit: 0, chillOnHit: 0, qiBurn: 0,
     rewards: {
-      money: Math.round((template.rewards?.money || 12) * scale),
-      cultivation: Math.round((template.rewards?.cultivation || 4) * (1 + playerRank * 0.08)),
-      reputation: options.boss ? 5 + playerRank : Math.max(0, Math.round((options.danger || 1) * 0.3)),
-      breakthrough: options.boss ? 8 + (options.danger || 0) : Math.max(1, Math.round(1 + (options.danger || 0) * 0.5)),
+      money: Math.round(base.money * (boss ? 3 : 1) * randomFloat(0.9, 1.15)),
+      cultivation: Math.round(base.cultivation * (boss ? 3 : 1)),
+      reputation: boss ? 4 + danger : Math.max(0, Math.round(danger * 0.3)),
+      breakthrough: boss ? 6 + danger : Math.max(1, Math.round(base.breakthrough)),
     },
-    rewardItemIds: options.rewardItemIds || [], lootTypes: template.lootTypes || [],
+    rewardItemIds: options.rewardItemIds || [], lootTypes: bp.lootTypes,
     effects: { burn: 0, exposed: 0, chill: 0 },
   }
-  affixes.forEach(affix => {
+  affixIds.map(getAffix).forEach(affix => {
     if (!affix) return
     enemy.maxHp = Math.round(enemy.maxHp * (1 + (affix.mod.hp || 0))); enemy.hp = enemy.maxHp
     enemy.power = round(enemy.power * (1 + (affix.mod.power || 0)))
@@ -57,16 +70,23 @@ function buildEnemyFromTemplate(
   return enemy
 }
 
-function generateEncounter(location: { id: string; danger: number }, options: { boss?: boolean } = {}): EnemyState {
-  const templatePool = MONSTER_TEMPLATES.filter(m => m.region === location.id)
-  const template = sample(templatePool.length ? templatePool : MONSTER_TEMPLATES)
-  const affixCount = options.boss ? 2 + Math.floor(location.danger / 3) : Math.min(2, Math.floor(location.danger / 3) + (Math.random() < 0.32 ? 1 : 0))
+function rollAffixes(count: number) {
   const affixIds: string[] = []
-  while (affixIds.length < affixCount) {
+  while (affixIds.length < count) {
     const affix = sample(MONSTER_AFFIXES)
     if (!affixIds.includes(affix.id)) affixIds.push(affix.id)
   }
-  return buildEnemyFromTemplate(template, { ...options, regionId: location.id, danger: location.danger, affixIds })
+  return affixIds
+}
+
+/** 遇敌：多半撞上本地专属的妖物，其余时候从险度相近的四方妖物里挑一只。 */
+function generateEncounter(location: { id: string; danger: number }): EnemyState {
+  const regional = MONSTER_TEMPLATES.filter(m => m.region === location.id)
+  const wandering = MONSTER_TEMPLATES.filter(m => m.region !== location.id && Math.abs(m.tier - location.danger) <= 1)
+  const pool = regional.length && (Math.random() < 0.65 || !wandering.length) ? regional : wandering
+  const template = sample(pool.length ? pool : MONSTER_TEMPLATES)
+  const affixCount = Math.min(2, Math.floor(location.danger / 3) + (Math.random() < 0.32 ? 1 : 0))
+  return buildEnemy(template, location.danger, { regionId: location.id, affixIds: rollAffixes(affixCount) })
 }
 
 export function startEncounter(source = 'hunt') {
@@ -74,7 +94,7 @@ export function startEncounter(source = 'hunt') {
   const g = ctx.game
   if (g.combat.currentEnemy) return g.combat.currentEnemy
   const location = ctx.getCurrentLocation()
-  const enemy = generateEncounter(location, { boss: false })
+  const enemy = generateEncounter(location)
   g.combat.history = []; g.combat.currentEnemy = enemy; g.combat.autoBattle = true
   g.combat.playerEffects = g.combat.playerEffects || { burn: 0, guard: 0, chill: 0 }
   g.player.action = source
@@ -92,10 +112,14 @@ export function challengeRealm(realmId: string) {
   if (g.player.reputation < realm.unlockRep) { ctx.appendLog(`你的声望不足，尚无法进入${realm.name}。`, 'warn'); return }
   if (g.player.locationId !== realm.locationId) { ctx.appendLog(`要挑战${realm.name}，你得先赶到${LOCATION_MAP.get(realm.locationId)!.name}。`, 'warn'); return }
   if (g.combat.currentEnemy) { ctx.appendLog('你仍在战斗中，无法直接转入首领秘境。', 'warn'); return }
-  const enemy = buildEnemyFromTemplate(
-    { id: realm.id, name: realm.boss.name, baseHp: realm.boss.baseHp, basePower: realm.boss.basePower, baseQi: realm.boss.baseQi, rewards: { money: realm.rewards.money, cultivation: 16 }, lootTypes: realm.rewards.items.map(itemId => getItem(itemId)?.type).filter(Boolean) as string[] },
-    { boss: true, realmId, regionId: realm.locationId, danger: (LOCATION_MAP.get(realm.locationId)?.danger || 0) + 1, affixIds: realm.boss.affixes, rewardItemIds: realm.rewards.items },
+  const danger = (LOCATION_MAP.get(realm.locationId)?.danger || 1) + 1
+  const lootTypes = realm.rewards.items.map(itemId => getItem(itemId)?.type).filter(Boolean) as string[]
+  const enemy = buildEnemy(
+    { id: realm.id, name: realm.boss.name, hpMul: realm.boss.hpMul, powerMul: realm.boss.powerMul, lootTypes },
+    danger,
+    { boss: true, realmId, regionId: realm.locationId, affixIds: realm.boss.affixes, rewardItemIds: realm.rewards.items },
   )
+  enemy.rewards.money = Math.max(enemy.rewards.money, realm.rewards.money)
   g.combat.history = []; g.combat.currentEnemy = enemy; g.combat.pendingRealmId = realmId
   g.combat.autoBattle = true; g.combat.playerEffects = g.combat.playerEffects || { burn: 0, guard: 0, chill: 0 }
   addCombatHistory(`你踏入${realm.name}，${enemy.name}自深处现身。`, 'warn')
@@ -110,27 +134,14 @@ export function startPursuitEncounter(factionId: string, source = 'travel') {
   const location = ctx.getCurrentLocation()
   if (!faction || g.combat.currentEnemy) return g.combat.currentEnemy
 
-  const pursuitTemplateByType: Record<string, { name: string; baseHp: number; basePower: number; baseQi: number }> = {
-    court: { name: '缉拿差吏', baseHp: 86, basePower: 14, baseQi: 20 },
-    bureau: { name: '转运司巡缉', baseHp: 92, basePower: 15, baseQi: 24 },
-    garrison: { name: '军府缉骑', baseHp: 102, basePower: 17, baseQi: 22 },
-  }
-  const pursuitTemplate = pursuitTemplateByType[faction.type] || { name: '门路追兵', baseHp: 80, basePower: 13, baseQi: 18 }
-  const playerRank = g.player.rankIndex
-  const enemy = buildEnemyFromTemplate({
-    id: `pursuit-${faction.id}`,
-    name: pursuitTemplate.name,
-    baseHp: pursuitTemplate.baseHp + playerRank * 20 + location.danger * 8,
-    basePower: pursuitTemplate.basePower + playerRank * 3.2 + location.danger * 1.1,
-    baseQi: pursuitTemplate.baseQi + playerRank * 4,
-    rewards: { money: 16 + playerRank * 4, cultivation: 4 + playerRank * 1.1 },
-    lootTypes: [],
-  }, {
-    boss: false,
-    regionId: location.id,
-    danger: location.danger + 1,
-  })
-
+  const pursuitNames: Record<string, string> = { court: '缉拿差吏', bureau: '转运司巡缉', garrison: '军府缉骑' }
+  // 追兵按你的境界派人：总比你高出一两级险地的身手。
+  const danger = Math.max(location.danger, g.player.rankIndex + 2)
+  const enemy = buildEnemy(
+    { id: `pursuit-${faction.id}`, name: pursuitNames[faction.type] || '门路追兵', hpMul: 1.05, powerMul: 1.05, lootTypes: [] },
+    danger,
+    { regionId: location.id },
+  )
   enemy.rewards.reputation = 0
   enemy.rewardItemIds = []
   enemy.lootTypes = []
@@ -322,10 +333,24 @@ export function processBattleRound(action = 'attack', skillId: string | null = n
   if (ctx.game.player.hp <= 0) resolveDefeat(enemy)
 }
 
+/** 自动出招：伤重先服药，眼看要输且非首领时设法脱身，否则有术法用术法。 */
 export function autoCombatTick(): boolean {
   const ctx = getContext()
-  if (!ctx.game.combat.currentEnemy) return false
-  const preferredSkillId = getPreferredSpellId(ctx.game.player.qi)
+  const enemy = ctx.game.combat.currentEnemy
+  if (!enemy) return false
+  const p = ctx.game.player
+  // 估一估胜负：照眼下的来回，自己撑不到对手倒下还留两成余裕，就趁早脱身。
+  const playerHit = Math.max(5, (ctx.getPlayerPower() + ctx.getPlayerInsight() * 0.28) * (1 - enemy.defense)) * (1 - Math.min(0.6, enemy.dodge))
+  const losing = p.hp / Math.max(4, enemy.power) < (enemy.hp / playerHit) * 1.2
+  if (!enemy.boss && ((losing && p.hp < p.maxHp * 0.7) || (p.hp < p.maxHp * 0.3 && enemy.hp > enemy.maxHp * 0.3))) {
+    processBattleRound('flee')
+    return true
+  }
+  if (p.hp < p.maxHp * 0.35 && getHealingItem()) {
+    processBattleRound('item')
+    return true
+  }
+  const preferredSkillId = getPreferredSpellId(p.qi)
   processBattleRound(preferredSkillId ? 'skill' : 'attack', preferredSkillId)
   return true
 }

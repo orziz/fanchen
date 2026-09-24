@@ -188,7 +188,7 @@ function buildAffiliationPatrolTask(faction: any) {
     desc: `回${LOCATION_MAP.get(faction.locationId)?.name || faction.locationId}压一圈地头。那边近来${overview.heatLabel}，${security < 46 ? '街面未稳' : security < 62 ? '人心略浮' : '门路正忙'}。`,
     staminaCost: 10 + (location?.danger || 0) * 2 + Math.ceil(unrest / 9),
     qiCost: (isOfficialFaction(faction) ? 2 : 1) + Math.ceil(unrest / 20),
-    rewardMoney: 24 + (location?.marketTier || 0) * 14 + unrest * 2,
+    rewardMoney: 24 + (location?.marketTier || 0) * 14 + Math.round(unrest * 0.8),
     rewardReputation: 1,
     rewardStanding: clamp(2 + Math.floor(unrest / 14) + Number(overview.tradeHeat >= 60), 2, 5),
     rewardRegion: security < 50 ? 2 : 1,

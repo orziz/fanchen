@@ -43,7 +43,7 @@ describe('world action dispatch', () => {
     store.player.cultivation = 0
     store.player.breakthrough = 200
 
-    expect(getActionUnavailableReason('breakthrough')).toContain('修为底子')
+    expect(getActionUnavailableReason('breakthrough')).toContain('修为还差')
     expect(performAction('breakthrough')).toBe(false)
     expect(store.world.subStep).toBe(0)
   })

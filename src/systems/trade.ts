@@ -49,7 +49,7 @@ export function getTradeRouteOptions(locationId?: string) {
       const demandBonus = dest.marketBias === origin.marketBias ? 0.05 : 0.16
       const courtBonus = dest.tags.includes('court') ? 0.04 : 0
       const riskDiscount = destCommerce.tradeLossRate + Math.max(0, (80 - Math.min(originCommerce.security, destCommerce.security)) * 0.0012)
-      const saleEstimate = Math.round(purchaseCost * (1.1 + segments * 0.05 + demandBonus * 0.6 + courtBonus + dest.marketTier * 0.025 + destTerritoryBonus * 0.7 + originTerritoryBonus * 0.3) * Math.max(0.78, 1 - destCommerce.taxRate * 0.48 - riskDiscount))
+      const saleEstimate = Math.round(purchaseCost * (1.04 + segments * 0.022 + demandBonus * 0.6 + courtBonus + dest.marketTier * 0.025 + destTerritoryBonus * 0.7 + originTerritoryBonus * 0.3) * Math.max(0.78, 1 - destCommerce.taxRate * 0.48 - riskDiscount))
       return {
         id: `${origin.id}-${dest.id}`, originId: origin.id, originName: origin.name,
         destinationId: dest.id, destinationName: dest.name, cargoLabel, segments,
@@ -121,7 +121,10 @@ export function settleTradeRun(): boolean {
   const fluctuation = randomFloat(0.94, 1.12)
   const originCommerce = getTerritoryCommerceEffects(run.originId)
   const destCommerce = getTerritoryCommerceEffects(run.destinationId)
-  const grossRevenue = Math.max(run.purchaseCost + 8, Math.round(run.saleEstimate * (1 + g.player.skills.trading * 0.008 + localStanding * 0.008) * fluctuation))
+  // 商道与本地声望能抬价，但各有顶：跑得再熟、名头再响，一趟货也翻不出几倍利。
+  const skillBonus = Math.min(g.player.skills.trading, 30) * 0.004
+  const standingBonus = Math.min(Math.max(0, localStanding), 40) * 0.0025
+  const grossRevenue = Math.max(run.purchaseCost + 8, Math.round(run.saleEstimate * (1 + skillBonus + standingBonus) * fluctuation))
   const tariffCut = Math.max(0, Math.round(grossRevenue * Math.min(0.28, originCommerce.taxRate * 0.18 + destCommerce.taxRate * 0.56)))
   const routeLoss = Math.max(0, Math.round(grossRevenue * destCommerce.tradeLossRate))
   const revenue = Math.max(run.purchaseCost + 8, grossRevenue - tariffCut - routeLoss)

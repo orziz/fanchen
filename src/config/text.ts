@@ -40,80 +40,80 @@ function resolveGrowthState(input: GrowthCopyInput) {
 
 export function getCultivationStatusCopy(input: GrowthCopyInput) {
   if (!input.hasNextRank) {
-    return '当前已在境界尽头，后续修行只会继续温养根基。'
+    return '已到当前境界尽头，只能继续温养根基。'
   }
   const state = resolveGrowthState(input)
   if (state.cultivationGap > 0) {
-    return `离化火候线还差 ${formatNumber(state.cultivationGap)}。`
+    return `修为再积 ${formatNumber(state.cultivationGap)}，才能化出底火。`
   }
-  return `已过化火候线，当前可稳住至少 ${formatNumber(state.breakthroughFloor)} 点底火。`
+  return `修为已化出 ${formatNumber(state.breakthroughFloor)} 点底火。`
 }
 
 export function getBreakthroughStatusCopy(input: GrowthCopyInput) {
   if (!input.hasNextRank) {
-    return '当前境界已到头，暂无更高关隘可冲。'
+    return '已到当前境界尽头，前头暂无关隘。'
   }
   const state = resolveGrowthState(input)
   if (state.breakthroughGap <= 0) {
-    return '已过手动冲关线，继续打磨只会把胜算抬得更稳。'
+    return '火候已足，可以择地冲关；再磨一磨，胜算更稳。'
   }
-  return `距手动冲关线还差 ${formatNumber(state.breakthroughGap)}。`
+  return `火候还差 ${formatNumber(state.breakthroughGap)} 才够冲关。`
 }
 
 export function getGrowthProgressNote(input: GrowthCopyInput) {
   const state = resolveGrowthState(input)
   if (!input.hasNextRank) {
-    return `你已站到当前境界尽头。现有境界仍会直接给你 +${state.realmPowerBonus} 战力，并撑起气血、真气、体力三项上限。`
+    return '已到当前境界尽头，只能继续温养根基。'
   }
   if (state.cultivationGap > 0) {
-    return `境界会直接给你 +${state.realmPowerBonus} 战力，也决定高阶门路和器物是否肯认你；修为还差 ${formatNumber(state.cultivationGap)} 才会开始化成底火。`
+    return `修为再积 ${formatNumber(state.cultivationGap)}，方能化出底火；打坐、历练、奔走都能养底子。`
   }
   if (state.breakthroughGap > 0) {
-    return `修为底子已化出 ${formatNumber(state.breakthroughFloor)} 点底火，后续静坐、历练和机缘会继续把火候往上磨；当前还差 ${formatNumber(state.breakthroughGap)} 到手动冲关线。`
+    return `底火已有 ${formatNumber(state.breakthroughFloor)}，火候还差 ${formatNumber(state.breakthroughGap)} 才够冲关；静坐、历练与机缘都能磨火候。`
   }
-  return '底子与火候都已到位。境界撑上限，修为垫底火，火候定冲关，现在已经可以择机手动破境。'
+  return '底子与火候俱足，寻一处灵地便可冲关；灵气越足，胜算越高。'
 }
 
 export function getBreakthroughHintCopy(input: GrowthCopyInput) {
   const state = resolveGrowthState(input)
   if (!input.hasNextRank) {
-    return `你已站在当前境界尽头。现有境界仍会给你 +${state.realmPowerBonus} 战力，并继续撑住三项上限。`
+    return '已到当前境界尽头，只能继续温养根基。'
   }
   if (state.breakthroughGap <= 0) {
-    return `当前火候 ${state.breakthroughPercent}%，已过手动冲关线；所在地点灵气 ${input.aura || 0} 会计入成败。`
+    return `火候已到 ${state.breakthroughPercent}%，可以冲关；此地灵气 ${input.aura || 0}，灵气越足胜算越高。`
   }
   if (state.cultivationGap > 0) {
-    return `修为底子还差 ${formatNumber(state.cultivationGap)} 才能化成底火；先静坐、历练或跑事养底。`
+    return `修为还差 ${formatNumber(state.cultivationGap)} 才能化出底火，先静坐、历练或奔走养底。`
   }
-  return `修为底子已把底火垫到 ${formatNumber(state.breakthroughFloor)}，再磨 ${formatNumber(state.breakthroughGap)} 火候就能手动冲关。`
+  return `底火已有 ${formatNumber(state.breakthroughFloor)}，再磨 ${formatNumber(state.breakthroughGap)} 火候便可冲关。`
 }
 
 export function getBreakthroughDisabledReason(input: GrowthCopyInput) {
   if (!input.hasNextRank) {
-    return '当前境界已到头，只能继续温养根基。'
+    return '已到当前境界尽头，只能继续温养根基。'
   }
   const state = resolveGrowthState(input)
   if (state.cultivationGap > 0) {
-    return `修为底子还差 ${formatNumber(state.cultivationGap)}，先把底火养出来。`
+    return `修为还差 ${formatNumber(state.cultivationGap)}，底火未成，冲不得关。`
   }
   if (state.breakthroughGap > 0) {
-    return `当前底火已稳到 ${formatNumber(state.breakthroughFloor)}，还差 ${formatNumber(state.breakthroughGap)} 火候到手动冲关线。`
+    return `火候还差 ${formatNumber(state.breakthroughGap)}，尚不足以冲关。`
   }
   return ''
 }
 
 export function getBreakthroughActionDescription(input: GrowthCopyInput) {
   if (!input.hasNextRank) {
-    return '当前境界已到头，只能继续温养根基。'
+    return '已到当前境界尽头，只能继续温养根基。'
   }
   const state = resolveGrowthState(input)
   if (state.breakthroughGap <= 0) {
-    return `火候 ${state.breakthroughPercent}%，现在就能试破当前境界。`
+    return `火候 ${state.breakthroughPercent}%，现在就能冲关。`
   }
   if (state.cultivationGap > 0) {
-    return '先补修为底子，化出底火后再谈冲关。'
+    return '先补修为底子，化出底火再谈冲关。'
   }
-  return `底火已成，再磨 ${formatNumber(state.breakthroughGap)} 火候就能手动冲关。`
+  return `底火已成，再磨 ${formatNumber(state.breakthroughGap)} 火候便可冲关。`
 }
 
 export function describeIndustryAssetEffect(kind: string, level: number) {

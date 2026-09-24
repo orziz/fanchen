@@ -101,7 +101,7 @@ const growthHint = computed(() => {
 })
 
 const cultivationTip = computed(() => `修为是日积月累的根基。积到刻度线（${cultivationGateNeed.value}）方算底子扎稳，此后越满，冲关时保底的火候越高。`)
-const breakthroughTip = computed(() => `火候是冲关的把握。过刻度线（${breakthroughReadyNeed.value}）即可手动破境；地点灵气与悟性决定成败。`)
+const breakthroughTip = computed(() => `火候是冲关的把握。过刻度线（${breakthroughReadyNeed.value}）便可择地冲关；地点灵气与悟性左右成败。`)
 
 const gear = computed(() => {
   const eq = player.value.equipment
