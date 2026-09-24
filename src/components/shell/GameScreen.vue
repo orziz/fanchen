@@ -1,7 +1,9 @@
 <template>
   <div class="game-screen">
     <main class="game-screen__stage">
-      <SceneView />
+      <SceneView>
+        <CombatHud />
+      </SceneView>
     </main>
     <TopBar @settings="$emit('settings')" />
     <CharacterCard class="game-screen__left" />
@@ -31,6 +33,7 @@ import ChronicleFeed from '@/components/shell/ChronicleFeed.vue'
 import ActionDock from '@/components/shell/ActionDock.vue'
 import StrategyPopover from '@/components/shell/StrategyPopover.vue'
 import SceneView from '@/components/scene/SceneView.vue'
+import CombatHud from '@/components/scene/CombatHud.vue'
 import BookHost from '@/components/books/BookHost.vue'
 import StoryOverlay from '@/components/StoryOverlay.vue'
 import ToastStack from '@/components/ToastStack.vue'

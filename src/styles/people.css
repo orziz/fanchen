@@ -1,0 +1,65 @@
+/* ─── 人情 ─── */
+.npc-detail {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.relation-bars {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
+}
+
+.relation-bar {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr 2.4rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: var(--fs-small);
+}
+
+.relation-bar__label { color: var(--text-faint); }
+.relation-bar__value { color: var(--paper-100); text-align: right; }
+
+.relation-bar__track {
+  position: relative;
+  height: 0.4rem;
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.relation-bar__center {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: rgba(214, 196, 150, 0.4);
+}
+
+.relation-bar__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #3f6f61, #9fd6c2);
+  transition: width 0.5s var(--ease-out), left 0.5s var(--ease-out);
+}
+
+.relation-bar__fill.is-neg { background: linear-gradient(90deg, #d0624f, #7d2f26); }
+.relation-bar.is-negative-scale .relation-bar__fill { background: linear-gradient(90deg, #7d2f26, #d0624f); }
+
+.trait-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
+}
+
+.npc-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}

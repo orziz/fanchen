@@ -123,6 +123,10 @@ export function consumeItem(itemId: string) {
   const p = ctx.game.player
   const item = getItem(itemId)
   if (!item) return
+  if ((item.type === 'weapon' || item.type === 'armor') && item.minRankIndex > p.rankIndex) {
+    ctx.appendLog(`${item.name}需${RANKS[Math.min(item.minRankIndex, RANKS.length - 1)].name}以上的根基才驾驭得住。`, 'warn')
+    return
+  }
   if (item.type === 'weapon') {
     if (!ctx.removeItemFromInventory(itemId, 1)) return
     if (p.equipment.weapon) ctx.addItemToInventory(p.equipment.weapon, 1)
@@ -177,6 +181,14 @@ export function stashManualToSect(itemId: string) {
   ctx.appendLog(`${item.name}已收入宗门藏经阁，可供后续传功。`, 'info')
 }
 
+/** 就地出售一件物品能换得的灵石：当地偏好此类货时收价更高。 */
+export function getItemSellPrice(itemId: string) {
+  const item = getItem(itemId)
+  if (!item) return 0
+  const location = getContext().getCurrentLocation()
+  return Math.round(item.baseValue * (location.marketBias === item.type ? 0.96 : 0.72))
+}
+
 export function sellItem(itemId: string) {
   const ctx = getContext()
   const p = ctx.game.player
@@ -184,7 +196,7 @@ export function sellItem(itemId: string) {
   const item = getItem(itemId)
   if (!entry || !item) return
   const location = ctx.getCurrentLocation()
-  const price = Math.round(item.baseValue * (location.marketBias === item.type ? 0.96 : 0.72))
+  const price = getItemSellPrice(itemId)
   ctx.removeItemFromInventory(itemId, 1)
   p.money += price; p.stats.tradesCompleted += 1
   ctx.adjustRegionStanding(location.id, 0.4)

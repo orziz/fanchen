@@ -1,6 +1,6 @@
 <template>
   <div ref="rootEl" class="scene-view" :class="{ 'is-fighting': fighting, 'is-traveling': traveling }">
-    <div :key="fx.shakeKey" class="scene-view__shaker" :class="{ 'is-shaking': fx.shakeKey > 0 }" :style="{ '--shake': fx.shakeStrength }">
+    <div ref="shakerEl" class="scene-view__shaker">
       <canvas ref="canvasEl" class="scene-view__canvas" />
       <div class="scene-view__actors" :style="{ '--hero-light': heroLight }">
         <div class="scene-actor scene-actor--hero" :class="{ 'is-dueling': fighting }">
@@ -57,6 +57,7 @@ const settings = useSettings()
 const { fx } = useFx()
 
 const rootEl = ref<HTMLElement | null>(null)
+const shakerEl = ref<HTMLElement | null>(null)
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 let renderer: SceneRenderer | null = null
 let resizeObserver: ResizeObserver | null = null
@@ -99,6 +100,20 @@ watch(sceneInput, input => renderer?.setInput(input))
 
 watch(() => fx.flash, flash => {
   if (flash) renderer?.flash(flash.color, 260)
+})
+
+/** 屏震：直接对画面层播放一次位移动画，不重建画布。 */
+watch(() => fx.shakeKey, () => {
+  if (!shakerEl.value || settings.reduceMotion) return
+  const k = fx.shakeStrength * 5
+  shakerEl.value.animate([
+    { transform: 'translate(0, 0)' },
+    { transform: `translate(${-k}px, ${k * 0.4}px)` },
+    { transform: `translate(${k * 0.85}px, ${-k * 0.4}px)` },
+    { transform: `translate(${-k * 0.5}px, ${k * 0.25}px)` },
+    { transform: `translate(${k * 0.25}px, 0)` },
+    { transform: 'translate(0, 0)' },
+  ], { duration: 360, easing: 'cubic-bezier(0.36, 0.07, 0.19, 0.97)' })
 })
 
 watch(() => fx.banner, banner => {

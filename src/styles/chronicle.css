@@ -1,0 +1,70 @@
+/* ─── 纪事 ─── */
+.story-timeline {
+  position: relative;
+  display: grid;
+  gap: 0.8rem;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding-left: 1.4rem;
+}
+
+.story-timeline::before {
+  content: "";
+  position: absolute;
+  left: 0.35rem;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 1px;
+  background: linear-gradient(180deg, var(--gold-soft), transparent);
+}
+
+.timeline-entry {
+  position: relative;
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.timeline-entry::before {
+  content: "";
+  position: absolute;
+  left: -1.3rem;
+  top: 1rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  border: 1px solid var(--gold-soft);
+  background: var(--ink-900);
+}
+
+.timeline-entry.is-ongoing {
+  justify-items: start;
+  border-color: rgba(199, 162, 90, 0.5);
+  background: linear-gradient(135deg, rgba(64, 50, 24, 0.4), rgba(0, 0, 0, 0.2));
+}
+
+.timeline-entry.is-ongoing::before { background: var(--gold-bright); box-shadow: 0 0 6px var(--gold-bright); }
+
+.timeline-entry__badge { color: var(--gold); font-size: var(--fs-micro); letter-spacing: 0.2em; }
+.timeline-entry h4 { font-size: var(--fs-lead); letter-spacing: 0.15em; }
+.timeline-entry__speaker { color: #f0a494; font-family: var(--font-title); font-size: var(--fs-small); }
+
+.timeline-entry__text {
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.75;
+}
+
+.task-sections {
+  display: grid;
+  gap: 1rem;
+}
+
+.log-view {
+  display: grid;
+  gap: 0.8rem;
+}

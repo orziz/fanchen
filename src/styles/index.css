@@ -4,7 +4,12 @@
 @import url('./shell.css');
 @import url('./scene.css');
 @import url('./books.css');
+@import url('./items.css');
+@import url('./map.css');
+@import url('./pages.css');
+@import url('./market.css');
+@import url('./people.css');
 @import url('./title.css');
 @import url('./story.css');
-@import url('./legacy-skin.css');
+@import url('./chronicle.css');
 @import url('./responsive.css');

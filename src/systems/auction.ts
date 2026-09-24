@@ -18,6 +18,15 @@ function getReservedAuctionFunds(ignoreListingId: string | null = null): number 
   }, 0)
 }
 
+/** 对某件拍品再加一口价还差多少灵石（已领先的其他拍品会暂扣本钱）。 */
+export function getBidShortfall(listingId: string): number {
+  const ctx = getContext()
+  const listing = ctx.game.auction.find(e => e.id === listingId)
+  if (!listing) return 0
+  const need = getReservedAuctionFunds(listing.id) + listing.currentBid + listing.minimumRaise
+  return Math.max(0, need - ctx.game.player.money)
+}
+
 /* ─── Bidding ─── */
 
 export function placeBid(listingId: string) {

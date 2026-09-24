@@ -119,5 +119,13 @@ export function resolveArchetype(location: Pick<LocationData, 'id' | 'name' | 't
   else if (has(text, /芦|苇/)) inferred.flora = ['reeds']
   else if (inferred.water !== 'none') inferred.flora = ['willow']
 
-  return { ...inferred, ...OVERRIDES[location.id], seed: location.id }
+  const override = OVERRIDES[location.id]
+  if (!override) return inferred
+  // 手工覆写的地点从中性底子起算，避免“林海”这类字面把山林误判成海港。
+  return {
+    relief: 'hills', water: 'none', settlement: 'none', flora: ['sparse'],
+    smoke: false, mystic: false, snowCover: false, fields: false, warm: 0,
+    ...override,
+    seed: location.id,
+  }
 }

@@ -18,6 +18,7 @@ import {
   DISTRIBUTABLE_ITEMS,
   FACTIONS,
   LOCATIONS,
+  LOCATION_MAP,
   NPC_ARCHETYPES,
   PERSONALITIES,
 } from '@/config'
@@ -284,7 +285,18 @@ function createInitialStory(): StoryState {
   }
 }
 
+/** 开局那位叫醒你的路人：保证起步之地至少有一位认得的人，不至于举目无亲。 */
+function ensureLocalAcquaintance(player: PlayerState, npcs: NpcState[]) {
+  if (npcs.some(npc => npc.locationId === player.locationId) || !npcs.length) return
+  const local = npcs[0]
+  const home = LOCATION_MAP.get(player.locationId)
+  local.homeId = player.locationId
+  local.locationId = player.locationId
+  local.factionId = home?.factionIds?.length ? home.factionIds[0] : local.factionId
+}
+
 function seedInitialNpcIntel(player: PlayerState, npcs: NpcState[]) {
+  ensureLocalAcquaintance(player, npcs)
   npcs.forEach((npc) => {
     if (npc.locationId === player.locationId) {
       player.npcIntel[npc.id] = 'met'

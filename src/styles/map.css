@@ -1,0 +1,389 @@
+/* ─── 山河书册 ─── */
+.book__body--flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+.map-book {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 21rem;
+  height: 100%;
+}
+
+.map-book__info {
+  border-left: 1px solid var(--panel-line);
+  overflow-y: auto;
+}
+
+/* ─── 绢本地图 ─── */
+.world-map {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  background: #14120f;
+}
+
+.world-map:active { cursor: grabbing; }
+
+.world-map__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.map-glyph { fill: none; stroke: rgba(196, 182, 150, 0.22); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; }
+.map-glyph--mountain { fill: rgba(196, 182, 150, 0.09); }
+.map-glyph--snow { fill: rgba(225, 230, 235, 0.14); stroke: rgba(225, 230, 235, 0.28); }
+.map-glyph--water { stroke: rgba(130, 170, 190, 0.3); }
+.map-glyph--tree { stroke: rgba(140, 170, 140, 0.28); }
+
+.map-route {
+  fill: none;
+  stroke: rgba(214, 200, 165, 0.26);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.map-route.is-near { stroke: rgba(214, 200, 165, 0.5); }
+
+.map-route--preview {
+  stroke: rgba(227, 198, 135, 0.55);
+  stroke-width: 3;
+  stroke-dasharray: 3 7;
+}
+
+.map-route--planned {
+  stroke: #e3c687;
+  stroke-width: 3.6;
+  stroke-dasharray: 10 8;
+  animation: route-march 1.2s linear infinite;
+  filter: drop-shadow(0 0 4px rgba(227, 198, 135, 0.6));
+}
+
+@keyframes route-march {
+  to { stroke-dashoffset: -18; }
+}
+
+.map-node { cursor: pointer; }
+.map-node__hit { fill: transparent; }
+
+.map-node__ring,
+.map-node__realm,
+.map-hero__pulse {
+  transform-box: fill-box;
+}
+
+.map-node__mark {
+  fill: #1b1915;
+  stroke: rgba(226, 214, 184, 0.85);
+  stroke-width: 1.6;
+  transition: fill 0.15s;
+}
+
+.map-node--city .map-node__mark { stroke-width: 2; }
+.map-node--sect .map-node__mark { fill: rgba(106, 168, 147, 0.25); stroke: #9fd6c2; }
+.map-node--wild .map-node__mark { fill: rgba(226, 214, 184, 0.25); }
+
+.map-node:hover .map-node__mark { fill: rgba(227, 198, 135, 0.4); }
+
+.map-node__label {
+  fill: rgba(236, 229, 213, 0.82);
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: rgba(20, 18, 15, 0.9);
+  stroke-width: 3.5px;
+  pointer-events: none;
+}
+
+.map-node.is-selected .map-node__label { fill: var(--gold-bright); }
+.map-node.is-current .map-node__label { fill: #f3c0b5; }
+
+.map-node__ring {
+  fill: none;
+  stroke: var(--gold-bright);
+  stroke-width: 1.6;
+  stroke-dasharray: 4 3;
+  animation: ring-spin 8s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes ring-spin {
+  to { transform: rotate(360deg); }
+}
+
+.map-node.is-dest .map-node__mark { fill: rgba(227, 198, 135, 0.6); }
+
+.map-node__realm {
+  fill: rgba(194, 74, 59, 0.2);
+  stroke: rgba(230, 120, 100, 0.8);
+  stroke-width: 1.4;
+  animation: realm-pulse 1.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes realm-pulse {
+  50% { transform: scale(1.25); opacity: 0.55; }
+}
+
+.map-hero { pointer-events: none; }
+
+.map-hero__pulse {
+  fill: none;
+  stroke: rgba(213, 88, 74, 0.8);
+  stroke-width: 1.6;
+  animation: hero-pulse 2s ease-out infinite;
+  transform-origin: center;
+}
+
+@keyframes hero-pulse {
+  from { transform: scale(0.6); opacity: 1; }
+  to { transform: scale(2.2); opacity: 0; }
+}
+
+.map-hero__pin {
+  fill: #b8463a;
+  stroke: #f3d9cf;
+  stroke-width: 1.2;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+.map-hero__dot { fill: #f7e9dd; }
+
+.world-map__controls {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(8, 10, 12, 0.8);
+}
+
+/* ─── 地点详情 ─── */
+.location-info {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+  padding: 1rem;
+}
+
+.location-info__name {
+  font-size: 1.7rem;
+  letter-spacing: 0.25em;
+}
+
+.location-info__sub {
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+}
+
+.location-info__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+}
+
+.location-info__desc {
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.8;
+}
+
+.journey-card,
+.realm-card {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: start;
+  padding: 0.75rem 0.8rem;
+  border: 1px solid rgba(199, 162, 90, 0.35);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(64, 50, 24, 0.35), rgba(0, 0, 0, 0.2));
+}
+
+.journey-card.is-current { border-color: rgba(106, 168, 147, 0.4); background: linear-gradient(135deg, rgba(40, 70, 60, 0.35), rgba(0, 0, 0, 0.2)); }
+.journey-card.is-blocked { border-color: rgba(194, 74, 59, 0.4); background: rgba(60, 20, 16, 0.25); }
+
+.journey-card__kicker,
+.realm-card__kicker {
+  color: var(--gold);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.25em;
+}
+
+.journey-card.is-blocked .journey-card__kicker { color: #e8a597; }
+.journey-card.is-current .journey-card__kicker { color: #a6d8c6; }
+
+.journey-card__text,
+.realm-card__desc {
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.realm-card {
+  border-color: rgba(194, 74, 59, 0.5);
+  background: linear-gradient(135deg, rgba(90, 30, 24, 0.4), rgba(0, 0, 0, 0.2));
+}
+
+.realm-card__kicker { color: #f0a494; }
+.realm-card__name { color: var(--paper-50); font-family: var(--font-title); font-size: var(--fs-lead); letter-spacing: 0.15em; }
+
+.location-info__section {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.location-info__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.location-info__facts {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--panel-line);
+  font-size: var(--fs-small);
+}
+
+.location-info__facts div {
+  display: grid;
+  grid-template-columns: 4.2rem 1fr;
+  gap: 0.4rem;
+}
+
+.location-info__facts dt { color: var(--text-faint); }
+.location-info__facts dd { margin: 0; color: var(--paper-100); }
+
+/* ─── 秘境 ─── */
+.realm-list {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.realm-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.realm-row.is-active {
+  border-color: rgba(194, 74, 59, 0.6);
+  background: linear-gradient(90deg, rgba(90, 30, 24, 0.45), rgba(0, 0, 0, 0.2));
+}
+
+.realm-row__seal {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  border: 1px solid var(--panel-line-strong);
+  color: var(--text-faint);
+}
+
+.realm-row.is-active .realm-row__seal { color: #f0a494; border-color: rgba(230, 120, 100, 0.7); }
+.realm-row__seal .game-icon { width: 1.4rem; height: 1.4rem; }
+
+.realm-row__body header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.realm-row__body strong {
+  margin-right: 0.3rem;
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-lead);
+  letter-spacing: 0.12em;
+}
+
+.realm-row__body p {
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.realm-row__boss { color: var(--text-faint) !important; }
+
+.realm-list__last {
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+  text-align: center;
+}
+
+/* ─── 表格 ─── */
+.world-overview {
+  display: grid;
+  gap: 1rem;
+}
+
+.world-overview__summary {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.world-overview__summary dd {
+  font-size: var(--fs-lead);
+  font-family: var(--font-title);
+}
+
+.ink-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-small);
+}
+
+.ink-table th {
+  position: sticky;
+  top: -0.9rem;
+  padding: 0.4rem 0.5rem;
+  background: #13171b;
+  color: var(--text-faint);
+  font-weight: 400;
+  text-align: left;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--panel-line-strong);
+}
+
+.ink-table td {
+  padding: 0.38rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-dim);
+}
+
+.ink-table .num { text-align: right; }
+.ink-table tr:hover td { background: rgba(255, 255, 255, 0.03); }
+.ink-table tr.is-current td { background: rgba(106, 168, 147, 0.08); }
+
+.link-btn {
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-base);
+  letter-spacing: 0.05em;
+}
+
+.link-btn:hover { color: var(--gold-bright); text-decoration: underline; text-underline-offset: 3px; }

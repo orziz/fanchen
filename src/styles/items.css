@@ -1,0 +1,350 @@
+/* ─── 品阶色：凡品墨灰、灵品青玉、玄品苍蓝、地品赭金、天品朱砂 ─── */
+.rarity--common { --rarity: #8c969b; --rarity-glow: rgba(140, 150, 155, 0); }
+.rarity--uncommon { --rarity: #6aa893; --rarity-glow: rgba(106, 168, 147, 0.18); }
+.rarity--rare { --rarity: #7aa6c8; --rarity-glow: rgba(122, 166, 200, 0.22); }
+.rarity--epic { --rarity: #d2a45a; --rarity-glow: rgba(210, 164, 90, 0.28); }
+.rarity--legendary { --rarity: #d5584a; --rarity-glow: rgba(213, 88, 74, 0.32); }
+
+/* ─── 物品格 ─── */
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.2rem, 1fr));
+  gap: 0.5rem;
+}
+
+.item-tile {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.3rem;
+  aspect-ratio: 1 / 1.05;
+  padding: 0.5rem 0.3rem 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--rarity, #8c969b) 45%, transparent);
+  border-radius: var(--radius-sm);
+  background:
+    radial-gradient(circle at 50% 38%, var(--rarity-glow, transparent), transparent 70%),
+    linear-gradient(180deg, rgba(30, 36, 42, 0.8), rgba(12, 15, 18, 0.9));
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.item-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--rarity, #8c969b);
+}
+
+.item-tile.is-selected {
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 0 1px var(--gold-bright), 0 0 1rem rgba(227, 198, 135, 0.2);
+}
+
+.item-tile__icon {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--rarity, #8c969b);
+}
+
+.item-tile__icon .game-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.item-tile__name {
+  max-width: 100%;
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-body);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-tile__qty {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.35rem;
+  color: var(--paper-100);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+}
+
+.item-tile__badge {
+  position: absolute;
+  top: 0.25rem;
+  left: 0.35rem;
+  padding: 0 0.25rem;
+  border-radius: 0.2rem;
+  background: rgba(106, 168, 147, 0.3);
+  color: #cfeee2;
+  font-size: var(--fs-micro);
+}
+
+/* ─── 行囊布局 ─── */
+.bag-items {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr) 18rem;
+  gap: 1.1rem;
+  min-height: 100%;
+}
+
+.bag-items__side {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+}
+
+.bag-items__grid {
+  min-width: 0;
+}
+
+.equip-slots {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.equip-slot {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.45rem;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--rarity, #56636c) 40%, transparent);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.equip-slot .game-icon {
+  grid-row: 1 / 3;
+  width: 1.3rem;
+  height: 1.3rem;
+  color: var(--rarity, var(--text-faint));
+}
+
+.equip-slot__label { color: var(--text-faint); font-size: var(--fs-micro); }
+.equip-slot__name { color: var(--paper-50); font-family: var(--font-title); font-size: var(--fs-body); }
+.equip-slot.is-empty .equip-slot__name { color: var(--text-faint); }
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--panel-line);
+  border-radius: 1rem;
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+  transition: all 0.15s;
+}
+
+.filter-chip .num { color: var(--text-faint); font-size: var(--fs-micro); }
+.filter-chip:hover { border-color: var(--panel-line-strong); color: var(--paper-50); }
+
+.filter-chip.is-active {
+  border-color: rgba(199, 162, 90, 0.55);
+  background: rgba(199, 162, 90, 0.12);
+  color: var(--gold-bright);
+}
+
+/* ─── 物品详情 ─── */
+.item-detail {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--rarity, #56636c) 40%, transparent);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(ellipse at 20% 0%, var(--rarity-glow, transparent), transparent 60%),
+    rgba(0, 0, 0, 0.28);
+}
+
+.bag-items__detail--empty {
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--panel-line);
+  border-radius: var(--radius-md);
+}
+
+.item-detail__head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.item-detail__icon {
+  display: grid;
+  place-items: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  border: 1px solid color-mix(in srgb, var(--rarity) 50%, transparent);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--rarity);
+  flex: none;
+}
+
+.item-detail__icon .game-icon { width: 1.8rem; height: 1.8rem; }
+
+.item-detail__name {
+  font-size: 1.3rem;
+  letter-spacing: 0.1em;
+}
+
+.item-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.6rem;
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+}
+
+.rarity-label { color: var(--rarity); }
+
+.item-detail__desc {
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: 1.75;
+}
+
+.item-detail__facts {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--panel-line);
+  border-bottom: 1px solid var(--panel-line);
+  font-size: var(--fs-small);
+}
+
+.item-detail__facts div {
+  display: grid;
+  grid-template-columns: 3.4rem 1fr;
+  gap: 0.4rem;
+}
+
+.item-detail__facts dt { color: var(--text-faint); }
+.item-detail__facts dd { margin: 0; color: var(--paper-100); }
+
+.item-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.item-detail__reason {
+  color: #e6c48a;
+  font-size: var(--fs-small);
+}
+
+/* ─── 修习 ─── */
+.bag-skills {
+  display: grid;
+  grid-template-columns: 20rem minmax(0, 1fr);
+  grid-template-areas: "hero techs" "hero knows";
+  gap: 1.1rem 1.4rem;
+  align-items: start;
+}
+
+.skill-hero { grid-area: hero; }
+.bag-skills .skill-section:nth-of-type(2) { grid-area: techs; }
+.bag-skills .skill-section:nth-of-type(3) { grid-area: knows; }
+
+.skill-hero {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.1rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--rarity, #56636c) 45%, transparent);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(ellipse at 50% 0%, var(--rarity-glow, rgba(106, 168, 147, 0.1)), transparent 65%),
+    rgba(0, 0, 0, 0.28);
+}
+
+.skill-hero__kicker { color: var(--gold); font-size: var(--fs-micro); letter-spacing: 0.3em; }
+.skill-hero__name { font-size: 1.6rem; letter-spacing: 0.15em; }
+.skill-hero.is-empty .skill-hero__name { color: var(--text-faint); }
+.skill-hero__desc { color: var(--text-dim); font-family: var(--font-body); font-size: var(--fs-body); line-height: 1.7; }
+.skill-hero__effect { color: #bfe6d8; font-size: var(--fs-small); }
+
+.skill-section {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.skill-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.6rem;
+}
+
+.skill-card {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  padding: 0.75rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--rarity, #56636c) 38%, transparent);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.skill-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.skill-card__head .game-icon { color: var(--rarity); }
+
+.skill-card__head strong {
+  margin-right: auto;
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-lead);
+  letter-spacing: 0.08em;
+}
+
+.skill-card__desc,
+.skill-card__effect {
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: 1.65;
+}
+
+.skill-card__facts {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  font-size: var(--fs-small);
+}
+
+.skill-card__facts div {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr;
+  gap: 0.4rem;
+}
+
+.skill-card__facts dt { color: var(--text-faint); }
+.skill-card__facts dd { margin: 0; color: var(--paper-100); }
+
+.skill-card__actions {
+  display: flex;
+  gap: 0.4rem;
+}

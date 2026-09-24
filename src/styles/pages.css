@@ -1,0 +1,410 @@
+/* ─── 左列表右详情 ─── */
+.split-view {
+  display: grid;
+  grid-template-columns: 19rem minmax(0, 1fr);
+  gap: 1.2rem;
+  min-height: 100%;
+}
+
+.split-view__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.3rem 0 0;
+  display: grid;
+  align-content: start;
+  gap: 0.3rem;
+  border-right: 1px solid var(--panel-line);
+}
+
+.list-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.list-row:hover { background: rgba(255, 255, 255, 0.04); }
+
+.list-row.is-selected {
+  border-color: rgba(199, 162, 90, 0.45);
+  background: rgba(199, 162, 90, 0.08);
+}
+
+.list-row__main {
+  display: grid;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.list-row__main strong {
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-base);
+  letter-spacing: 0.08em;
+}
+
+.list-row__main span {
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.split-view__detail {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  min-width: 0;
+  max-width: 46rem;
+}
+
+/* ─── 势力详情 ─── */
+.faction-detail__head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.faction-detail__head h3 {
+  font-size: 1.7rem;
+  letter-spacing: 0.25em;
+}
+
+.faction-detail__head p {
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+}
+
+.faction-detail__desc {
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: 1.8;
+}
+
+.faction-detail__actions {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+}
+
+.faction-detail__gap,
+.faction-detail__warn {
+  color: #e6c48a;
+  font-size: var(--fs-small);
+}
+
+.faction-detail__warn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #f0a494;
+}
+
+/* 条件清单 */
+.req-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.req-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+}
+
+.req-list .game-icon { color: var(--cinnabar); }
+.req-list li.is-met .game-icon { color: var(--jade); }
+.req-list li.is-met { color: var(--paper-100); }
+
+.req-list__value {
+  margin-left: auto;
+  color: var(--paper-50);
+}
+
+/* 身份阶梯 */
+.rank-ladder {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+}
+
+.rank-ladder li {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.rank-ladder li.is-past { border-color: rgba(156, 129, 80, 0.5); }
+
+.rank-ladder li.is-current {
+  border-color: var(--gold-bright);
+  background: rgba(199, 162, 90, 0.12);
+}
+
+.rank-ladder__title {
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-base);
+  letter-spacing: 0.1em;
+}
+
+.rank-ladder__need { color: var(--text-faint); font-size: var(--fs-micro); }
+
+/* ─── 差使卡 ─── */
+.task-board {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 0.7rem;
+}
+
+.task-card {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.task-card.is-ready {
+  border-color: rgba(106, 168, 147, 0.5);
+  background: linear-gradient(135deg, rgba(40, 70, 60, 0.3), rgba(0, 0, 0, 0.2));
+}
+
+.task-card header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.task-card header .game-icon { color: var(--gold); }
+
+.task-card header strong {
+  margin-right: auto;
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-lead);
+  letter-spacing: 0.08em;
+}
+
+.task-card__desc {
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: 1.65;
+}
+
+.task-card__gap { color: #e6c48a; font-size: var(--fs-small); }
+
+.task-card footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed var(--panel-line);
+}
+
+.task-card__reward {
+  color: var(--gold-bright);
+  font-size: var(--fs-small);
+}
+
+/* ─── 自家势力 ─── */
+.own-faction {
+  display: grid;
+  gap: 1rem;
+}
+
+.own-faction__create {
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+  max-width: 34rem;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+.own-faction__create h3 {
+  font-size: 1.5rem;
+  letter-spacing: 0.3em;
+}
+
+.own-faction__gap { color: #e6c48a; font-size: var(--fs-small); }
+
+.branch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+}
+
+.branch-card {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.branch-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.branch-card strong {
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-lead);
+  letter-spacing: 0.1em;
+}
+
+.branch-card p {
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.plain-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.plain-list li {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--panel-line);
+}
+
+.plain-list strong { color: var(--paper-50); font-family: var(--font-title); }
+.plain-list span { color: var(--text-dim); font-size: var(--fs-small); }
+
+/* ─── 营生 ─── */
+.asset-glyph {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 0.2rem;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--gold);
+}
+
+.asset-glyph--farm { color: #b9d58f; }
+.asset-glyph--shop { color: #e3c687; }
+.asset-glyph--workshop { color: #a9cbe0; }
+
+.asset-detail {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.asset-detail__head h3 { font-size: 1.5rem; letter-spacing: 0.2em; }
+.asset-detail__head p { color: var(--text-faint); font-size: var(--fs-small); }
+
+.asset-detail__state,
+.asset-detail__growth,
+.asset-detail__manage {
+  display: grid;
+  justify-items: start;
+  gap: 0.55rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.asset-detail__state .ink-bar { width: 100%; }
+
+.asset-detail__growth p {
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+}
+
+.asset-detail__label {
+  display: inline-block;
+  width: 2.6rem;
+  color: var(--gold);
+}
+
+.chip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.recipe-list {
+  display: grid;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.recipe-row {
+  display: grid;
+  grid-template-columns: 7rem 1fr auto;
+  gap: 0.6rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-size: var(--fs-small);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.recipe-row:hover { border-color: var(--panel-line-strong); background: rgba(255, 255, 255, 0.03); }
+.recipe-row[aria-disabled="true"] { opacity: 0.55; }
+.recipe-row strong { color: var(--paper-50); font-family: var(--font-title); }
+.recipe-row span { color: var(--text-dim); }
+
+.record-grid--two { grid-template-columns: repeat(2, 1fr); width: 100%; }
+
+.empty-hero {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  max-width: 30rem;
+  margin: 3rem auto;
+  text-align: center;
+}
+
+.empty-hero > .game-icon {
+  width: 3rem;
+  height: 3rem;
+  color: var(--gold-soft);
+}
+
+.empty-hero h3 { font-size: 1.4rem; letter-spacing: 0.3em; }
+.empty-hero p { color: var(--text-dim); font-family: var(--font-body); line-height: 1.8; }

@@ -224,6 +224,83 @@
 .enemy-in-enter-from { opacity: 0; transform: translateX(calc(-50% + 3rem)); }
 .enemy-in-leave-to { opacity: 0; }
 
+/* ─── 交战界面 ─── */
+.combat-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.combat-hud__plate {
+  position: absolute;
+  bottom: 43%;
+  display: grid;
+  gap: 0.25rem;
+  width: 11rem;
+  padding: 0.45rem 0.6rem;
+  transform: translateX(-50%);
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(8, 10, 12, 0.72);
+  pointer-events: auto;
+  animation: rise-in 0.4s var(--ease-out);
+}
+
+.combat-hud__plate strong {
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-base);
+  letter-spacing: 0.1em;
+}
+
+.combat-hud__plate--hero { left: calc(50% - 7rem); }
+.combat-hud__plate--enemy { left: calc(50% + 8rem); width: 13rem; border-color: rgba(194, 74, 59, 0.4); }
+
+.combat-hud__name {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.combat-hud__affixes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.combat-hud__log {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--dock-h) + 0.6rem);
+  display: grid;
+  gap: 0.2rem;
+  width: min(30rem, 60%);
+  margin: 0;
+  padding: 0.35rem 2rem;
+  list-style: none;
+  transform: translateX(-50%);
+  text-align: center;
+  background: linear-gradient(90deg, transparent, rgba(6, 8, 10, 0.72) 18%, rgba(6, 8, 10, 0.72) 82%, transparent);
+}
+
+.combat-hud__log li {
+  color: var(--paper-100);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+}
+
+.combat-hud__log li:nth-child(1) { font-size: var(--fs-body); color: var(--paper-50); }
+.combat-hud__log li:nth-child(2) { opacity: 0.7; }
+.combat-hud__log li:nth-child(3) { opacity: 0.45; }
+.combat-hud__log li.is-warn { color: #f0b3a4; }
+.combat-hud__log li.is-loot { color: #f3e2b4; }
+
+.combat-line-enter-active { transition: all 0.35s var(--ease-out); }
+.combat-line-enter-from { opacity: 0; transform: translateY(0.4rem); }
+.combat-line-leave-active { display: none; }
+
 /* ─── 飘字 ─── */
 .scene-floats {
   position: absolute;

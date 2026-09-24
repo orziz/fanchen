@@ -1,0 +1,253 @@
+/* ─── 货架 ─── */
+.shop-view {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 19rem;
+  grid-template-rows: auto 1fr;
+  gap: 0.9rem 1.2rem;
+}
+
+.shop-view__places {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+}
+
+.shop-view__places .filter-chip { flex: none; }
+.shop-view__places .tag { padding: 0 0.3rem; }
+
+.shop-view__stock {
+  display: grid;
+  align-content: start;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.shop-view__stock > .ink-btn { justify-self: start; }
+
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
+  gap: 0.55rem;
+}
+
+.listing-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--rarity, #56636c) 35%, transparent);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.listing-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--rarity-glow, transparent), rgba(0, 0, 0, 0.35) 70%);
+  color: var(--rarity);
+}
+
+.listing-card__icon .game-icon { width: 1.4rem; height: 1.4rem; }
+
+.listing-card__body {
+  display: grid;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.listing-card__body strong {
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-base);
+  letter-spacing: 0.05em;
+}
+
+.listing-card__body span {
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listing-card__seller { color: var(--text-faint) !important; }
+
+.listing-card__buy {
+  display: grid;
+  justify-items: end;
+  gap: 0.3rem;
+}
+
+.listing-card__price {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--gold-bright);
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+
+.shop-view__sell {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  padding-left: 1.1rem;
+  border-left: 1px solid var(--panel-line);
+}
+
+.sell-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.sell-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: var(--fs-small);
+}
+
+.sell-list .game-icon { color: var(--rarity); }
+.sell-list__name { color: var(--paper-100); }
+.sell-list__name .num { color: var(--text-faint); }
+.sell-list__price { color: var(--text-dim); }
+.sell-list__price.is-favored { color: var(--gold-bright); }
+
+/* ─── 行商 ─── */
+.trade-view {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.caravan-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(199, 162, 90, 0.5);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, rgba(64, 50, 24, 0.5), rgba(0, 0, 0, 0.2));
+}
+
+.caravan-card__icon { width: 2rem !important; height: 2rem !important; color: var(--gold-bright); }
+.caravan-card__body { display: grid; gap: 0.1rem; }
+.caravan-card__kicker { color: var(--gold); font-size: var(--fs-micro); letter-spacing: 0.25em; }
+.caravan-card__body strong { color: var(--paper-50); font-family: var(--font-title); font-size: var(--fs-lead); }
+.caravan-card__body p { color: var(--text-dim); font-size: var(--fs-small); }
+
+.route-table {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.route-row {
+  display: grid;
+  grid-template-columns: 7rem 1fr 2.6rem 4rem 4rem 4.4rem 6rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.route-row .num { text-align: right; }
+.route-row:not(.route-row--head):hover { background: rgba(255, 255, 255, 0.03); }
+
+.route-row--head {
+  color: var(--text-faint);
+  border-bottom: 1px solid var(--panel-line-strong);
+  border-radius: 0;
+}
+
+.route-row__dest { color: var(--paper-50); font-family: var(--font-title); font-size: var(--fs-base); }
+.route-row__profit { color: var(--gold-bright); font-weight: 600; }
+
+.route-row.is-best {
+  background: linear-gradient(90deg, rgba(64, 50, 24, 0.35), transparent);
+  box-shadow: inset 2px 0 0 var(--gold);
+}
+
+/* ─── 拍卖 ─── */
+.auction-view {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.lot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 0.7rem;
+}
+
+.lot-card {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: start;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--rarity, #56636c) 38%, transparent);
+  border-radius: var(--radius-sm);
+  background:
+    radial-gradient(ellipse at 10% 0%, var(--rarity-glow, transparent), transparent 55%),
+    rgba(0, 0, 0, 0.24);
+}
+
+.lot-card.is-leading { box-shadow: inset 0 0 0 1px rgba(106, 168, 147, 0.6); }
+
+.lot-card header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.lot-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--rarity);
+}
+
+.lot-card header div { display: grid; }
+.lot-card header strong { color: var(--paper-50); font-family: var(--font-title); font-size: var(--fs-lead); }
+.lot-card header .rarity-label { font-size: var(--fs-micro); }
+
+.lot-card__timer { color: var(--text-faint); font-size: var(--fs-small); }
+.lot-card__timer.is-urgent { color: #f0a494; }
+
+.lot-card__desc {
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.lot-card__facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  width: 100%;
+  margin: 0;
+  font-size: var(--fs-small);
+}
+
+.lot-card__facts dt { color: var(--text-faint); font-size: var(--fs-micro); }
+.lot-card__facts dd { margin: 0; color: var(--paper-100); }
+.lot-card__facts dd.is-you { color: #a6d8c6; }
