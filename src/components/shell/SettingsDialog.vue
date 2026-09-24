@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { useSettings } from '@/composables/useSettings'
@@ -78,6 +78,15 @@ const { returnToTitle } = useGamePhase()
 const { closeBook } = useBooks()
 const notice = ref('')
 const noticeError = ref(false)
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape') return
+  event.preventDefault()
+  emit('close')
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 function saveNow() {
   store.saveGame(true)

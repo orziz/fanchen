@@ -2,7 +2,7 @@
   <div class="game-root" :class="{ 'reduce-motion': settings.reduceMotion }">
     <Transition name="phase" mode="out-in">
       <TitleScreen v-if="phase === 'title'" key="title" @settings="settingsOpen = true" />
-      <GameScreen v-else key="game" @settings="settingsOpen = true" />
+      <GameScreen v-else key="game" :modal-open="settingsOpen" @settings="settingsOpen = true" />
     </Transition>
     <SettingsDialog v-if="settingsOpen" :in-game="phase === 'playing'" @close="settingsOpen = false" />
     <TooltipLayer />
