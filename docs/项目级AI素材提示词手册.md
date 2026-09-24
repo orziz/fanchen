@@ -1,5 +1,7 @@
 # 凡尘立道录 · 项目级 AI 素材提示词手册
 
+> 已被取代：网页游戏化重构后，场景、人物、妖物与图标全部由代码程序化绘制（见 [visual-design-spec.md](./visual-design-spec.md) 与 [网页游戏重构说明](./网页游戏重构说明.md)），游戏不再接入位图素材，本文列出的素材位均已不用。以下内容仅作历史参考。
+
 > 用途：把本项目需要的角色、场景、UI、图标与装饰素材整理成一套可直接交给 ChatGPT Images 2.0 的项目级提示词包。
 > 当前唯一风格真相源：江湖模式的深色水墨武侠气质。
 > 当前已接线资产：public/assets/jianghu-bg.jpg、public/assets/character-silhouette.png。
