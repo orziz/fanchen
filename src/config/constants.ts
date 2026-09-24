@@ -10,16 +10,15 @@ export const PLAYER_SECT_ENABLED = false
 export const PLAYER_SECT_CREATE_BLOCK_TEXT = '山门未启，眼下还不是另立宗门的时候。'
 export const PLAYER_SECT_FROZEN_TEXT = '山门暂封，旧日门内事务先行封存，只留账册与名录备查。'
 
+/** 每跳间隔（毫秒）：一跳为半个时辰，一日二十四跳。 */
 export const LOOP_INTERVALS: Record<number, number> = {
-  0.5: 12000,
-  1: 7600,
-  2: 4200,
-  4: 2100,
-  10: 900,
+  1: 3000,
+  2: 1500,
+  4: 750,
+  10: 300,
 }
 
 export const SPEED_OPTIONS = [
-  { value: 0.5, label: '0.5x' },
   { value: 1, label: '1x' },
   { value: 2, label: '2x' },
   { value: 4, label: '4x' },

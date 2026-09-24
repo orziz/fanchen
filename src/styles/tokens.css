@@ -1,0 +1,89 @@
+/*
+ * 深墨水墨舞台：设计变量与整体缩放。
+ * 以 1280×720 为基准，1rem = 舞台高度 / 45（基准下为 16px），
+ * 同时受宽度约束（宽 80rem），整屏随窗口等比缩放、不出现滚动条。
+ */
+:root {
+  /* 墨阶 */
+  --ink-950: #07090b;
+  --ink-900: #0c0f12;
+  --ink-850: #11151a;
+  --ink-800: #161b21;
+  --ink-700: #1e252c;
+  --ink-600: #29323a;
+  --ink-500: #3a454e;
+  --ink-400: #56636c;
+  --mist-300: #7f8b91;
+  --mist-200: #a7b0b3;
+  --paper-100: #d8d1c1;
+  --paper-50: #ece5d5;
+
+  /* 点睛色：只在关键处少量使用 */
+  --gold: #c7a25a;
+  --gold-soft: #9c8150;
+  --gold-bright: #e3c687;
+  --jade: #6aa893;
+  --jade-soft: #3f6f61;
+  --cinnabar: #c24a3b;
+  --cinnabar-soft: #7d2f26;
+  --azure: #6f9dbd;
+  --ochre: #b58a4f;
+
+  /* 文字 */
+  --text: #e7e0d0;
+  --text-dim: #aaa597;
+  --text-faint: #75726a;
+  --text-on-light: #1b1e21;
+
+  /* 面板：墨色毛玻璃 */
+  --panel-bg: rgba(12, 15, 18, 0.74);
+  --panel-bg-strong: rgba(10, 12, 15, 0.9);
+  --panel-bg-soft: rgba(24, 29, 35, 0.6);
+  --panel-line: rgba(214, 196, 150, 0.14);
+  --panel-line-strong: rgba(214, 196, 150, 0.28);
+  --panel-blur: 10px;
+  --shadow-panel: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.45);
+  --shadow-float: 0 0.9rem 2.6rem rgba(0, 0, 0, 0.55);
+
+  /* 字体 */
+  --font-title: "STKaiti", "KaiTi", "Kaiti SC", "楷体", "FangSong", serif;
+  --font-body: "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  --font-ui: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+
+  /* 字号阶 */
+  --fs-micro: 0.6875rem;
+  --fs-small: 0.75rem;
+  --fs-body: 0.8125rem;
+  --fs-base: 0.875rem;
+  --fs-lead: 1rem;
+  --fs-title: 1.25rem;
+  --fs-display: 2rem;
+
+  /* 圆角：克制 */
+  --radius-sm: 0.2rem;
+  --radius-md: 0.35rem;
+  --radius-lg: 0.5rem;
+
+  /* 舞台尺寸 */
+  --topbar-h: 3rem;
+  --dock-h: 4.4rem;
+  --side-left-w: 15.5rem;
+  --side-right-w: 17rem;
+  --gutter: 0.6rem;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-ink: cubic-bezier(0.45, 0.05, 0.25, 1);
+
+  color-scheme: dark;
+}
+
+html {
+  font-size: 16px;
+  font-size: clamp(9px, min(2.2222vh, 1.25vw), 34px);
+}
+
+@supports (height: 100dvh) {
+  html {
+    font-size: clamp(9px, min(2.2222dvh, 1.25vw), 34px);
+  }
+}

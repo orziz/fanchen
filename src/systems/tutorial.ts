@@ -32,7 +32,6 @@ export function isOpeningTutorialActive(story: StoryState) {
 export function primeOpeningTutorialState() {
   const ctx = getContext()
   const { player, story } = ctx.game
-  const { setTab } = useStage()
 
   story.flags[OPENING_TUTORIAL_FLAGS.active] = true
   story.flags[OPENING_TUTORIAL_FLAGS.started] = false
@@ -47,7 +46,6 @@ export function primeOpeningTutorialState() {
   player.inventory = []
   player.equipment = { weapon: null, armor: null, heart: null }
   ctx.selectedLocationId = 'qinghe'
-  setTab('inventory')
 }
 
 export function shouldAutoStartOpeningTutorial(story: StoryState) {

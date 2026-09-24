@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { GameState, LearnedTechniqueState, RelationState } from '@/types/game'
-import { useStage } from '@/composables/useStage'
+import { useBooks } from '@/composables/useBooks'
 import {
   FACTIONS,
   FACTION_MAP,
@@ -46,6 +46,12 @@ import {
   deriveLifeStage,
 } from '@/stores/game/factories'
 import { OBSOLETE_SAVE_STORAGE_KEYS, hydrateGameState, readStoredSave } from '@/stores/game/hydration'
+import { ORIGIN_MAP } from '@/config/origins'
+
+export interface NewLifeOptions {
+  name: string
+  originId: string
+}
 
 const STALE_SAVE_KEYS = [...LEGACY_SAVE_KEYS, ...OBSOLETE_SAVE_STORAGE_KEYS]
 
@@ -58,7 +64,7 @@ function resolveTechniqueEffect(
 }
 
 export const useGameStore = defineStore('game', () => {
-  const { setTab } = useStage()
+  const { closeBook } = useBooks()
   const game = ref<GameState>(createGameState())
   const selectedLocationId = ref('qinghe')
   const speed = ref(1)
@@ -302,7 +308,6 @@ export const useGameStore = defineStore('game', () => {
 
   function maybeStartOpeningTutorial() {
     if (!shouldAutoStartOpeningTutorial(game.value.story)) return
-    setTab('inventory')
     if (startStory(OPENING_TUTORIAL_STORY_ID, { locationId: game.value.player.locationId }, 'overlay')) {
       markOpeningTutorialStarted()
     }
@@ -366,11 +371,30 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  function resetGame() {
+  function applyOrigin(options: NewLifeOptions) {
+    const p = game.value.player
+    const origin = ORIGIN_MAP.get(options.originId)
+    const name = options.name.trim().slice(0, 6)
+    if (name) p.name = name
+    if (!origin) return
+    const bonus = origin.bonus
+    p.money += bonus.money || 0
+    p.power += bonus.power || 0
+    p.insight += bonus.insight || 0
+    p.charisma += bonus.charisma || 0
+    p.skills.farming += bonus.farming || 0
+    p.skills.crafting += bonus.crafting || 0
+    p.skills.trading += bonus.trading || 0
+    origin.items.forEach(({ itemId, quantity }) => addItemToInventory(itemId, quantity))
+    game.value.story.flags[`origin.${origin.id}`] = true
+  }
+
+  function resetGame(options: NewLifeOptions | null = null) {
     game.value = createGameState()
     primeOpeningTutorialState()
+    if (options) applyOrigin(options)
     selectedLocationId.value = game.value.player.locationId
-    setTab('inventory')
+    closeBook()
     saveState.value = '新轮回已开启'
     updateDerivedStats()
     meetNpcsAtLocation(game.value.player.locationId)
@@ -378,7 +402,32 @@ export const useGameStore = defineStore('game', () => {
     maybeStartOpeningTutorial()
     saveGame(false)
     saveState.value = '新轮回已保存'
+    initialized.value = true
     bus.emit('game:reset')
+  }
+
+  function startNewLife(options: NewLifeOptions) {
+    resetGame(options)
+  }
+
+  function hasStoredSave() {
+    return Boolean(readStoredSave()?.raw)
+  }
+
+  /** 导出当前进度为 JSON 文本，供玩家另存为文件。 */
+  function exportSave() {
+    game.value.lastSavedAt = Date.now()
+    normalizeNumericState()
+    return JSON.stringify(game.value)
+  }
+
+  /** 导入存档文本：先按现行规则修复成完整存档，确认可用后再落盘并读入。 */
+  function importSave(raw: string) {
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || !parsed.player || !parsed.world || !Array.isArray(parsed.npcs)) throw new Error('invalid_save')
+    persistSnapshot(JSON.stringify(hydrateGameState(parsed)))
+    loadGame()
+    initialized.value = true
   }
 
   function initializeGame() {
@@ -406,9 +455,7 @@ export const useGameStore = defineStore('game', () => {
     }
     updateDerivedStats()
     selectedLocationId.value = game.value.player.locationId
-    if (!resumedStoredSave || shouldAutoStartOpeningTutorial(game.value.story)) {
-      setTab('inventory')
-    }
+    closeBook()
     meetNpcsAtLocation(game.value.player.locationId)
     syncOpeningTutorialState()
     appendLog(resumedStoredSave ? '旧日行程已经续上。' : '你在青禾镇街口惊醒，怀里只剩一点零碎盘缠。', 'info')
@@ -456,7 +503,7 @@ export const useGameStore = defineStore('game', () => {
     appendLog, getRegionStanding, adjustRegionStanding,
     adjustFactionStanding, adjustRelation,
     updateDerivedStats, clearLog, toggleAutoBattle,
-    saveGame, loadGame, resetGame, initializeGame,
+    saveGame, loadGame, resetGame, initializeGame, startNewLife, hasStoredSave, exportSave, importSave,
     createRelationState, deriveLifeStage, createInitialSect, createInitialPlayerFaction,
     createLootBundle, createNPC, createMarketListings, createAuctionListings,
     createInitialTerritories, findRoute,

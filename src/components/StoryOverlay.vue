@@ -11,13 +11,10 @@
   >
     <div class="story-overlay__backdrop" aria-hidden="true"></div>
     <section ref="panelElement" class="story-overlay__panel" tabindex="-1">
-      <div class="story-overlay__head">
-        <div>
-          <p class="section-kicker">剧情面板</p>
-          <h2 id="story-dialog-title">当前剧情</h2>
-          <p id="story-dialog-summary" class="sr-only">完成当前剧情选择后可继续游戏。</p>
-        </div>
-        <button v-if="canClose" class="control-button ghost" type="button" @click="closeStory()">收起</button>
+      <h2 id="story-dialog-title" class="sr-only">{{ scene?.title }}</h2>
+      <p id="story-dialog-summary" class="sr-only">{{ scene?.summary }}</p>
+      <div v-if="canClose && !scene?.isTerminal" class="story-overlay__head">
+        <button class="icon-btn" type="button" aria-label="收起" data-tip="收起" @click="closeStory()"><GameIcon name="close" /></button>
       </div>
       <StoryScene />
     </section>
@@ -29,6 +26,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import StoryScene from '@/components/StoryScene.vue'
+import GameIcon from '@/components/common/GameIcon.vue'
 import { closeStory, getActiveStoryScene } from '@/systems/story'
 import { canDismissStoryScene } from '@/systems/tutorial'
 
@@ -69,7 +67,7 @@ function handleKeydown(event: KeyboardEvent) {
   const focusable = getFocusableElements()
   if (!focusable.length) {
     event.preventDefault()
-    panelElement.value?.focus()
+    panelElement.value?.focus({ preventScroll: true })
     return
   }
 
@@ -77,10 +75,10 @@ function handleKeydown(event: KeyboardEvent) {
   const last = focusable[focusable.length - 1]
   if (event.shiftKey && document.activeElement === first) {
     event.preventDefault()
-    last.focus()
+    last.focus({ preventScroll: true })
   } else if (!event.shiftKey && document.activeElement === last) {
     event.preventDefault()
-    first.focus()
+    first.focus({ preventScroll: true })
   }
 }
 
@@ -93,7 +91,7 @@ watch(isVisible, async (visible) => {
   previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
   await nextTick()
   const firstChoice = overlayElement.value?.querySelector<HTMLElement>('.story-choice-button:not(:disabled)')
-  ;(firstChoice || getFocusableElements()[0] || panelElement.value)?.focus()
+  ;(firstChoice || getFocusableElements()[0] || panelElement.value)?.focus({ preventScroll: true })
 })
 
 onBeforeUnmount(restoreFocus)

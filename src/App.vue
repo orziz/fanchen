@@ -1,10 +1,7 @@
 <template>
-  <GameShellHost />
+  <GameRoot />
 </template>
 
 <script setup lang="ts">
-import GameShellHost from '@/components/GameShellHost.vue'
-import { useGameLoop } from '@/composables/useGameLoop'
-
-useGameLoop()
+import GameRoot from '@/components/GameRoot.vue'
 </script>

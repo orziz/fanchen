@@ -1,3 +1,4 @@
+import { bus } from '@/core/events'
 import { getContext } from '@/core/context'
 import { addPlayerMetric } from '@/core/integerProgress'
 import { FACTION_MAP, LOCATION_MAP, getItem } from '@/config'
@@ -349,6 +350,7 @@ export function joinFaction(factionId: string) {
   if (previous && previous.id !== factionId) ctx.appendLog(`你离开了${previous.name}，转而投向${faction.name}。`, 'npc')
   g.player.title = `${faction.name}${faction.titles[0]}`
   ctx.appendLog(`你正式加入${faction.name}，身份为"${faction.titles[0]}"。`, 'loot')
+  bus.emit('faction:joined', { factionId, name: faction.name, title: faction.titles[0] })
   syncOpeningTutorialState({ announce: true })
 }
 

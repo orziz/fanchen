@@ -80,6 +80,7 @@ export function startEncounter(source = 'hunt') {
   g.player.action = source
   addCombatHistory(`你遭遇了${enemy.affixIds.length ? `${enemy.affixIds.map(id => getAffix(id)?.label || '').join('、')}·` : ''}${enemy.name}。`, 'warn')
   ctx.appendLog(`你在${location.name}遭遇${enemy.name}，战斗一触即发。`, 'warn')
+  bus.emit('combat:start', { enemy })
   return enemy
 }
 
@@ -99,6 +100,7 @@ export function challengeRealm(realmId: string) {
   g.combat.autoBattle = true; g.combat.playerEffects = g.combat.playerEffects || { burn: 0, guard: 0, chill: 0 }
   addCombatHistory(`你踏入${realm.name}，${enemy.name}自深处现身。`, 'warn')
   ctx.appendLog(`你闯入${realm.name}，与${enemy.name}正面相逢。`, 'warn')
+  bus.emit('combat:start', { enemy })
 }
 
 export function startPursuitEncounter(factionId: string, source = 'travel') {
@@ -143,6 +145,7 @@ export function startPursuitEncounter(factionId: string, source = 'travel') {
   g.player.action = 'combat'
   addCombatHistory(`你被${faction.name}的人马当场拦下，${enemy.name}已逼到近前。`, 'warn')
   ctx.appendLog(`你在${location.name}${source === 'travel' ? '行路' : '活动'}时撞上了${faction.name}的追缉。`, 'warn')
+  bus.emit('combat:start', { enemy })
   return enemy
 }
 
@@ -171,11 +174,16 @@ function computePlayerDamage(kind: string) {
 }
 
 function enemyReceivesDamage(enemy: EnemyState, rawDamage: number) {
-  if (Math.random() < enemy.dodge) { addCombatHistory(`${enemy.name}身形一晃，避开了你的攻势。`, 'warn'); return 0 }
+  if (Math.random() < enemy.dodge) {
+    addCombatHistory(`${enemy.name}身形一晃，避开了你的攻势。`, 'warn')
+    bus.emit('combat:enemy-dodge')
+    return 0
+  }
   const effectiveDefense = Math.max(0, enemy.defense - enemy.effects.exposed * 0.06)
   const finalDamage = Math.max(5, Math.round(rawDamage * (1 - effectiveDefense)))
   enemy.hp = Math.max(0, enemy.hp - finalDamage)
   addCombatHistory(`你打中了${enemy.name}，造成${finalDamage}点伤害。`, 'loot')
+  bus.emit('combat:enemy-hit', { damage: finalDamage })
   return finalDamage
 }
 
@@ -190,6 +198,7 @@ function playerCastSpell(enemy: EnemyState, skillId: string) {
   }
   ctx.adjustResource('qi', -qiCost, 'maxQi')
   addCombatHistory(`你运起${technique.name}。`, 'info')
+  bus.emit('combat:spell', { skillId, name: technique.name })
   const damage = computePlayerDamage('attack') * Math.max(1, getTechniqueEffectValue(skillId, 'damageMultiplier') || 1)
   enemyReceivesDamage(enemy, damage)
   const burn = Math.round(getTechniqueEffectValue(skillId, 'burn'))
@@ -223,6 +232,7 @@ function tryFlee(): boolean {
     addCombatHistory(`你成功摆脱了${enemy.name}。`, 'info')
     ctx.appendLog(`你从${enemy.name}手中脱身，暂避锋芒。`, 'info')
     ctx.game.combat.currentEnemy = null; ctx.game.combat.pendingRealmId = null
+    bus.emit('combat:flee')
     return true
   }
   addCombatHistory(`你试图脱身，却被${enemy.name}缠住。`, 'warn')
@@ -237,6 +247,7 @@ function enemyTurn(enemy: EnemyState) {
   const damage = Math.max(4, Math.round(enemy.power * randomFloat(0.84, 1.12) * guardMultiplier * chillMultiplier))
   ctx.adjustResource('hp', -damage, 'maxHp')
   addCombatHistory(`${enemy.name}反击，令你损失${damage}点气血。`, 'warn')
+  bus.emit('combat:player-hit', { damage, guarded: guardMultiplier < 1 })
   if (enemy.qiBurn) ctx.adjustResource('qi', -enemy.qiBurn, 'maxQi')
   if (enemy.burnOnHit) effects.burn = Math.max(effects.burn, enemy.burnOnHit)
   if (enemy.chillOnHit) { effects.chill = Math.max(effects.chill, enemy.chillOnHit); ctx.adjustResource('stamina', -enemy.chillOnHit, 'maxStamina') }
@@ -269,6 +280,7 @@ function resolveVictory(enemy: EnemyState) {
   addCombatHistory('战斗结束，你赢下了这场厮杀。', 'loot')
   ctx.game.combat.lastResult = { outcome: 'victory', enemy: enemy.name, boss: enemy.boss }
   ctx.game.combat.currentEnemy = null; ctx.game.combat.autoBattle = false
+  bus.emit('combat:victory', { name: enemy.name, boss: enemy.boss, money: enemy.rewards.money, cultivation: enemy.rewards.cultivation })
   checkRankGrowth()
 }
 
@@ -278,6 +290,7 @@ function resolveDefeat(enemy: EnemyState) {
   ctx.appendLog(`你败给了${enemy.name}，所幸留得性命。`, 'warn')
   ctx.game.combat.lastResult = { outcome: 'defeat', enemy: enemy.name, boss: enemy.boss }
   ctx.game.combat.currentEnemy = null; ctx.game.combat.pendingRealmId = null; ctx.game.combat.autoBattle = false
+  bus.emit('combat:defeat', { name: enemy.name })
   revivePlayer()
 }
 

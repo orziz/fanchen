@@ -1,74 +1,87 @@
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { storeToRefs } from 'pinia'
+import { onBeforeUnmount, ref, watch } from 'vue'
 import { useGameStore } from '@/stores/game'
 import { gameStep } from '@/systems/autoplay'
-import { LOOP_INTERVALS, AUTO_SAVE_INTERVAL } from '@/config'
+import { AUTO_SAVE_INTERVAL, LOOP_INTERVALS } from '@/config'
+import { useGamePhase } from '@/composables/useGamePhase'
 
+const paused = ref(false)
+const holdReasons = ref(new Set<string>())
+
+/**
+ * 世界时钟：游戏中才走；暂停、剧情遮罩、设置面板、页面隐藏或“手动操作”时停。
+ * 交战时回合加快，让一场厮杀在十几秒内打完。
+ */
 export function useGameLoop() {
   const store = useGameStore()
-  const { speed } = storeToRefs(store)
-  const running = ref(true)
+  const { phase } = useGamePhase()
+  let timer = 0
+  let saveTimer = 0
 
-  let loopTimer: ReturnType<typeof setInterval> | null = null
-  let saveTimer: ReturnType<typeof setInterval> | null = null
+  function canTick() {
+    const visible = typeof document === 'undefined' || document.visibilityState === 'visible'
+    const storyBlocking = Boolean(store.story.activeStoryId && store.story.presentation === 'overlay')
+    return phase.value === 'playing'
+      && store.initialized
+      && !paused.value
+      && holdReasons.value.size === 0
+      && visible
+      && !storyBlocking
+      && store.player.mode !== 'manual'
+  }
 
-  function canAutoTick() {
-    const isPageVisible = typeof document === 'undefined' || document.visibilityState === 'visible'
-    const hasBlockingStory = Boolean(store.story.activeStoryId && store.story.presentation === 'overlay')
-    return running.value && isPageVisible && !hasBlockingStory && store.player.mode !== 'manual'
+  function interval() {
+    const base = LOOP_INTERVALS[store.speed] ?? LOOP_INTERVALS[1]
+    return store.combat.currentEnemy ? Math.max(260, Math.round(base * 0.55)) : base
+  }
+
+  function schedule() {
+    window.clearTimeout(timer)
+    timer = window.setTimeout(tick, interval())
   }
 
   function tick() {
-    if (!canAutoTick()) return
-    store.updateDerivedStats()
-    gameStep()
-    store.updateDerivedStats()
-  }
-
-  function startLoop() {
-    stopLoop()
-    if (!canAutoTick()) return
-    const interval = LOOP_INTERVALS[speed.value] ?? LOOP_INTERVALS[1]
-    loopTimer = setInterval(tick, interval)
-  }
-
-  function stopLoop() {
-    if (loopTimer !== null) {
-      clearInterval(loopTimer)
-      loopTimer = null
+    if (canTick()) {
+      store.updateDerivedStats()
+      gameStep()
+      store.updateDerivedStats()
     }
+    schedule()
   }
 
   function startAutoSave() {
-    stopAutoSave()
-    saveTimer = setInterval(() => store.saveGame(false), AUTO_SAVE_INTERVAL)
+    window.clearInterval(saveTimer)
+    saveTimer = window.setInterval(() => {
+      if (phase.value === 'playing' && store.initialized) store.saveGame(false)
+    }, AUTO_SAVE_INTERVAL)
   }
 
-  function stopAutoSave() {
-    if (saveTimer !== null) {
-      clearInterval(saveTimer)
-      saveTimer = null
-    }
+  watch(() => store.speed, schedule)
+  watch(phase, value => { if (value === 'playing') schedule() })
+
+  schedule()
+  startAutoSave()
+
+  onBeforeUnmount(() => {
+    window.clearTimeout(timer)
+    window.clearInterval(saveTimer)
+  })
+
+  return { paused }
+}
+
+/** 其他界面借此暂停时钟（如设置面板），release 后恢复。 */
+export function useClock() {
+  function togglePause() { paused.value = !paused.value }
+  function resume() { paused.value = false }
+  function hold(reason: string) {
+    const next = new Set(holdReasons.value)
+    next.add(reason)
+    holdReasons.value = next
   }
-
-  watch(speed, () => {
-    if (running.value) startLoop()
-  })
-
-  watch(() => store.player.mode, () => {
-    if (running.value) startLoop()
-  })
-
-  onMounted(() => {
-    store.initializeGame()
-    startLoop()
-    startAutoSave()
-  })
-
-  onUnmounted(() => {
-    stopLoop()
-    stopAutoSave()
-  })
-
-  return { running, speed }
+  function release(reason: string) {
+    const next = new Set(holdReasons.value)
+    next.delete(reason)
+    holdReasons.value = next
+  }
+  return { paused, togglePause, resume, hold, release }
 }

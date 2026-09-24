@@ -1,0 +1,392 @@
+/* ─── 场景：画布铺底，人物立于正中地坪 ─── */
+.scene-view {
+  position: relative;
+  overflow: hidden;
+  background: var(--ink-900);
+}
+
+.scene-view__shaker {
+  position: absolute;
+  inset: 0;
+}
+
+.scene-view__shaker.is-shaking {
+  animation: scene-shake 0.36s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes scene-shake {
+  20% { transform: translate(calc(var(--shake, 1) * -0.35rem), calc(var(--shake, 1) * 0.12rem)); }
+  40% { transform: translate(calc(var(--shake, 1) * 0.3rem), calc(var(--shake, 1) * -0.15rem)); }
+  60% { transform: translate(calc(var(--shake, 1) * -0.2rem), calc(var(--shake, 1) * 0.1rem)); }
+  80% { transform: translate(calc(var(--shake, 1) * 0.1rem), 0); }
+}
+
+.scene-view__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.scene-view__actors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scene-actor {
+  position: absolute;
+  bottom: 13%;
+  height: 26%;
+  transform: translateX(-50%);
+  transition: left 0.8s var(--ease-ink);
+}
+
+.scene-actor--hero {
+  left: 50%;
+  filter: brightness(var(--hero-light, 1));
+}
+
+.scene-actor--hero.is-dueling { left: calc(50% - 7rem); }
+
+.scene-actor--enemy {
+  left: calc(50% + 8rem);
+}
+
+/* ─── 主角 ─── */
+.hero-figure {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.hero-figure__svg {
+  height: calc(100% * var(--pose-scale, 1));
+  width: auto;
+  overflow: visible;
+  transform-origin: 50% 100%;
+  animation: hero-breathe 4.2s ease-in-out infinite;
+}
+
+.hero-figure__shadow { fill: rgba(0, 0, 0, 0.45); }
+.fig-robe { fill: #d6cfbf; }
+.fig-shade { fill: #9d9687; }
+.fig-hair { fill: #121417; }
+.fig-sash { fill: #28403a; }
+.fig-line { fill: none; stroke: rgba(30, 32, 34, 0.5); stroke-width: 0.7; stroke-linecap: round; }
+.fig-accent { fill: none; stroke: #a8473b; stroke-width: 0.9; stroke-linecap: round; }
+.fig-blade { fill: #cfd8dc; }
+.fig-skin { fill: #c9b69c; }
+
+@keyframes hero-breathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.012); }
+}
+
+.pose-meditate .hero-figure__svg { animation: hero-float 5.5s ease-in-out infinite; }
+
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2%); }
+}
+
+.pose-walk .hero-figure__svg { animation: hero-walk 0.7s steps(2) infinite; }
+
+@keyframes hero-walk {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5%); }
+}
+
+.frame-b { opacity: 0; }
+.pose-walk .frame-a { animation: frame-a 0.7s steps(1) infinite; }
+.pose-walk .frame-b { animation: frame-b 0.7s steps(1) infinite; }
+.pose-train .frame-a { animation: frame-a 1.1s steps(1) infinite; }
+.pose-train .frame-b { animation: frame-b 1.1s steps(1) infinite; }
+
+@keyframes frame-a {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes frame-b {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+.hero-figure__aura {
+  position: absolute;
+  left: 50%;
+  bottom: 12%;
+  width: 90%;
+  aspect-ratio: 1;
+  transform: translateX(-50%) scale(0.6);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(227, 198, 135, 0.28), rgba(106, 168, 147, 0.12) 45%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.8s;
+}
+
+.pose-meditate .hero-figure__aura {
+  opacity: 1;
+  animation: aura-breathe 4.5s ease-in-out infinite;
+}
+
+.motion-surge .hero-figure__aura {
+  opacity: 1;
+  animation: aura-surge 1.6s ease-out;
+}
+
+@keyframes aura-breathe {
+  0%, 100% { transform: translateX(-50%) scale(0.62); opacity: 0.55; }
+  50% { transform: translateX(-50%) scale(0.78); opacity: 1; }
+}
+
+@keyframes aura-surge {
+  0% { transform: translateX(-50%) scale(0.4); opacity: 1; }
+  100% { transform: translateX(-50%) scale(2.2); opacity: 0; }
+}
+
+.motion-attack .hero-figure__svg { animation: hero-lunge 0.36s var(--ease-out); }
+.motion-hit .hero-figure__svg { animation: hero-hit 0.32s ease-out; }
+.motion-surge .hero-figure__svg { animation: hero-surge 1.6s var(--ease-out); }
+
+@keyframes hero-lunge {
+  40% { transform: translateX(18%); }
+}
+
+@keyframes hero-hit {
+  30% { transform: translateX(-8%); filter: brightness(1.6) sepia(1) saturate(4) hue-rotate(-30deg); }
+}
+
+@keyframes hero-surge {
+  30% { transform: translateY(-4%); filter: brightness(1.6) drop-shadow(0 0 0.8rem rgba(255, 230, 170, 0.9)); }
+}
+
+/* ─── 敌方 ─── */
+.enemy-figure {
+  position: relative;
+  height: calc(100% * var(--enemy-scale, 1));
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transform: translateY(calc(var(--enemy-float, 0) * -100%));
+  transform-origin: 50% 100%;
+}
+
+.enemy-figure__svg {
+  height: 100%;
+  width: auto;
+  overflow: visible;
+  animation: enemy-idle 2.6s ease-in-out infinite;
+}
+
+.enemy-figure__aura {
+  position: absolute;
+  inset: 5% -10% 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 70%, var(--enemy-aura), transparent 65%);
+  filter: blur(0.4rem);
+}
+
+.enemy-body { fill: #111416; }
+.enemy-shade { fill: #25292d; }
+.enemy-line { fill: none; stroke: rgba(160, 170, 175, 0.35); stroke-width: 0.8; }
+.enemy-eye { fill: #f0c070; filter: drop-shadow(0 0 2px #f0a040); }
+.enemy-blade { fill: #b9c3c7; }
+.is-boss .enemy-eye { fill: #ff7a5c; }
+
+@keyframes enemy-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5%); }
+}
+
+.enemy-figure.motion-attack .enemy-figure__svg { animation: enemy-lunge 0.36s var(--ease-out); }
+.enemy-figure.motion-hit .enemy-figure__svg { animation: enemy-hit 0.32s ease-out; }
+.enemy-figure.motion-defeated { animation: enemy-fall 0.9s ease-in forwards; }
+
+@keyframes enemy-lunge {
+  40% { transform: translateX(-16%); }
+}
+
+@keyframes enemy-hit {
+  30% { transform: translateX(8%); filter: brightness(2.2); }
+}
+
+@keyframes enemy-fall {
+  to { opacity: 0; transform: translateY(8%) scale(0.95); filter: blur(4px); }
+}
+
+.enemy-in-enter-active { transition: opacity 0.5s, transform 0.5s var(--ease-out); }
+.enemy-in-leave-active { transition: opacity 0.6s; }
+.enemy-in-enter-from { opacity: 0; transform: translateX(calc(-50% + 3rem)); }
+.enemy-in-leave-to { opacity: 0; }
+
+/* ─── 飘字 ─── */
+.scene-floats {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 0;
+  height: 0;
+}
+
+.float-text {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-title);
+  font-size: var(--fs-lead);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 0.6rem rgba(0, 0, 0, 0.6);
+  animation: float-up 2.1s var(--ease-out) forwards;
+}
+
+.float-text:nth-child(2n) { margin-left: -2.5rem; }
+.float-text:nth-child(3n) { margin-left: 2.2rem; }
+
+.float-text--gold { color: var(--gold-bright); }
+.float-text--gain { color: #efe0bb; }
+.float-text--qi { color: #a8e2cf; }
+.float-text--loss { color: #f08c78; }
+.float-text--info { color: var(--mist-200); font-size: var(--fs-base); }
+.float-text--crit { color: #ffb36b; font-size: 1.6rem; }
+
+@keyframes float-up {
+  0% { opacity: 0; transform: translate(-50%, 0.6rem) scale(0.8); }
+  12% { opacity: 1; transform: translate(-50%, 0) scale(1.05); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -4.2rem) scale(1); }
+}
+
+/* ─── 地名牌 ─── */
+.location-plate {
+  position: absolute;
+  top: calc(var(--topbar-h) + 0.5rem);
+  left: 50%;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.location-plate__frame {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 1.4rem;
+  background: linear-gradient(90deg, transparent, rgba(8, 10, 12, 0.75) 18%, rgba(8, 10, 12, 0.75) 82%, transparent);
+  border-top: 1px solid rgba(214, 190, 128, 0.25);
+  border-bottom: 1px solid rgba(214, 190, 128, 0.25);
+}
+
+.location-plate__name {
+  font-size: 1.45rem;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em;
+  color: var(--paper-50);
+  text-shadow: 0 0 1rem rgba(0, 0, 0, 0.8);
+}
+
+.location-plate__ornament {
+  width: 0.45rem;
+  height: 0.45rem;
+  transform: rotate(45deg);
+  border: 1px solid rgba(214, 190, 128, 0.55);
+}
+
+.location-plate__sub {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  pointer-events: auto;
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.location-plate__chip {
+  padding: 0 0.4rem;
+  border: 1px solid var(--panel-line);
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.location-plate__chip.is-warn { color: #e6c48a; }
+.location-plate__chip.is-danger { color: #f08c78; border-color: rgba(194, 74, 59, 0.5); }
+.location-plate .is-warn { color: #e6c48a; }
+
+.location-plate__route {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.location-plate__route i {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  border: 1px solid var(--mist-300);
+}
+
+.location-plate__route i.is-done { background: var(--gold); border-color: var(--gold); }
+.location-plate__route i.is-next { border-color: var(--gold-bright); box-shadow: 0 0 4px var(--gold-bright); }
+
+/* ─── 横幅：破境、抵达、胜负 ─── */
+.scene-banner {
+  position: absolute;
+  top: 36%;
+  left: 50%;
+  z-index: 8;
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  min-width: 22rem;
+  padding: 0.9rem 3rem;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at center, rgba(6, 8, 10, 0.82), rgba(6, 8, 10, 0.55) 55%, transparent 75%);
+  pointer-events: none;
+}
+
+.scene-banner__title {
+  font-family: var(--font-title);
+  font-size: 2.3rem;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  color: var(--paper-50);
+  text-shadow: 0 0 1.4rem rgba(0, 0, 0, 0.9);
+}
+
+.scene-banner__subtitle {
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  letter-spacing: 0.2em;
+}
+
+.scene-banner--breakthrough .scene-banner__title {
+  font-size: 3.2rem;
+  color: var(--gold-bright);
+  text-shadow: 0 0 1.6rem rgba(227, 198, 135, 0.7), 0 0 3rem rgba(227, 198, 135, 0.35);
+}
+
+.scene-banner--breakthrough-fail .scene-banner__title,
+.scene-banner--defeat .scene-banner__title { color: #f0a494; }
+.scene-banner--victory .scene-banner__title { color: #f3e2b4; }
+.scene-banner--unlock .scene-banner__title { font-size: 1.6rem; color: #bfe6d8; }
+.scene-banner--arrival .scene-banner__title { font-size: 2rem; }
+
+.banner-enter-active { transition: opacity 0.5s, transform 0.6s var(--ease-out), filter 0.6s; }
+.banner-leave-active { transition: opacity 0.7s, filter 0.7s; }
+.banner-enter-from { opacity: 0; transform: translate(-50%, -40%) scale(1.08); filter: blur(6px); }
+.banner-leave-to { opacity: 0; filter: blur(4px); }

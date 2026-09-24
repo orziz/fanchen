@@ -17,6 +17,7 @@ import { meetNpcsAtLocation, processNpcLifeTick, runNpcAI } from '@/systems/npc'
 import { processIndustryTick } from '@/systems/industry'
 import { processWorldEconomyTick } from '@/systems/worldEconomy'
 import { getManualActionLockReason } from '@/systems/tutorial'
+import { processMilestones } from '@/systems/milestones'
 
 /* ─── Travel Events ─── */
 
@@ -278,6 +279,7 @@ function advancePlayerTravelStep(): TravelAdvanceResult {
     ctx.selectedLocationId = nextStopId
     g.player.action = sample(nextStop.actions)
     ctx.appendLog(`你沿着既定门路赶到${nextStop.name}。`, 'info')
+    bus.emit('travel:arrived', { locationId: nextStopId })
     return {
       moved: true,
       arrived: true,
@@ -471,4 +473,5 @@ export function tickWorld() {
     if (g.world.hour === 0) processNpcLifeTick()
   }
   runNpcAI()
+  processMilestones()
 }

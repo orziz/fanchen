@@ -1,7 +1,6 @@
 <template>
   <div v-if="scene" :class="['story-scene', { 'story-scene--compact': compact }]">
     <div class="story-scene__meta">
-      <p class="section-kicker">剧情</p>
       <h3>{{ scene.title }}</h3>
       <p class="story-scene__summary">{{ scene.summary }}</p>
       <p v-if="scene.speaker" class="story-scene__speaker">{{ scene.speaker }}</p>

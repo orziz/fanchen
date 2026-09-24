@@ -1,0 +1,318 @@
+/* ─── 书册：浮在场景之上的功能卷册 ─── */
+.book-host {
+  position: absolute;
+  inset: var(--topbar-h) 0 var(--dock-h);
+  z-index: 20;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  padding: 0.5rem;
+  background: radial-gradient(ellipse at center, rgba(4, 5, 7, 0.35), rgba(4, 5, 7, 0.7));
+}
+
+.book {
+  width: min(76rem, 100%);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(18, 22, 27, 0.95), rgba(10, 12, 15, 0.97));
+}
+
+.book__head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.7rem 0.55rem 0.9rem;
+  border-bottom: 1px solid var(--panel-line);
+}
+
+.book__seal {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.2rem;
+  background: radial-gradient(circle at 30% 30%, #c9564a, #8c2f26);
+  color: #f7e9dd;
+}
+
+.book__title {
+  font-size: 1.3rem;
+  letter-spacing: 0.3em;
+}
+
+.book__tabs {
+  display: flex;
+  gap: 0.2rem;
+  margin-left: 0.6rem;
+}
+
+.book__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-family: var(--font-title);
+  font-size: var(--fs-base);
+  letter-spacing: 0.15em;
+  transition: color 0.15s, background 0.15s;
+}
+
+.book__tab:hover { color: var(--paper-50); background: rgba(255, 255, 255, 0.04); }
+
+.book__tab.is-active {
+  color: var(--gold-bright);
+  background: rgba(199, 162, 90, 0.1);
+  box-shadow: inset 0 -2px 0 var(--gold);
+}
+
+.book__tab-badge {
+  font-family: var(--font-ui);
+  font-size: var(--fs-micro);
+  letter-spacing: 0;
+  color: var(--text-faint);
+}
+
+.book__head-extra {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.book__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.9rem 1rem 1rem;
+}
+
+.book-enter-active { transition: opacity 0.22s, transform 0.28s var(--ease-out); }
+.book-leave-active { transition: opacity 0.16s, transform 0.16s; }
+.book-enter-from { opacity: 0; transform: translateY(0.8rem) scale(0.99); }
+.book-leave-to { opacity: 0; transform: translateY(0.4rem); }
+
+/* 通用书页排版 */
+.sheet {
+  display: grid;
+  align-content: start;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.sheet__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--fs-lead);
+  letter-spacing: 0.25em;
+  color: var(--paper-100);
+}
+
+.sheet__heading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--panel-line-strong), transparent);
+}
+
+.sheet__note {
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: var(--fs-small);
+  line-height: 1.7;
+}
+
+/* ─── 人物书 ─── */
+.character-book {
+  display: grid;
+  grid-template-columns: 17rem 1fr 1fr;
+  gap: 1.4rem;
+  min-height: 100%;
+}
+
+.sheet--portrait {
+  justify-items: center;
+  text-align: center;
+  padding-right: 1.2rem;
+  border-right: 1px solid var(--panel-line);
+}
+
+.sheet__name {
+  font-size: 1.8rem;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+}
+
+.sheet__line {
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  width: 100%;
+  margin: 0.4rem 0 0;
+}
+
+.stat-grid__item {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.22);
+  text-align: left;
+}
+
+.stat-grid__item dt {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+}
+
+.stat-grid__item dt .game-icon { color: var(--gold); }
+
+.stat-grid__item dd {
+  margin: 0;
+  color: var(--paper-50);
+  font-size: var(--fs-lead);
+  font-weight: 600;
+}
+
+.realm-ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.realm-ladder__step {
+  display: grid;
+  grid-template-columns: 3.4rem 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.6rem;
+  border-left: 2px solid var(--ink-500);
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+}
+
+.realm-ladder__name {
+  font-family: var(--font-title);
+  font-size: var(--fs-lead);
+  letter-spacing: 0.1em;
+}
+
+.realm-ladder__step.is-past { border-left-color: var(--gold-soft); color: var(--text-dim); }
+
+.realm-ladder__step.is-current {
+  border-left-color: var(--gold-bright);
+  background: linear-gradient(90deg, rgba(199, 162, 90, 0.15), transparent);
+  color: var(--paper-50);
+}
+
+.fact-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.fact-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px dashed var(--panel-line);
+  font-size: var(--fs-small);
+}
+
+.fact-list dt { color: var(--text-faint); }
+.fact-list dd { margin: 0; color: var(--paper-50); text-align: right; }
+
+.skill-bars { display: grid; gap: 0.5rem; }
+
+.record-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.record-grid div {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.record-grid dt { color: var(--text-faint); font-size: var(--fs-micro); }
+.record-grid dd { margin: 0; color: var(--paper-50); font-size: var(--fs-title); font-weight: 600; }
+
+/* ─── 纪事全卷 ─── */
+.chronicle-log {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 48rem;
+}
+
+.chronicle-log .feed-entry {
+  grid-template-columns: 7rem 1fr;
+}
+
+/* ─── 设置 ─── */
+.settings-dialog__body {
+  overflow-y: auto;
+  padding: 0.6rem 1rem 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.settings-group {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.settings-group h3 {
+  font-size: var(--fs-base);
+  letter-spacing: 0.3em;
+  color: var(--gold);
+}
+
+.setting-row {
+  display: grid;
+  grid-template-columns: 5rem 1fr 2.4rem;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--text);
+  font-size: var(--fs-body);
+}
+
+.setting-row--toggle { grid-template-columns: 5rem auto; }
+.setting-row .num { text-align: right; color: var(--text-dim); }
+
+.settings-group__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.settings-group__note,
+.settings-group__notice {
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+}
+
+.settings-group__notice.is-error { color: #f08c78; }

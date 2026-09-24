@@ -109,10 +109,12 @@ export function attemptBreakthrough(): boolean {
     ctx.appendLog(`灵机贯体，你成功踏入${RANKS[nextRankIndex].name}境。`, 'loot')
     ctx.updateDerivedStats()
     ctx.adjustResource('hp', p.maxHp, 'maxHp'); ctx.adjustResource('qi', p.maxQi, 'maxQi'); ctx.adjustResource('stamina', p.maxStamina, 'maxStamina')
+    bus.emit('player:breakthrough', { success: true, rankIndex: nextRankIndex })
     return true
   }
   p.breakthrough = round(p.breakthrough * 0.68); ctx.adjustResource('hp', -12, 'maxHp'); ctx.adjustResource('qi', -16, 'maxQi')
   ctx.appendLog('冲关受挫，经脉震荡，需要重新稳固根基。', 'warn')
+  bus.emit('player:breakthrough', { success: false, rankIndex: p.rankIndex })
   return false
 }
 
