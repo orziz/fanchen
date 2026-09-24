@@ -1,5 +1,7 @@
 # 项目梳理与优化记录
 
+> 本文记录的是网页游戏化重构之前的一轮梳理（当时的 `components/v1`、`components/panels`、Pixi.js 等均已删除）。当前架构与验证方式以 [网页游戏重构说明](./网页游戏重构说明.md) 和 [source-architecture.md](./source-architecture.md) 为准。
+
 ## 当前架构
 
 - `src/config`：静态世界、剧情、教程、动作和数值定义。

@@ -1,5 +1,7 @@
 # 凡尘 V1 首屏与核心交互重构设计规范 (Final Review - Light & Centered)
 
+> 已被取代：本文是重构前 v1 首屏的改版稿，v1 界面已删除。当前首屏见 [ui-ux-firstscreen-redesign.md](./ui-ux-firstscreen-redesign.md)。以下内容仅作历史参考。
+
 > 涉及题材定位、世界规则与长期系统演进时，以 [修真题材长期总纲](./修真题材长期总纲.md) 为准；本文只适用于 v1 导轨 / 文本布局，不再约束 v2 舞台布局的视觉方向。
 
 ## 1. 设计目标与核心理念

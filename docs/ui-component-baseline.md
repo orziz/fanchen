@@ -1,5 +1,7 @@
 # UI Component Baseline
 
+> 已被取代：本文描述的是重构前 `src/components/ui/` 的卡片基元，这些组件已随旧界面删除。当前组件见 [source-architecture.md](./source-architecture.md)，视觉与组件规范见 [visual-design-spec.md](./visual-design-spec.md)。以下内容仅作历史参考。
+
 ## 目标
 
 - 把主交互面板里重复最多的卡片骨架收口成共享基元，减少同类改动分散在多个页面重复维护。

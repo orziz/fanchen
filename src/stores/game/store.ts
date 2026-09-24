@@ -6,12 +6,14 @@ import {
   FACTIONS,
   FACTION_MAP,
   LEGACY_SAVE_KEYS,
+  LEGACY_WINDOW_LAYOUT_KEYS,
   LOCATION_MAP,
   PLAYER_SECT_ENABLED,
   RANKS,
   SAVE_BACKUP_KEY,
   SAVE_KEY,
   TIME_LABELS,
+  WINDOW_LAYOUT_KEY,
   OPENING_TUTORIAL_STORY_ID,
   getBreakthroughReadyNeed,
   getCultivationBreakthroughFloor,
@@ -46,14 +48,12 @@ import {
   deriveLifeStage,
 } from '@/stores/game/factories'
 import { OBSOLETE_SAVE_STORAGE_KEYS, hydrateGameState, readStoredSave } from '@/stores/game/hydration'
-import { ORIGIN_MAP } from '@/config/origins'
+import { applyOrigin, looksLikeSave, type NewLifeOptions } from '@/stores/game/origin'
 
-export interface NewLifeOptions {
-  name: string
-  originId: string
-}
+export type { NewLifeOptions } from '@/stores/game/origin'
 
-const STALE_SAVE_KEYS = [...LEGACY_SAVE_KEYS, ...OBSOLETE_SAVE_STORAGE_KEYS]
+// 浮窗布局已随旧界面退役，残留的布局记录与旧存档键一并清掉。
+const STALE_SAVE_KEYS = [...LEGACY_SAVE_KEYS, ...OBSOLETE_SAVE_STORAGE_KEYS, WINDOW_LAYOUT_KEY, ...LEGACY_WINDOW_LAYOUT_KEYS]
 
 function resolveTechniqueEffect(
   technique: NonNullable<ReturnType<typeof getTechnique>> | null,
@@ -313,6 +313,13 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
+  /** 把当前进度规整后落盘，并清掉旧版本遗留的存档键。 */
+  function commitSnapshot() {
+    normalizeNumericState()
+    persistSnapshot(JSON.stringify(game.value))
+    clearStaleSaveKeys()
+  }
+
   function persistSnapshot(snapshot: string) {
     const previousSnapshot = localStorage.getItem(SAVE_KEY)
     if (previousSnapshot && previousSnapshot !== snapshot) {
@@ -329,10 +336,7 @@ export const useGameStore = defineStore('game', () => {
   function saveGame(manual = true) {
     try {
       game.value.lastSavedAt = Date.now()
-      normalizeNumericState()
-      const snapshot = JSON.stringify(game.value)
-      persistSnapshot(snapshot)
-      clearStaleSaveKeys()
+      commitSnapshot()
       saveState.value = `${manual ? '已手动存档' : '自动存档'} ${new Date(game.value.lastSavedAt).toLocaleTimeString('zh-CN', { hour12: false })}`
       if (manual) feedback.value = { text: '当前进度已写入本地存档。', type: 'action' }
       bus.emit('game:saved', { manual })
@@ -347,10 +351,7 @@ export const useGameStore = defineStore('game', () => {
       const stored = readStoredSave()
       if (!stored?.raw) { appendLog('当前浏览器里没有可读取的存档。', 'warn'); return }
       game.value = hydrateGameState(JSON.parse(stored.raw))
-      normalizeNumericState()
-      const snapshot = JSON.stringify(game.value)
-      persistSnapshot(snapshot)
-      clearStaleSaveKeys()
+      commitSnapshot()
       updateDerivedStats()
       selectedLocationId.value = game.value.player.locationId
       meetNpcsAtLocation(game.value.player.locationId)
@@ -371,28 +372,10 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  function applyOrigin(options: NewLifeOptions) {
-    const p = game.value.player
-    const origin = ORIGIN_MAP.get(options.originId)
-    const name = options.name.trim().slice(0, 6)
-    if (name) p.name = name
-    if (!origin) return
-    const bonus = origin.bonus
-    p.money += bonus.money || 0
-    p.power += bonus.power || 0
-    p.insight += bonus.insight || 0
-    p.charisma += bonus.charisma || 0
-    p.skills.farming += bonus.farming || 0
-    p.skills.crafting += bonus.crafting || 0
-    p.skills.trading += bonus.trading || 0
-    origin.items.forEach(({ itemId, quantity }) => addItemToInventory(itemId, quantity))
-    game.value.story.flags[`origin.${origin.id}`] = true
-  }
-
   function resetGame(options: NewLifeOptions | null = null) {
     game.value = createGameState()
     primeOpeningTutorialState()
-    if (options) applyOrigin(options)
+    if (options) applyOrigin(game.value, options, addItemToInventory)
     selectedLocationId.value = game.value.player.locationId
     closeBook()
     saveState.value = '新轮回已开启'
@@ -404,10 +387,6 @@ export const useGameStore = defineStore('game', () => {
     saveState.value = '新轮回已保存'
     initialized.value = true
     bus.emit('game:reset')
-  }
-
-  function startNewLife(options: NewLifeOptions) {
-    resetGame(options)
   }
 
   function hasStoredSave() {
@@ -424,7 +403,7 @@ export const useGameStore = defineStore('game', () => {
   /** 导入存档文本：先按现行规则修复成完整存档，确认可用后再落盘并读入。 */
   function importSave(raw: string) {
     const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object' || !parsed.player || !parsed.world || !Array.isArray(parsed.npcs)) throw new Error('invalid_save')
+    if (!looksLikeSave(parsed)) throw new Error('invalid_save')
     persistSnapshot(JSON.stringify(hydrateGameState(parsed)))
     loadGame()
     initialized.value = true
@@ -437,10 +416,7 @@ export const useGameStore = defineStore('game', () => {
     if (stored?.raw) {
       try {
         game.value = hydrateGameState(JSON.parse(stored.raw))
-        normalizeNumericState()
-        const snapshot = JSON.stringify(game.value)
-        persistSnapshot(snapshot)
-        clearStaleSaveKeys()
+        commitSnapshot()
         saveState.value = stored.source === 'backup' ? '已从备份恢复' : '已载入本地存档'
         resumedStoredSave = true
       } catch {
@@ -503,7 +479,7 @@ export const useGameStore = defineStore('game', () => {
     appendLog, getRegionStanding, adjustRegionStanding,
     adjustFactionStanding, adjustRelation,
     updateDerivedStats, clearLog, toggleAutoBattle,
-    saveGame, loadGame, resetGame, initializeGame, startNewLife, hasStoredSave, exportSave, importSave,
+    saveGame, loadGame, resetGame, initializeGame, startNewLife: resetGame, hasStoredSave, exportSave, importSave,
     createRelationState, deriveLifeStage, createInitialSect, createInitialPlayerFaction,
     createLootBundle, createNPC, createMarketListings, createAuctionListings,
     createInitialTerritories, findRoute,

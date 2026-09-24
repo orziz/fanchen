@@ -8,32 +8,36 @@
 - 系统阶段、功能顺序与长期扩展节奏：见 [docs/修真系统分期总表.md](docs/修真系统分期总表.md)
 - 工程与实现边界：见 [docs/project-rules.md](docs/project-rules.md)
 
-## 当前迁移基线
+## 当前形态
 
-- 新源码入口放在 src，使用 TypeScript 作为后续迁移主线。
-- UI 宿主选用 Vue3，页面骨架与运行时启动都由源码入口直接托管。
-- 游戏规则现按 src/config、src/stores、src/systems、src/components 和 src/styles 分层维护，不再保留旧 runtime 脚本入口。
-- 开发与发布统一由 Vite 8 驱动；发布阶段仍输出 classic IIFE bundle，这样 dist/index.html 可以在 file 协议下直接打开。
-- 地图渲染使用 PixiJS 局部接入，不再作为全局宿主引擎。
+- 网页游戏：深墨水墨舞台，场景、人物、妖物、图标全部由代码程序化绘制，配乐与音效由 WebAudio 实时合成，不依赖位图或音频素材。
+- 主画面是场景本身，人物卡、要务卡、纪事和行动坞浮在场景上；八本书册（人物、行囊、山河、市集、营生、门路、人情、纪事）以浮层打开，各有快捷键。
+- 以 1280×720 为基准整屏等比缩放；桌面优先，手机横屏可玩。
+- 技术栈：Vue 3 + Pinia + TypeScript，Vite 8 构建；发布阶段输出 classic IIFE bundle，dist/index.html 在 file 协议下可直接打开。
+- 本轮重构的评估结论、表现层架构与数值口径见 [docs/网页游戏重构说明.md](docs/网页游戏重构说明.md)。
 
 ## 源码目录
 
-- src/components：Vue 外壳组件与后续逐步迁出的界面组件。
-- src/composables：舞台、窗口、界面辅助等组合式逻辑。
+- src/components：界面组件——shell（顶栏、人物卡、要务、纪事、行动坞、标题页、设置）、scene（场景与人物）、books（八本书册）、common（通用小件）。
+- src/art：程序化美术——scene（地貌原型、分层构图、光照天气）、paint（笔触与山水草木建筑）、figures（人物与妖物剪影）、icons。
+- src/audio：WebAudio 合成的配乐、环境声与音效。
+- src/composables：游戏循环、书册、演出反馈、声音、设置等组合式逻辑。
 - src/config：世界表、常量和玩法配置。
+- src/core：不依赖 Vue 的纯规则与事件总线。
 - src/stores：Pinia 状态、派生数据和存读档入口。
-- src/systems：世界循环、战斗、产业、势力等规则模块。
-- src/styles：全局样式、响应式和启动覆盖层样式。
-- src/types：全局类型与 Vue 声明。
-- docs：迁移、架构和设计说明。
+- src/systems：世界循环、挂机决策、战斗、修行路标、产业、势力等规则模块。
+- src/styles：全局样式与设计变量。
+- src/tools、tools：内容编辑器与场景画室（tools/scene-lab.html）。
+- docs：设计、架构与维护说明。
 
 ## 构建与运行
 
 - 本地开发执行 npm run dev。
-- 发布构建执行 npm run build。
-- 构建产物输出到 dist。
+- 发布构建执行 npm run build，产物输出到 dist。
 - 交付要求是直接双击 dist/index.html 即可游玩，不依赖本地 server。
-- 源码目录与职责见 docs/source-architecture.md，迁移规划见 docs/ts-vue-runtime-migration.md，外壳与运行时启动行为说明见 docs/vue-shell-runtime-design.md。
+- 规则回归执行 npm test，类型检查执行 npm run typecheck。
+- 可视化冒烟执行 npm run test:visual（需本机 Chrome；默认以 file 协议打开 dist/index.html，可用 FANCHEN_URL 改指开发服务）。
+- 源码目录与职责见 docs/source-architecture.md，视觉规范见 docs/visual-design-spec.md。
 
 ## 项目硬规则
 

@@ -1,411 +1,158 @@
 # 凡尘立道录 · 视觉设计规范
 
-> 本文档约束 v1 与 v2 两条表现轨道的视觉边界。AI 与人工均须以此为准，不可再把“唯一主题”套用到所有界面。
-> 主题来源：v1 优先使用 `src/styles/base.css` 的 `:root` 变量表；v2 可在 `src/styles/v2/` 或 mode-scoped 样式中定义独立变量，再在对应组件中引用。
-> 涉及题材定位、世界规则与系统演进时，以 [修真题材长期总纲](./修真题材长期总纲.md) 为准；本文只约束视觉气质与表现层口径。
-
----
-
-## 0. 双轨视觉总则
-
-### 0.1 v1：素雅水墨 / 宣纸轻量风 (Light Ink)
-
-- 适用于导轨布局、文本壳、阅读型信息组织和浅色轻量 HUD。
-- 核心关键词：宣纸、留白、低对比、淡阴影、阅读感、轻量化。
-
-### 0.2 v2：冷峻深墨的国风水墨主舞台 (Immortal Stage)
-
-- 适用于舞台布局、主界面概念图、修仙氛围强的场景壳和更沉静的桌面端主舞台。
-- 核心关键词：深墨、水墨、云海、山门、留白、山水长卷、轻阵纹、玉石、淡金点睛、空间层次、可玩主界面。
-- 允许更深的底色、更强的体积雾、更明显的景深和更聚焦的主舞台灯光，但必须保持信息层级清楚，且禁止页游式重金边、强发光描边、手游化圆图标、运营页式满屏堆叠、海报 KV、网页后台、赛博霓虹或高饱和仙偶风。
-
-### 0.3 隔离原则
-
-- v1 和 v2 的界面、表现、风格完全隔离；共享的只有玩法语义、数据、状态和页签口径。
-- v1 的浅宣纸规范不能直接回压 v2；v2 的深色舞台、重氛围和演出感也不能反向污染 v1。
-
----
-
-## 1. v1 主题：素雅水墨 / 宣纸轻量风 (Light Ink)
-
-### 1.1 设计气质
-
-凡尘修真题材、纸上跃然。轻质感、低对比、淡阴影、虚线勾勒。
-拒绝深色暗底、浓重阴影、霓虹高饱和、扁平纯白、后台管理系统感。
-
-### 1.2 视觉锚点
-
-- 宣纸底 + 墨色字 = 阅读主线
-- 琉璃黄 (gold) = 高亮激活 / 关键资源
-- 翠玉绿 (jade) = 稳态 / 推荐
-- 朱砂红 (cinnabar) = 警示 / 战斗
-- 苍石蓝 (sky) = 信息 / 修行
-
----
-
-## 2. v1 配色体系
-
-> 以下 token 表默认约束 v1 与共享浅色表层。v2 应在 mode-scoped 样式中使用独立 token（例如 `--jh-*` 或 `--v2-*`），但仍必须集中声明，禁止在组件里散落硬编码。
-
-### 2.1 CSS 变量（唯一真相源）
-
-| 变量名 | 值 | 用途 |
-|--------|------|------|
-| `--bg-ink` | `#f2ebd9` | 亮宣纸色，Shell 主背景 |
-| `--bg-deep` | `#e8decc` | 深宣纸色，辅助背景 |
-| `--mist` | `rgba(0,0,0,0.04)` | 极淡遮罩 |
-| `--card` | `rgba(255,255,255,0.9)` | 卡片/面板主背景 |
-| `--card-soft` | `rgba(248,245,238,0.7)` | 次级卡片/柔和背景 |
-| `--border` | `rgba(0,0,0,0.08)` | 标准边框 |
-| `--line` | `rgba(0,0,0,0.05)` | 更轻的分割线 / 虚线 |
-| `--text-main` | `#2b2823` | 主文字（墨色） |
-| `--text-dim` | `#5c5850` | 次要文字 |
-| `--text-faint` | `#8e897f` | 微弱标签 / 辅助说明 |
-| `--gold` | `#b3852b` | 暗琉璃黄（状态色） |
-| `--gold-bright` | `#d4a340` | 亮琉璃黄（激活、数值高亮） |
-| `--jade` | `#427e61` | 翠玉绿（稳态、推荐） |
-| `--cinnabar` | `#b44a42` | 朱砂红（警示、战斗） |
-| `--sky` | `#4682b4` | 苍石蓝（信息、修行进度） |
-
-### 2.2 阴影
-
-| 变量名 | 值 | 说明 |
-|--------|------|------|
-| `--shadow` | `0 16px 32px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.02)` | 标准卡片阴影（极轻） |
-
-规则：
-- 卡片用 `var(--shadow)` 或比它更轻的值。
-- hover 态阴影上限 `0 6px 20px rgba(0,0,0,0.05)`。
-- 禁止 `rgba(0,0,0,0.15)` 以上的阴影值。
-
-### 2.3 配色禁区
-
-- 禁止硬编码深色系背景（`rgba(31,47,41,...)` 等暗值）。
-- 禁止 `color-scheme: dark`、`prefers-color-scheme: dark`。
-- 禁止纯白背景 `#fff`（用 `var(--card)` 替代）。
-- 禁止纯黑文字 `#000`（用 `var(--text-main)` 替代）。
-- 所有色值必须通过 CSS 变量引用，不可在组件中直接写色码。
-
----
-
-## 3. 字体体系
-
-### 3.1 字体族
-
-| 变量名 | 值 | 用途 |
-|--------|------|------|
-| `--font-title` | `"STKaiti", "KaiTi", "FangSong", "Times New Roman", serif` | 标题、人名、章节名 |
-| `--font-body` | `"Georgia", "STSong", "SimSun", serif` | 正文、说明、标签 |
-
-- `body` 统一使用 `var(--font-body)`。
-- 所有 heading（h1-h3）、人名、卡片大标题使用 `var(--font-title)` + `font-weight: 700`。
-- 按钮、标签等不重新指定字体，继承 body。
-
-### 3.2 字号层级
-
-| 级别 | 大小 | 适用场景 | 示例类名 |
-|------|------|---------|---------|
-| **Display** | `clamp(28px, 4vw, 36px)` | 策略盘主标题 | `.command-hero-title` |
-| **H1** | `34px` | 角色名 | `.player-name` |
-| **H2** | `22px` | 面板内标题、子章节标题、toolbar 标题 | `.subsection-title`, `.window-toolbar h3` |
-| **H3** | `18px` | 卡片标题、pin-card 标题、状态徽章 | `.pin-card-head h3`, `.status-badge strong` |
-| **Body large** | `16px` | 状态栏数值 | `.status-pill strong` |
-| **Body** | `15px` | 正文、面板说明 | `body`（基线） |
-| **HUD name** | `17px` | 顶栏角色名 | `.hud-name` |
-| **HUD realm** | `14px` | 顶栏境界 | `.hud-realm` |
-| **Body small** | `14px` | 按钮、meter 标签 | `.control-button`, `.meter-label` |
-| **Caption** | `13px` | HUD 指标标签、chip | `.hud-chip`, `.hud-meter-label`, `.command-chip` |
-| **Micro** | `12px` | 标签、品阶、读数说明、时间戳 | `.rarity`, `.log-item time`, `.micro-label` |
-| **Kicker** | `11px` | 栏目眉题（eyebrow）、策略标记 | `.section-kicker`, `.command-pill` |
-
-规则：
-- 正文最小不低于 `13px`，标签/眉题允许 `11-12px`。
-- 禁止在面板正文区域使用 `10px` 或以下字号。
-- `body` 基线 `font-size: 15px; line-height: 1.6`。
-
----
-
-## 4. 圆角体系
-
-| 变量名 | 值 | 适用场景 |
-|--------|------|---------|
-| `--radius-xl` | `22px` | Shell 主面板、大卡片 |
-| `--radius-lg` | `16px` | 普通卡片、面板内容区 |
-| `--radius-md` | `10px` | Dock 按钮、小卡片、overlay-stat |
-| `--radius-sm` | `6px` | 内嵌小元素 |
-| `999px` | 胶囊（药丸）形 | 按钮、tag、rarity、chip、pill |
-
-规则：
-- 主面板外壳用 `--radius-xl`。
-- 面板内卡片用 `--radius-lg`。
-- 所有按钮默认 `999px`（胶囊形）；仅 Dock 按钮和 mode-button-card 例外用 `--radius-md`。
-- 禁止使用 `0` 圆角造成尖角矩形。
-
----
-
-## 5. 间距体系
-
-### 5.1 全局间距
-
-| 场景 | 值 | 说明 |
-|------|------|------|
-| Shell padding | `0`（由内部子区域各自 padding） | v3-shell 本身不加 padding |
-| HudBar padding | `10px 18px` | 水平贯通 |
-| Stage-wrap padding | `12px` | 主内容区外围 |
-| Panel-body padding | `18px 20px` | 面板内容区 |
-| Dock padding | `8px 14px` | 底栏 |
-| Pin-rail padding | `12px 12px 12px 0` | 右导轨（左侧不需要间距，紧贴 stage） |
-
-### 5.2 卡片间距
-
-| 属性 | 值 | 说明 |
-|------|------|------|
-| 卡片内 padding | `16px` | 通用 `.stat-box`, `.item-card` 等 |
-| pin-card-head padding | `12px 14px` | pin 卡头部 |
-| pin-card-body padding | `14px` | pin 卡内容 |
-| grid gap | `12-14px` | 大部分 grid 使用 `12px` 或 `14px` |
-| section 间 margin | `24px 0 12px` | `.subsection-title` 默认上间距 |
-
-### 5.3 按钮间距
-
-| 属性 | 值 |
-|------|------|
-| 通用按钮 padding | `10px 16px` |
-| 小按钮 padding | `9px 12px` |
-| Dock tab padding | `7px 16px` |
-| Speed 按钮 padding | `5px 12px` |
-| HUD pin 按钮 padding | `5px 11px` |
-
----
-
-## 6. 边框风格
-
-| 场景 | border 值 | 说明 |
-|------|-----------|------|
-| 卡片标准 | `1px solid var(--border)` | `.item-card` 等大部分卡片 |
-| 分割线 | `1px solid var(--line)` | 较轻，用于卡片内部 |
-| 虚线勾勒 | `1px dashed var(--line)` | canvas-shell、pin-card-head 底部 |
-| 虚线边界 | `1px dashed rgba(0,0,0,0.1)` | empty-state、command-chip |
-| 点线 | `1px dotted var(--border)` | command-section、策略卡 |
-| 激活态 | `border-color: rgba(208,171,108,0.3)` | Dock tab、active card |
-| 日志色边 | `border-left: 3px solid [色]` | `.log-item` 类型指示条 |
-
-规则：
-- 线条透明度不超过 `0.15`（常态）。
-- hover 态允许到 `0.15`，active 态允许到 `0.3-0.4`。
-- 禁止 `2px` 以上粗边框（日志左色条 `3px` 除外）。
-
----
-
-## 7. 组件风格
-
-### 7.1 按钮
-
-```
-默认态：  border: 1px solid rgba(0,0,0,0.1)
-          background: rgba(0,0,0,0.03)
-          color: var(--text-main)
-          border-radius: 999px
-
-hover态： background: rgba(0,0,0,0.06)
-          border-color: rgba(0,0,0,0.15)
-          transform: translateY(-1px)
-
-active态：background: linear-gradient(135deg, rgba(208,171,108,0.2), rgba(127,178,148,0.22))
-          border-color: rgba(242,214,162,0.28)
-          color: var(--gold-bright)
-
-disabled：opacity: 0.72
-          border-style: dashed
-          color: var(--text-dim)
-          无 hover 动效
-```
-
-### 7.2 卡片
-
-```
-默认态：  border-radius: var(--radius-lg)
-          border: 1px solid var(--line)
-          background: var(--card-soft)
-          box-shadow: 0 2px 8px rgba(0,0,0,0.02)
-
-hover态： transform: translateY(-2px)
-          box-shadow: 0 4px 12px rgba(0,0,0,0.05)
-          border-color: rgba(0,0,0,0.15)
-          background: var(--card)
-```
-
-### 7.3 Tag / Rarity / Chip
-
-```
-默认态：  border-radius: 999px
-          padding: 7px 12px
-          font-size: 12px
-          background: rgba(0,0,0,0.03)
-          border: 1px solid rgba(0,0,0,0.08)
-          color: var(--text-dim)
-
-品阶色：  .common  → #8e897f
-          .uncommon → var(--jade) #427e61
-          .rare    → var(--sky) #4682b4
-          .epic    → var(--gold) #b3852b
-          .legendary → var(--cinnabar) #b44a42
-```
-
-### 7.4 Meter / 进度条
-
-```
-轨道：    height: 12px, border-radius: 999px, background: rgba(0,0,0,0.06)
-HUD 轨道：height: 8px, width: 80px
-
-填充渐变：
-  默认  → linear-gradient(90deg, rgba(127,178,148,0.9), rgba(208,171,108,0.96))
-  HP    → linear-gradient(90deg, rgba(180,92,71,0.95), rgba(208,171,108,0.95))
-  QI    → linear-gradient(90deg, rgba(125,178,200,0.9), rgba(127,178,148,0.9))
-  体力  → linear-gradient(90deg, rgba(208,171,108,0.92), rgba(242,214,162,0.92))
-  突破  → linear-gradient(90deg, rgba(180,92,71,0.85), rgba(125,178,200,0.9))
-```
-
-### 7.5 Toast / 通知
-
-```
-底层：    background: rgba(255,255,255,0.95)
-          border: 1px solid var(--border)
-          border-radius: 18px
-          box-shadow: 0 14px 28px rgba(0,0,0,0.08)
-          backdrop-filter: blur(12px)
-
-warn态：  border-color: rgba(180,92,71,0.38)
-loot态：  border-color: rgba(208,171,108,0.38)
-
-徽章：    background: rgba(179,133,43,0.1)
-          color: var(--gold)
-          font-size: 12px
-```
-
-### 7.6 日志条
-
-```
-容器：    border-radius: var(--radius-lg)
-          border: 1px solid var(--line)
-          background: var(--card-soft)
-          padding: 16px
-
-类型色条（左 3px）：
-  info → rgba(127,178,148,0.8)
-  loot → rgba(208,171,108,0.86)
-  warn → rgba(180,92,71,0.86)
-  npc  → rgba(125,178,200,0.86)
-```
-
----
-
-## 8. 动效与过渡
-
-### 8.1 通用过渡
-
-| 属性 | 时长 | 缓动 | 适用 |
-|------|------|------|------|
-| `transform` | `0.18-0.2s` | `ease` | 按钮 hover、卡片 hover |
-| `background`, `border-color`, `color` | `0.15-0.18s` | `ease` | 按钮状态切换 |
-| `opacity`, `transform` | `0.2s` | `ease` | Toast 进出 |
-| `width` (meter fill) | `0.4s` | `ease` | 进度条变化 |
-
-### 8.2 hover 动效
-
-- 按钮 hover：`translateY(-1px)` — 微浮动。
-- 卡片 hover：`translateY(-2px)` + 加深阴影 — 轻跃起。
-- 无 hover 态的元素不加 transition（节省性能）。
-
-### 8.3 禁止的动效
-
-- 禁止 `scale` 放大效果（偏扁平 UI，不合凡尘修真书卷气质）。
-- 禁止 `rotate` 旋转（除 loading spinner 外）。
-- 禁止超过 `0.4s` 的过渡时长（"胜不贵久"）。
-- 禁止连续弹跳 / 呼吸动画（分散注意力）。
-
-### 8.4 未来扩展方向
-
-- 数值飘字（金币获得、经验增长）：`translateY(-20px)` + `opacity: 0`，时长 `0.5s`。
-- 物品获得高亮：卡片短暂 `border-color: var(--gold)` 闪烁一次。
-- 战斗命中反馈：目标卡片短暂 `shake` 微颤。
-
----
-
-## 9. 图标与插画指引
-
-### 9.1 当前状态
-
-项目目前**不使用图标库**。所有状态信息通过文字标签、色彩和结构表达。
-
-### 9.2 未来图标方向
-
-若引入图标，须遵守：
-
-- **风格**：线性描边（1.5-2px stroke），不填充，古典线条感。参考宋/明刻本插画的勾勒风格。
-- **色彩**：默认 `var(--text-faint)` 描边，激活态 `var(--gold)` / 对应状态色。
-- **尺寸**：16px（内联）、20px（按钮内）、24px（标题旁）。统一 viewBox `0 0 24 24`。
-- **格式**：内联 SVG 或 SVG sprite，不用图片文件。不用 icon font。
-- **命名**：`icon-[主题]-[动作]`，如 `icon-sword-attack`、`icon-scroll-read`。
-
-### 9.3 插画 / 氛围图
-
-- 不使用照片或写实插画。
-- 允许 SVG 噪点/渐变纹理作背景氛围（已有：body 宣纸纹、shell 噪点层）。
-- 未来地图节点图标可用简笔山水风 SVG。
-- 角色头像区域预留，但当前以文字+境界信息代替。
-
----
+> 本文约束游戏表现层的视觉气质、配色、字体、组件、场景美术、动效与声音。AI 与人工均须以此为准。
+> 唯一真相源是 `src/styles/tokens.css` 的变量表；本文列出的色值与尺寸若与代码不一致，以代码为准并回头修正本文。
+> 题材定位与世界规则以 [修真题材长期总纲](./修真题材长期总纲.md) 为准；表现层架构与重构背景见 [网页游戏重构说明](./网页游戏重构说明.md)。
+
+## 0. 总则：深墨水墨舞台
+
+- 只有一条视觉轨道。画面主体是程序化绘制的水墨山水场景，界面是浮在场景上的墨色半透明面板，像在一幅长卷上铺开的案头。
+- 关键词：深墨、留白、雾、山水长卷、淡金点睛、印章、细笔勾勒、克制的演出。
+- 信息层级靠明暗、字号和留白区分，不靠边框堆叠。
+- 禁止：页游式鎏金重边框、强发光描边、手游化圆图标与红点墙、运营页式满屏入口、网页后台表格感、赛博霓虹、高饱和仙偶风、写实照片或位图插画。
+
+## 1. 舞台与缩放
+
+- 基准画幅 1280×720。`html` 字号为 `clamp(9px, min(2.2222dvh, 1.25vw), 34px)`，1rem = 舞台高度 / 45，基准下为 16px。
+- 所有界面尺寸用 rem；整屏等比缩放，不出现滚动条，书册内部内容过长时在书册内滚动。
+- 画面分区（尺寸变量见 `tokens.css`）：
+
+| 区域 | 变量 | 基准值 | 内容 |
+|---|---|---|---|
+| 顶栏 | `--topbar-h` | 3rem | 名号境界、资源、时辰天气、书册入口、存档设置 |
+| 左栏 | `--side-left-w` | 15.5rem | 人物卡 |
+| 右栏 | `--side-right-w` | 17rem | 要务卡、纪事 |
+| 底栏 | `--dock-h` | 4.4rem | 行动坞 |
+| 间距 | `--gutter` | 0.6rem | 各区与屏幕边缘的空隙 |
+
+- 场景始终铺满全屏，中间留给场景与人物，不放常驻面板。
+
+## 2. 配色
+
+### 2.1 墨阶
+
+| 变量 | 值 | 用途 |
+|---|---|---|
+| `--ink-950` ～ `--ink-800` | `#07090b` ～ `#161b21` | 最深底色、遮罩、面板底 |
+| `--ink-700` ～ `--ink-400` | `#1e252c` ～ `#56636c` | 分隔、次级底、禁用态 |
+| `--mist-300`、`--mist-200` | `#7f8b91`、`#a7b0b3` | 雾色、弱信息 |
+| `--paper-100`、`--paper-50` | `#d8d1c1`、`#ece5d5` | 纸色高光、重点数字 |
+
+### 2.2 点睛色（只在关键处少量使用）
+
+| 变量 | 值 | 语义 |
+|---|---|---|
+| `--gold` / `--gold-soft` / `--gold-bright` | `#c7a25a` / `#9c8150` / `#e3c687` | 当前选中、可点处悬停、关键资源 |
+| `--jade` / `--jade-soft` | `#6aa893` / `#3f6f61` | 稳妥、推荐、主要行动按钮 |
+| `--cinnabar` / `--cinnabar-soft` | `#c24a3b` / `#7d2f26` | 警示、战斗、气血、印章 |
+| `--azure` | `#6f9dbd` | 真气、修行信息 |
+| `--ochre` | `#b58a4f` | 体力、土木营生 |
+
+### 2.3 文字与面板
+
+| 变量 | 值 | 用途 |
+|---|---|---|
+| `--text` | `#e7e0d0` | 正文 |
+| `--text-dim` | `#aaa597` | 次要说明 |
+| `--text-faint` | `#75726a` | 时间戳、占位、禁用 |
+| `--panel-bg` / `--panel-bg-strong` / `--panel-bg-soft` | 墨色 0.74 / 0.9 / 0.6 透明度 | 常驻面板 / 书册与弹窗 / 面板内分组 |
+| `--panel-line` / `--panel-line-strong` | 淡金 0.14 / 0.28 透明度 | 细分隔线 / 可交互边框 |
+| `--panel-blur` | 10px | 面板背后的毛玻璃模糊 |
+
+### 2.4 品阶色
+
+品阶只用于物品边框、名称与格底微光（`items.css` 的 `.rarity--*`），不扩散到其他组件：
+
+| 品阶 | 色值 |
+|---|---|
+| 凡品 common | `#8c969b` |
+| 灵品 uncommon | `#6aa893` |
+| 玄品 rare | `#7aa6c8` |
+| 地品 epic | `#d2a45a` |
+| 天品 legendary | `#d5584a` |
+
+## 3. 字体与字号
+
+- `--font-title`：楷体系（STKaiti、KaiTi、Kaiti SC），用于地名牌、书册标题、横幅、境界名。
+- `--font-body`：宋体系（Songti SC、Noto Serif SC 等），用于剧情、描述、纪事正文。
+- `--font-ui`：无衬线（PingFang SC、Microsoft YaHei 等），用于数字、按钮、标签与密集信息。
+- 字号阶（rem）：`--fs-micro` 0.6875、`--fs-small` 0.75、`--fs-body` 0.8125、`--fs-base` 0.875、`--fs-lead` 1、`--fs-title` 1.25、`--fs-display` 2。新增字号必须落在这张表里。
+- 标题可加 0.08–0.3em 字距；数字用等宽数字（`.num`）避免跳动。
+
+## 4. 面板、边框、圆角与阴影
+
+- 面板 = 半透明墨底 + 毛玻璃 + 一条 `--panel-line` 细边；不叠第二层描边，不用粗金框。
+- 圆角克制：`--radius-sm` 0.2rem（按钮、标签）、`--radius-md` 0.35rem（卡片）、`--radius-lg` 0.5rem（书册、弹窗）。
+- 阴影：`--shadow-panel` 用于常驻面板，`--shadow-float` 用于书册、浮层与弹窗。
+- 分组优先用留白与 `--panel-bg-soft` 底色区分，少用分隔线。
+
+## 5. 组件
+
+- **按钮 `.ink-btn`**：墨色渐变底 + 细边，悬停时边与字转 `--gold-bright`，按下下沉 1px，禁用 0.45 透明度并显示不可点光标。变体：`--primary`（玉色，主要行动）、`--danger`（朱砂，危险操作）、`--small`。
+- **图标按钮 `.icon-btn`**：2rem 方块，无底，悬停显出淡底与金色图标。
+- **行动按钮**（行动坞）：图标在上、两字名在下；不可做的行动保持可见但变暗，悬停说明原因。
+- **墨条 `InkBar`**：气血朱砂、真气天青、体力赭金、修为淡金、火候玉色、敌手血条暗朱；刻度线标出底子线、冲关线等门槛。
+- **物件格 `ItemTile`**：按品阶上色的边与微光，右下角数量。
+- **书册 `BookFrame`**：左上印章 + 楷体标题，页签在标题右侧，右上关闭；主体为“列表 + 详情”两栏或整页。
+- **悬停提示**：在元素上写 `data-tip`（可加 `data-tip-title`），由 `TooltipLayer` 统一渲染，不各自实现浮层。
+- **飘出提示**：`ToastStack` 在画面上方居中，短句、带类别小签，数秒后自动消失。
+- **不可用原因**：按钮不可用时必须能看到原因（悬停提示或旁边一行小字），不做“点了没反应”。
+
+## 6. 场景美术
+
+- 全部由代码绘制，不引入位图：地貌、水、草木、建筑、天光、天气、人物、妖物都是 Canvas2D 笔触或 SVG 路径。
+- 分层：远山、中景（水面、人烟、草木）、近景地面三层，各自可平铺；赶路时按层做视差。
+- 光照：十二时辰各有天色与明暗（`src/art/scene/palette.ts`），以正片叠底压暗；夜里主角同步变暗。天气（晴、微雨、大风、寒霜、雾起、雷暴）改变天色与粒子。
+- 地点画面由种子随机数生成，同一地点每次一致；换地点时交叉淡化。
+- 地貌原型由地点数据自动推导（`src/art/scene/archetype.ts`）；不合意时只在 `OVERRIDES` 补该地点的差异项，不为单个地点写专用绘制代码。
+- 人物：主角为白衣剪影，姿态随行动切换（站立、打坐、练体、歇息、行路、对敌），出手、受击、破境另有短动作；妖物为黑墨剪影，按模板取形与体型，首领更大并带金色气晕，词缀以气晕颜色区分。
+- 画面中间下方是人物落脚处，地面高度固定；新增绘制元素不得遮挡人物与战斗 HUD。
+- 用 `tools/scene-lab.html` 检查：单地点、全部地点网格、各时辰天气、赶路视差、人物剪影。
+
+## 7. 图标
+
+- 统一 24×24 画幅、描边绘制（`stroke: currentColor`，线宽 1.6，圆头圆角），像细笔勾勒；个别需要实心的路径以 `fill:` 前缀标注。
+- 路径集中在 `src/art/icons.ts`，经 `GameIcon` 组件使用；不用图标字体、不用位图。
+- 默认随文字色，激活态随所在组件变为淡金或对应语义色。
+- 按用途命名（`stone`、`hp`、`meditate`、`map` 等），新增前先查有无可复用的。
+
+## 8. 动效与演出
+
+- 缓动变量：`--ease-out`（界面进出）、`--ease-ink`（墨色晕开类过渡）。
+- 界面过渡 0.15–0.4s；悬停只改颜色与边，不做放大弹跳。
+- 场景演出可以更长，但要服务反馈：出手、受击约 0.32–0.42s，屏震 0.36s，妖物倒下 0.9s，破境气浪约 1.6s，横幅停留约 2.6s。
+- 常驻呼吸类动画（人物呼吸、打坐浮动、妖物待机、气晕）周期不短于 2.4s，幅度要小。
+- 飘字：伤害、收获、修为增长从人物头顶升起淡出；同屏不堆太多。
+- 减少动效：设置里的“减少动效”与系统 `prefers-reduced-motion` 都会把动画与过渡压到近乎瞬时，并停掉屏震；新增动画必须能被这两者关掉。
+
+## 9. 声音
+
+- 全部实时合成：配乐为五声音阶的生成式拨弦，分标题、昼、夜、战斗四种情绪；环境风雨声随天气变化；音效短促，以拨弦、击打与噪声合成。
+- 克制：默认音乐 0.55、音效 0.7，可静音；首次点击或按键后才发声。
+- 新增音效先复用 `sfx.ts` 已有音色，不引入音频文件。
 
 ## 10. 滚动条
 
-```css
-全局：    scrollbar-width: thin
-          scrollbar-color: rgba(179,133,43,0.25) transparent
-Webkit：  width/height: 7px
-          thumb: rgba(179,133,43,0.22), hover → rgba(179,133,43,0.38)
-          track: transparent
-          border-radius: 999px
-```
+- 全局细滚动条：宽 0.35rem，轨道透明，滑块为淡金 0.18 透明度（悬停 0.32），圆头。
+- 只有书册与纪事等内部区域会出现滚动；整屏不滚动。
 
-规则：
-- 所有可滚动容器自动继承全局滚动条，不需要单独声明。
-- `scrollbar-gutter: stable` 用于需要避免内容跳动的区域。
-- Dock 和 HudBar 使用 `scrollbar-width: none` 完全隐藏（横向滚动靠拖拽）。
+## 11. 适配
 
----
+- 桌面优先：1280×720 到 3840×2160 都应铺满、不溢出。
+- 手机横屏（如 844×390）沿用同一套缩放必须可玩；矮屏时收紧间距、缩小次要信息。
+- 窄竖屏只显示横置提示，不做竖屏布局。
+- 所有特殊适配只写在 `src/styles/responsive.css`。
 
-## 11. CSS 文件职责索引
+## 12. 样式文件
 
-| 文件 | 行数 | 职责 |
-|------|------|------|
-| `base.css` | ~320 | 变量表、全局重置、字体、滚动条、按钮通用态、tag/rarity |
-| `layout.css` | ~480 | Shell / HudBar / Body / Stage / Dock / Map 布局骨架 |
-| `windows.css` | ~180 | Pin-rail、pin-card、canvas-shell、toolbar |
-| `panels.css` | ~350 | 面板内公用结构（card / grid / summary / meter / toast） |
-| `command.css` | ~340 | 策略盘专用组件 |
-| `responsive.css` | ~100 | 所有 `@media` 断点 |
-| `runtime-overlay.css` | ~60 | 首屏启动覆盖层 |
+- 各样式文件职责见 [project-rules.md](./project-rules.md) 第 3.2 节；新增类名前先确认归属，按 `index.css` 的引入顺序放置。
 
-导入顺序（`src/styles/index.css`）：
-```
-base → layout → windows → panels → command → responsive → runtime-overlay
-```
+## 13. 变更检查清单
 
-变更新增类名时，先确认应放在哪个文件中，对照本表归类。
-
----
-
-## 12. 变更检查清单
-
-视觉相关改动后，按此清单逐条过：
-
-1. 新增色值是否已加 `:root` 变量？
-2. 新增色值是否符合"素雅水墨"气质（低饱和、偏暖灰）？
-3. 新增字号是否在 11-36px 层级表内？
-4. 是否有硬编码色码未走变量？
-5. 边框透明度是否在限定范围内？
-6. 动效时长是否 ≤ 0.4s？
-7. 卡片、按钮的 hover/active/disabled 态是否覆盖？
-8. 响应式降级是否在 responsive.css 中处理？
-9. 构建通过？无 CSS 语法错误？
+1. 新增色值、字号、尺寸是否先进了 `tokens.css`，组件里有没有硬编码色码？
+2. 是否守住“点睛色少量使用”，没有出现金框、强发光或高饱和？
+3. 新增尺寸是否用 rem、能随整屏缩放？
+4. 按钮与可点元素是否覆盖悬停、按下、禁用三态，不可用时能否看到原因？
+5. 新增动画能否被“减少动效”关掉？
+6. 场景或人物改动是否在 `tools/scene-lab.html` 看过多个时辰与天气？
+7. 1280×720、1920×1080、844×390 下是否无溢出？构建与 `npm run test:visual` 是否通过？

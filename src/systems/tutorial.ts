@@ -114,7 +114,7 @@ export function getOpeningTutorialObjective(story: StoryState, player: Pick<Play
   if (!isOpeningTutorialActive(story)) return null
   if (!hasFlag(story, OPENING_TUTORIAL_FLAGS.mapUnlocked)) return '先听路人把眼前这条活路说清'
   if (!hasFlag(story, OPENING_TUTORIAL_FLAGS.affiliationUnlocked)) return '顺着山河图认清青禾，再去找门路'
-  if (!player.affiliationId) return '去势力页投一家门路，先在青禾站住脚'
+  if (!player.affiliationId) return '在青禾投一家门路，先把脚跟站稳'
   return '你已经在青禾挂了名号，街面上的门路正在慢慢铺开'
 }
 

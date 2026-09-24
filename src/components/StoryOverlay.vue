@@ -92,7 +92,7 @@ watch(isVisible, async (visible) => {
   await nextTick()
   const firstChoice = overlayElement.value?.querySelector<HTMLElement>('.story-choice-button:not(:disabled)')
   ;(firstChoice || getFocusableElements()[0] || panelElement.value)?.focus({ preventScroll: true })
-})
+}, { immediate: true })
 
 onBeforeUnmount(restoreFocus)
 </script>

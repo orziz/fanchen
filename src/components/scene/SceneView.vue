@@ -62,6 +62,9 @@ const canvasEl = ref<HTMLCanvasElement | null>(null)
 let renderer: SceneRenderer | null = null
 let resizeObserver: ResizeObserver | null = null
 
+// 设置里的“减少动效”与系统的减弱动态偏好，任一打开都停掉屏震与画面动效。
+const systemReducedMotion = typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+const reduceMotion = computed(() => settings.reduceMotion || systemReducedMotion)
 const traveling = computed(() => Boolean(player.value.travelPlan))
 const fighting = computed(() => Boolean(combat.value.currentEnemy))
 const enemy = computed(() => combat.value.currentEnemy)
@@ -93,7 +96,7 @@ const sceneInput = computed(() => {
     weather: resolveWeather(world.value.weather),
     travel: traveling.value,
     heroEffect: (!fighting.value && !traveling.value && ['meditate', 'breakthrough'].includes(player.value.action) ? 'qi' : 'none') as 'qi' | 'none',
-    reduceMotion: settings.reduceMotion,
+    reduceMotion: reduceMotion.value,
   }
 })
 
@@ -105,7 +108,7 @@ watch(() => fx.flash, flash => {
 
 /** 屏震：直接对画面层播放一次位移动画，不重建画布。 */
 watch(() => fx.shakeKey, () => {
-  if (!shakerEl.value || settings.reduceMotion) return
+  if (!shakerEl.value || reduceMotion.value) return
   const k = fx.shakeStrength * 5
   shakerEl.value.animate([
     { transform: 'translate(0, 0)' },

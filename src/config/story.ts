@@ -139,7 +139,7 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       affiliation: {
         id: 'affiliation',
         speakerMode: 'narrator',
-        text: '势力页已经替你点开。先在青禾挂靠一方势力，把第一口饭稳住，街面上的其余门路才会慢慢向你打开。',
+        text: '青禾各家门路的名帖已摊在眼前。先挂靠一方势力，把第一口饭稳住，街面上的其余门路才会慢慢向你打开。',
       },
     },
   },

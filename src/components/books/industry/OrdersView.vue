@@ -31,7 +31,7 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { getItem } from '@/config'
-import { canFulfillIndustryOrder, explainIndustryOrder, fulfillIndustryOrder, refreshIndustryOrders } from '@/systems/industry'
+import { canFulfillIndustryOrder, explainIndustryOrder, fulfillIndustryOrder, refreshIndustryOrders } from '@/systems/industryOrders'
 import { sfx } from '@/audio/sfx'
 import GameIcon from '@/components/common/GameIcon.vue'
 

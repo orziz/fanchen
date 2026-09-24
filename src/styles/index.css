@@ -2,6 +2,7 @@
 @import url('./base.css');
 @import url('./ui.css');
 @import url('./shell.css');
+@import url('./dock.css');
 @import url('./scene.css');
 @import url('./books.css');
 @import url('./items.css');

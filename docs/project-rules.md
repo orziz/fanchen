@@ -51,10 +51,11 @@
 - 所有组件 `<template>` 必须有且仅有 **一个根元素**（`<div>`、`<section>` 等）。
 - 禁止 fragment root（多根并列）。原因：`v-show` 对 fragment 只隐藏第一个元素，曾导致面板内容全局串显。
 
-### 2.2 面板切换
+### 2.2 书册与画面
 
-- `GameWorkbench` 使用 `<div v-show>` 包裹每个面板做快速切换（保留 DOM）。
-- 地图面板例外，使用 `v-if` 按需挂载/卸载 Pixi.js 实例。
+- 游戏画面只有一套：场景铺满全屏，顶栏、人物卡、要务卡、纪事、行动坞浮在场景上。
+- 功能入口统一做成书册（`components/books/`），由 `BookHost` 按 `useBooks` 的当前书册用 `v-if` 挂载，同一时间只挂一本；新增功能优先并入现有书册的页签，不另开浮窗或第二套壳层。
+- 书册的开合、页签、热键与教程锁只走 `useBooks`；教程锁的判定仍在 `systems/tutorial.ts`。
 
 ### 2.3 组件通信
 
@@ -67,41 +68,36 @@
 
 ### 3.1 主题
 
-- 表现层采用双轨主题，不再强制全仓单一视觉方向。
-- v1（导轨 / 文本布局）保持 **素雅水墨 / 宣纸轻量风**（Light Ink），强调阅读、留白、低对比和轻量 HUD。
-- v2（舞台布局）使用 **冷峻深墨的国风水墨主舞台**（Immortal Stage），允许更深的底色、云海与山门留白、轻阵纹、器物剪影和更明显的空间层次，但必须压低页游式金边、强发光描边、手游化圆图标和运营页式满屏入口堆叠。
-- v2 的点睛色只能少量使用淡金或玉色，不得把鎏金描边、厚重金属边框和高频按钮高亮做成主视觉骨架。
-- v1 和 v2 的界面、表现、风格完全隔离；共享的只有玩法语义、状态、存档与数据，不共享同一套视觉规范。
-- 所有可见色值都必须先走 token。v1 优先复用 `base.css`；v2 可在 `src/styles/v2/` 或 mode-scoped 样式中定义独立变量，再按作用域引用。
-- v1 背景使用 `var(--card)` / `var(--card-soft)` / `var(--bg-ink)`；v2 背景可使用独立舞台变量与深色氛围层，但不能退化成纯黑铺底或通用后台深灰。
+- 表现层只有一条视觉轨道：**深墨水墨舞台**。场景由代码程序化绘制，界面是浮在场景上的墨色半透明面板；细则见 `docs/visual-design-spec.md`。
+- 点睛色（淡金、玉、朱砂）只少量用于关键状态与可点处，不做鎏金描边、强发光和手游式圆图标堆叠。
+- 所有可见色值都先走 `src/styles/tokens.css` 的变量，不在组件里硬编码色值。
+- 画面美术只用代码生成（Canvas2D 与 SVG），不引入位图素材；新增地点先看 `src/art/scene/archetype.ts` 的自动推导，不合意再加覆盖项。
 
 ### 3.2 CSS 文件职责
 
 | 文件 | 内容 |
 |---|---|
-| `base.css` | 变量表、全局重置、字体、滚动条 |
-| `layout.css` | Shell / HudBar / Body / Stage / Dock 骨架 |
-| `windows.css` | Pin-rail、pin-card、canvas-shell、toolbar |
-| `panels.css` | 面板内公用结构（card / grid / summary / actions） |
-| `command.css` | 策略盘专用 |
-| `modes.css` | 运行时模式容器与跨模式共用样式 |
-| `jianghu-mode.css` / `src/styles/v2/` | v2 舞台模式入口、独立变量与壳 / 舞台分层样式 |
-| `responsive.css` | 所有 `@media` 断点，以宽度渐进降级 |
-| `runtime-overlay.css` | 首屏启动覆盖层 |
+| `tokens.css` | 设计变量、字体、字号阶、舞台尺寸与整屏缩放 |
+| `base.css` | 全局重置、滚动条、根元素 |
+| `ui.css` | 按钮、标签、输入等基元 |
+| `shell.css` | 游戏画面骨架、顶栏、人物卡、要务卡、纪事 |
+| `dock.css` | 行动坞、打算浮层、飘出提示、画面切换 |
+| `scene.css` | 场景、人物、妖物、战斗 HUD、横幅与飘字 |
+| `books.css` | 书册框、页签与书册通用结构 |
+| `items.css`、`map.css`、`pages.css`、`market.css`、`people.css`、`chronicle.css` | 各书册专用样式 |
+| `title.css`、`story.css` | 标题页、新局、设置与剧情遮罩 |
+| `responsive.css` | 矮屏、手机横屏与竖屏横置提示 |
+| `tools.css`、`story-editor.css` | 仅供 `tools/` 编辑器页面 |
 
-- 禁止在 `.vue` 文件的 `<style>` 块中写全局样式，所有全局规则统一进 `src/styles/`。
+- 禁止在 `.vue` 文件的 `<style>` 块中写全局样式，所有全局规则统一进 `src/styles/`，并在 `index.css` 中按顺序引入。
 - 组件如需私有样式可用 `<style scoped>`，但不应与全局类名冲突。
 
-### 3.3 响应式
+### 3.3 缩放与适配
 
-- 断点从 **宽度大到小** 依次降级：`≤1380px` → `≤1120px` → `≤960px` → `≤720px`。
-- 额外有一条高度断点 `≤680px` 处理矮屏。
-- 降级策略：
-  1. 先缩紧 padding/gap。
-  2. 再隐藏 context 副栏。
-  3. 再隐藏 pin-rail。
-  4. 最后简化 HudBar 到仅保留核心操作。
-- 所有横屏分辨率（1024×768 到 3840×2160）必须可用，不出现内容溢出或空白死区。
+- 舞台以 1280×720 为基准，`html` 字号随视口等比变化（1rem = 舞台高度 / 45），界面尺寸一律用 rem，不写固定像素布局。
+- 整屏不出现滚动条；书册内部内容过长时在书册内滚动。
+- 桌面优先；手机横屏必须可玩；窄竖屏只显示横置提示，保证不坏。
+- 所有横屏分辨率（手机横屏 844×390 到 3840×2160）都必须可用，不出现内容溢出或空白死区；特殊的矮屏与手机规则只写在 `responsive.css`。
 
 ---
 
@@ -135,9 +131,8 @@
 
 ## 6. 地图（山河图）
 
-- 地图渲染使用 Pixi.js，挂载于 `MapPanel` 的 `canvas-shell` 容器。
-- 地图叠加信息（当前地点、挂机模式、当前行动）放在 **toolbar 区域**，不叠在 canvas 上阻挡交互。
-- 地图面板使用 `v-if` 切换（挂载时创建、卸载时销毁 Pixi 实例），不用 `v-show`。
+- 山河图用 SVG 渲染（`components/books/map/WorldMap.vue`），拖拽、滚轮与双指缩放由 `useMapView.ts` 处理，不引入画布引擎。
+- 地点信息、秘境与全图概览放在地图旁的信息栏或页签里，不叠在地图上遮挡交互。
 
 ---
 
@@ -146,7 +141,8 @@
 - `npm run dev`：Vite 开发服务器。
 - `npm run build`：产物输出到 `dist/`。
 - **硬约束**：`dist/index.html` 必须能双击直接打开游玩，不依赖本地 server。
-- 当前仓库以 `tsc --noEmit` 做类型检查，提交前至少通过 `npm run typecheck`。
+- 当前仓库以 `tsc --noEmit` 做类型检查、以 vitest 做规则回归，提交前至少通过 `npm test` 与 `npm run typecheck`。
+- `npm run test:visual` 用本机 Chrome 以 file 协议打开 `dist/index.html` 做可视化冒烟，涉及画面、书册、剧情或适配的改动应先构建再跑一遍。
 - 当前 `tsconfig.json` 的 `strict` 为 `false`；除非任务明确要求，不要顺手把整仓提到严格模式。
 - 在 Windows PowerShell 下如果 `npm run ...` 被执行策略拦截，改用 `npm.cmd run typecheck`、`npm.cmd run build`。
 
@@ -156,10 +152,10 @@
 
 每次代码变更后，请按以下顺序验证：
 
-1. `npm run typecheck` 通过，随后 `npm run build` 通过；若在 Windows PowerShell 下被拦截，改用 `npm.cmd run typecheck` 与 `npm.cmd run build`。
-2. 所有面板切换后只显示当前面板内容，无串显/残影。
-3. Pin-rail 单卡展开撑满高度，三卡等分。
-4. 地图 overlay 信息不遮盖 canvas。
-5. 在 1024px、1280px、1920px 宽度下无溢出。
-6. 存档加载兼容（若涉及 store 变更）。
+1. `npm test`、`npm run typecheck` 通过，随后 `npm run build` 通过；若在 Windows PowerShell 下被拦截，改用 `npm.cmd run ...`。
+2. 涉及画面、书册、剧情或适配时，跑 `npm run test:visual`，并实际双击 `dist/index.html` 看一眼。
+3. 书册开合、页签切换后只显示当前书册内容，Esc 能关闭。
+4. 桌面（1280×720、1920×1080）与手机横屏（844×390）下无溢出、无滚动条。
+5. 存档加载兼容（若涉及 store 变更）。
+6. 涉及挂机、战斗、修行或经济公式时，重跑挂机数值模拟（见 `docs/网页游戏重构说明.md` 第 5 节），确认各打算的节奏没有失衡。
 7. 游戏内无开发备注、调试信息、AI 痕迹文本。
