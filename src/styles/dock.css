@@ -248,8 +248,10 @@
 }
 
 /* ─── 飘出提示 ─── */
+/* 书册打开时改从底部浮出，免得压住书册标题与列表开头。 */
 body:has(.book-host) .toast-stack {
-  top: calc(var(--topbar-h) + 4.6rem);
+  top: auto;
+  bottom: calc(var(--dock-h) + 1rem);
 }
 
 .toast-stack {
