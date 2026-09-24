@@ -3,6 +3,8 @@ import { LOCATIONS, LOCATION_MAP, TIME_LABELS } from '@/config'
 import { resolveArchetype } from '@/art/scene/archetype'
 import { resolveWeather } from '@/art/scene/palette'
 import { SceneRenderer } from '@/art/scene/renderer'
+import { HERO_POSES } from '@/art/figures/hero'
+import { ENEMY_FIGURES } from '@/art/figures/enemies'
 
 const WEATHERS = ['晴', '微雨', '大风', '寒霜', '雾起', '雷暴']
 const params = new URLSearchParams(location.search)
@@ -15,6 +17,7 @@ function readState() {
     weather: params.get('weather') || '晴',
     travel: params.get('travel') === '1',
     grid: params.get('grid') === '1',
+    figures: params.get('figures') === '1',
   }
 }
 
@@ -48,6 +51,10 @@ function render() {
     </div>
     <div id="stage"></div>`
   const stage = document.getElementById('stage')!
+  if (state.figures) {
+    renderFigures(stage)
+    return
+  }
   if (state.grid) {
     stage.style.cssText = 'display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:6px;background:#111'
     for (const loc of LOCATIONS) {
@@ -70,6 +77,30 @@ function render() {
       params.set(id, el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value)
       location.search = params.toString()
     })
+  }
+}
+
+const FIG_COLORS: Record<string, string> = {
+  robe: '#d6cfbf', shade: '#9d9687', hair: '#121417', sash: '#28403a', blade: '#cfd8dc', skin: '#c9b69c',
+  body: '#111416', eye: '#f0c070',
+}
+
+function figureSvg(viewBox: [number, number], parts: { d: string; cls: string; frame?: string }[], height: number) {
+  const paths = parts.filter(p => p.frame !== 'b').map(p => {
+    const stroke = p.cls === 'line' ? 'fill="none" stroke="rgba(30,32,34,0.6)" stroke-width="0.7"' : p.cls === 'accent' ? 'fill="none" stroke="#a8473b" stroke-width="0.9"' : `fill="${FIG_COLORS[p.cls] || '#333'}"`
+    return `<path d="${p.d}" ${stroke} />`
+  }).join('')
+  return `<svg viewBox="0 0 ${viewBox[0]} ${viewBox[1]}" height="${height}" style="overflow:visible">${paths}</svg>`
+}
+
+/** 立绘陈列：逐一检看主角各姿态与敌方剪影。 */
+function renderFigures(stage: HTMLElement) {
+  stage.style.cssText = 'display:flex;flex-wrap:wrap;gap:28px;align-items:flex-end;padding:30px;background:linear-gradient(#8a9499,#c9c6bb)'
+  for (const [name, pose] of Object.entries(HERO_POSES)) {
+    stage.insertAdjacentHTML('beforeend', `<figure style="margin:0;text-align:center;font:12px sans-serif">${figureSvg(pose.viewBox, pose.parts, 220 * pose.scale)}<figcaption>${name}</figcaption></figure>`)
+  }
+  for (const [name, fig] of Object.entries(ENEMY_FIGURES)) {
+    stage.insertAdjacentHTML('beforeend', `<figure style="margin:0;text-align:center;font:12px sans-serif">${figureSvg(fig.viewBox, fig.parts, 220 * fig.scale)}<figcaption>${name}</figcaption></figure>`)
   }
 }
 

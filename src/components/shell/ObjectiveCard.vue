@@ -3,7 +3,7 @@
     <span class="objective-card__kicker">{{ guidance.kicker }}</span>
     <h3 class="objective-card__title">{{ guidance.title }}</h3>
     <p class="objective-card__detail">{{ guidance.detail }}</p>
-    <button class="ink-btn ink-btn--small" type="button" @click="follow">
+    <button v-if="guidance.actionLabel" class="ink-btn ink-btn--small" type="button" @click="follow">
       {{ guidance.actionLabel }}<GameIcon name="chevronRight" />
     </button>
     <div v-if="milestone" class="objective-card__milestone" :data-tip="milestone.detail" data-tip-title="修行路标">

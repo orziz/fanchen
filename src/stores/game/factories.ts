@@ -251,8 +251,9 @@ export function createAuctionListings(amount: number, playerRankIndex = 0, playe
 
 function createInitialWorld(): WorldState {
   return {
-    day: 1, hour: 0, subStep: 0,
-    weather: sample(['晴', '微雨', '雾起', '大风', '寒霜']),
+    // 开局在卯时破晓：路人叫醒你时，天正蒙蒙亮。
+    day: 1, hour: 3, subStep: 0,
+    weather: sample(['晴', '晴', '雾起']),
     omen: sample(['星辉平稳', '灵潮暗涌', '海雾倒卷', '宗门钟鸣', '赤霞流火']),
     factionFavor: { merchants: 0, court: 0, sect: 0, rogues: 0 },
     factions: Object.fromEntries(FACTIONS.map(f => [f.id, { standing: 0, favor: 0, joined: false }])),

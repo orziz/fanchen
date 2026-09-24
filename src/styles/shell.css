@@ -690,6 +690,10 @@
 }
 
 /* ─── 飘出提示 ─── */
+body:has(.book-host) .toast-stack {
+  top: calc(var(--topbar-h) + 4.6rem);
+}
+
 .toast-stack {
   position: fixed;
   top: calc(var(--topbar-h) + 3.6rem);

@@ -41,9 +41,9 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
       kicker: '入世指引',
       title: input.tutorialObjective,
       detail: input.activeStoryTitle
-        ? `“${input.activeStoryTitle}”正在推进，完成眼前选择后再落下一步。`
-        : '按当前指引完成第一条门路，其他系统会随进度逐步开放。',
-      actionLabel: input.activeStoryTitle ? '继续剧情' : '查看当前线索',
+        ? `“${input.activeStoryTitle}”还有下文，听完再定。`
+        : '先照路人说的办，在青禾找个落脚处，往后的路才走得开。',
+      actionLabel: input.activeStoryTitle ? '继续剧情' : '去办',
       target: 'story',
       tone: 'story',
     }
@@ -53,7 +53,7 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
     return {
       kicker: '剧情待决',
       title: `“${input.activeStoryTitle}”还有选择未定`,
-      detail: '世界已为当前剧情暂停，处理后再继续推进时间。',
+      detail: '眼前的事悬而未决，时辰也跟着停住。',
       actionLabel: '继续剧情',
       target: 'story',
       tone: 'story',
@@ -64,8 +64,8 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
     return {
       kicker: '交战中',
       title: `${input.enemyName}仍在眼前`,
-      detail: '其他事务已被战斗阻断，先决定出招、撤退或开启自动战斗。',
-      actionLabel: '处理战斗',
+      detail: '别的事都得放一放，先分个胜负，或设法脱身。',
+      actionLabel: '',
       target: 'combat',
       tone: 'danger',
     }
@@ -74,9 +74,9 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
   if (input.travelDestination) {
     return {
       kicker: '行程进行中',
-      title: `正在赶往${input.travelDestination}`,
-      detail: `当前从${input.locationName}继续赶路，可在山河图查看下一站与阻断原因。`,
-      actionLabel: '查看路线',
+      title: `正赶往${input.travelDestination}`,
+      detail: `自${input.locationName}动身，一程一程往前走，每程约半个时辰。`,
+      actionLabel: '看路线',
       target: 'map',
       tone: 'travel',
     }
@@ -85,9 +85,9 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
   if (Math.min(input.hpPercent, input.qiPercent, input.staminaPercent) < 30) {
     return {
       kicker: '根基告急',
-      title: '状态过低，先调息再冒险',
+      title: '伤疲过甚，先调息再说',
       detail: `气血 ${input.hpPercent}% · 真气 ${input.qiPercent}% · 体力 ${input.staminaPercent}%`,
-      actionLabel: '调息一轮',
+      actionLabel: '调息',
       target: 'rest',
       tone: 'danger',
     }
@@ -96,9 +96,9 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
   if (input.breakthroughReady && !input.canBreakthrough) {
     return {
       kicker: '寻找灵地',
-      title: '冲关积累已圆满，当前地点却接不住天机',
-      detail: '前往标有冲关门路的灵地，再尝试突破当前境界。',
-      actionLabel: '查看山河图',
+      title: '火候已足，此地却接不住天机',
+      detail: '去有冲关门路的灵地，再冲下一重境界。',
+      actionLabel: '看山河图',
       target: 'map',
       tone: 'growth',
     }
@@ -107,9 +107,9 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
   if (input.canBreakthrough) {
     return {
       kicker: '破境在即',
-      title: '修为底子与火候均已到线',
-      detail: '当前已具备手动冲关条件，地点灵气与悟性会影响成败。',
-      actionLabel: '尝试冲关',
+      title: '底子与火候都已到线',
+      detail: '此地可冲关。地点灵气与悟性越高，把握越大。',
+      actionLabel: '冲关',
       target: 'breakthrough',
       tone: 'growth',
     }
@@ -119,8 +119,8 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
     return {
       kicker: '立足江湖',
       title: '仍是白身，先找一方门路落脚',
-      detail: '挂靠本地势力后，差使、商路和更多行动会逐步开放。',
-      actionLabel: '查看势力',
+      detail: '挂靠一方势力，差使、营生与更多门路才会向你敞开。',
+      actionLabel: '看门路',
       target: 'sect',
       tone: 'steady',
     }
@@ -130,8 +130,8 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
     return {
       kicker: '商路未结',
       title: `这趟货要送到${input.tradeDestination}`,
-      detail: '先核对货路和交割地点，避免让已经压下的本钱停在路上。',
-      actionLabel: '查看商路',
+      detail: '本钱压在路上，早些交割早些回本。',
+      actionLabel: '看货路',
       target: 'market',
       tone: 'travel',
     }
@@ -141,8 +141,8 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
     return {
       kicker: '异象显世',
       title: `${input.activeRealmName}正在显现`,
-      detail: '先核对地点、危险与当前根基，再决定是否赶赴挑战。',
-      actionLabel: '查看异象',
+      detail: '掂量根基与声望，再决定去不去闯。',
+      actionLabel: '看秘境',
       target: 'world',
       tone: 'growth',
     }
@@ -151,8 +151,8 @@ export function resolveGuidance(input: GuidanceInput): GuidanceResult {
   return {
     kicker: '今日主路',
     title: `按“${input.currentModeLabel}”稳步推进`,
-    detail: `现居${input.locationName}，可随时从策略盘调整长期节奏和临时行动。`,
-    actionLabel: '打开策略盘',
+    detail: `落脚${input.locationName}，诸事照常。想换个活法，随时可改换打算。`,
+    actionLabel: '改换打算',
     target: 'command',
     tone: 'steady',
   }
