@@ -80,7 +80,8 @@ const notice = ref('')
 const noticeError = ref(false)
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key !== 'Escape') return
+  // 长按 Esc 打开设置时，后续连发不应立刻又把它关上。
+  if (event.key !== 'Escape' || event.repeat) return
   event.preventDefault()
   emit('close')
 }

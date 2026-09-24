@@ -32,6 +32,12 @@ describe('save import', () => {
 
     expect(() => store.importSave(JSON.stringify({ player: { name: null }, world: {}, npcs: [] }))).toThrow()
     expect(() => store.importSave(JSON.stringify({ player: { inventory: 'none' }, world: { day: 3 }, npcs: [] }))).toThrow()
+    const exported = JSON.parse(store.exportSave())
+    expect(() => store.importSave(JSON.stringify({ ...exported, log: [{ stamp: '', text: null, type: 'info' }] }))).toThrow()
+    expect(() => store.importSave(JSON.stringify({ ...exported, npcs: [{ ...exported.npcs[0], name: 7 }] }))).toThrow()
+    expect(() => store.importSave(JSON.stringify({ ...exported, player: { ...exported.player, rivalIds: 'none' } }))).toThrow()
+    expect(() => store.importSave(JSON.stringify({ ...exported, player: { ...exported.player, factionCooldowns: 5 } }))).toThrow()
+    expect(() => store.importSave(JSON.stringify({ ...exported, market: { qinghe: 'sold out' } }))).toThrow()
 
     expect(store.player.name).toBe('林寒')
     expect(storage.get(SAVE_KEY)).toBe(primary)
