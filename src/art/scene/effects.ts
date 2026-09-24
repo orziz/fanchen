@@ -74,6 +74,16 @@ export class ParticleField {
     this.motes = []
   }
 
+  /** 清空一切在飞的粒子（切到静止画面时用）。 */
+  clear() {
+    this.rain = []
+    this.snow = []
+    this.leaves = []
+    this.motes = []
+    this.smoke = []
+    this.qi = []
+  }
+
   private ensure(list: Particle[], count: number, spawn: () => Particle) {
     while (list.length < count) list.push(spawn())
     if (list.length > count) list.length = count

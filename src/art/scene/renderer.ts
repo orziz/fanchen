@@ -70,21 +70,29 @@ export class SceneRenderer {
     this.renderFrame(0)
   }
 
+  /** 减少动效时画面是一张静图：不淡入淡出、不留粒子，只在输入变化时重画。 */
   setInput(input: SceneInput) {
     const previous = this.input
     this.input = input
     const changedScene = !previous || previous.key !== input.key || previous.travel !== input.travel
-    if (changedScene) this.ensureComposition(input, Boolean(previous))
+    if (changedScene) this.ensureComposition(input, Boolean(previous) && !input.reduceMotion)
+    if (input.reduceMotion) {
+      this.particles.clear()
+      this.fadeCanvas = null
+      this.flashUntil = 0
+    }
     if (input.reduceMotion || !this.running) this.renderFrame(0)
   }
 
   /** 屏幕闪光：雷电、破境。 */
   flash(color = 'rgba(255,255,255,0.85)', duration = 180) {
+    if (this.input?.reduceMotion) return
     this.flashColor = color
     this.flashUntil = performance.now() + duration
   }
 
   burstQi() {
+    if (this.input?.reduceMotion) return
     const h = this.canvas.height
     this.particles.emitQi(this.canvas.width / 2, h * HERO_GROUND_RATIO - h * 0.12, h * 0.04, true)
   }
@@ -99,8 +107,8 @@ export class SceneRenderer {
       if (now - this.last < FRAME_MS) return
       const dt = Math.min(0.1, (now - this.last) / 1000)
       this.last = now
-      if (document.visibilityState !== 'visible') return
-      this.renderFrame(this.input?.reduceMotion ? 0 : dt)
+      if (document.visibilityState !== 'visible' || this.input?.reduceMotion) return
+      this.renderFrame(dt)
     }
     this.raf = requestAnimationFrame(loop)
   }

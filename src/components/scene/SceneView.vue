@@ -45,7 +45,7 @@ import { SceneRenderer } from '@/art/scene/renderer'
 import { poseForAction } from '@/art/figures/hero'
 import { shapeForEnemy, sizeForEnemy } from '@/art/figures/enemies'
 import { useFx } from '@/composables/useFx'
-import { useSettings } from '@/composables/useSettings'
+import { useReducedMotion } from '@/composables/useSettings'
 import GameIcon from '@/components/common/GameIcon.vue'
 import HeroFigure from '@/components/scene/HeroFigure.vue'
 import EnemyFigure from '@/components/scene/EnemyFigure.vue'
@@ -53,7 +53,7 @@ import LocationPlate from '@/components/scene/LocationPlate.vue'
 
 const store = useGameStore()
 const { player, world, combat } = storeToRefs(store)
-const settings = useSettings()
+const reduceMotion = useReducedMotion()
 const { fx } = useFx()
 
 const rootEl = ref<HTMLElement | null>(null)
@@ -62,9 +62,6 @@ const canvasEl = ref<HTMLCanvasElement | null>(null)
 let renderer: SceneRenderer | null = null
 let resizeObserver: ResizeObserver | null = null
 
-// 设置里的“减少动效”与系统的减弱动态偏好，任一打开都停掉屏震与画面动效。
-const systemReducedMotion = typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
-const reduceMotion = computed(() => settings.reduceMotion || systemReducedMotion)
 const traveling = computed(() => Boolean(player.value.travelPlan))
 const fighting = computed(() => Boolean(combat.value.currentEnemy))
 const enemy = computed(() => combat.value.currentEnemy)

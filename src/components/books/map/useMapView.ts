@@ -1,10 +1,11 @@
-import { computed, reactive, type Ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, type Ref } from 'vue'
 
 export interface MapBounds { x: number; y: number; w: number; h: number }
 
 /**
  * 地图视口：以地图坐标记录可视范围，支持滚轮 / 双指缩放、拖拽平移；
- * 拖动超过几像素即视为平移，不触发点选。
+ * 拖动超过几像素即视为平移，不触发点选。容器尺寸变化时保持中心、跟上新比例，
+ * 让指针换算始终与画面一致。
  */
 export function useMapView(root: Ref<HTMLElement | null>, bounds: MapBounds) {
   const view = reactive({ x: bounds.x, y: bounds.y, w: bounds.w, h: bounds.h })
@@ -37,6 +38,29 @@ export function useMapView(root: Ref<HTMLElement | null>, bounds: MapBounds) {
     view.x = bounds.x + bounds.w / 2 - view.w / 2
     view.y = bounds.y + bounds.h / 2 - view.h / 2
   }
+
+  /** 容器比例变了（改窗口、横竖屏切换）：保持中心与宽度，按新比例重算高度。 */
+  function syncAspect() {
+    const rect = root.value?.getBoundingClientRect()
+    if (!rect || !rect.width || !rect.height) return
+    const next = rect.width / rect.height
+    if (Math.abs(next - view.w / view.h) < 1e-3) return
+    const cx = view.x + view.w / 2
+    const cy = view.y + view.h / 2
+    aspect = next
+    view.h = view.w / next
+    view.x = cx - view.w / 2
+    view.y = cy - view.h / 2
+    clampView()
+  }
+
+  let observer: ResizeObserver | null = null
+  onMounted(() => {
+    if (typeof ResizeObserver === 'undefined' || !root.value) return
+    observer = new ResizeObserver(syncAspect)
+    observer.observe(root.value)
+  })
+  onBeforeUnmount(() => observer?.disconnect())
 
   function toMap(clientX: number, clientY: number) {
     const rect = root.value!.getBoundingClientRect()

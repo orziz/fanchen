@@ -1,4 +1,4 @@
-import { reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { SAVE_KEY } from '@/config'
 
 export interface GameSettings {
@@ -41,4 +41,18 @@ watch(settings, () => {
 
 export function useSettings() {
   return settings
+}
+
+// 系统的“减弱动态效果”偏好，跟随系统设置实时变化。
+const systemReducedMotion = ref(false)
+if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+  const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+  systemReducedMotion.value = query.matches
+  query.addEventListener?.('change', event => { systemReducedMotion.value = event.matches })
+}
+const reducedMotion = computed(() => settings.reduceMotion || systemReducedMotion.value)
+
+/** 设置里的“减少动效”与系统偏好，任一打开即视为减少动效。 */
+export function useReducedMotion() {
+  return reducedMotion
 }

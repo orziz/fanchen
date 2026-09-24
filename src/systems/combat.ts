@@ -160,9 +160,15 @@ export function startPursuitEncounter(factionId: string, source = 'travel') {
   return enemy
 }
 
+/** 行囊里能直接服下、回气血最多的一样药食；只回真气或体力的不算。 */
 function getHealingItem() {
-  const ctx = getContext()
-  return ['jade-spring', 'mist-herb', 'spirit-grain'].find(id => ctx.findInventoryEntry(id))
+  let best: { id: string; hp: number } | null = null
+  for (const entry of getContext().game.player.inventory) {
+    const item = getItem(entry.itemId)
+    const hp = item?.directUse ? item.effect.hp || 0 : 0
+    if (entry.quantity > 0 && hp > 0 && (!best || hp > best.hp)) best = { id: entry.itemId, hp }
+  }
+  return best?.id
 }
 
 function applyOngoingEffects() {

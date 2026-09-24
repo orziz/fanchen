@@ -58,8 +58,7 @@ import { useGameStore } from '@/stores/game'
 import { ACTION_META, LOCATION_MAP, SPEED_OPTIONS } from '@/config'
 import { iconForAction } from '@/art/icons'
 import { getModeLabel } from '@/composables/useUIHelpers'
-import { getActionUnavailableReason, performAction } from '@/systems/world'
-import { processBattleRound } from '@/systems/combat'
+import { getActionUnavailableReason, performAction, performCombatRound } from '@/systems/world'
 import { getPreferredSpellId } from '@/systems/techniques'
 import { getManualActionLockReason } from '@/systems/tutorial'
 import { sfx } from '@/audio/sfx'
@@ -132,7 +131,7 @@ const combatCommands = computed(() => {
   const round = (action: string, skill: string | null = null) => () => {
     if (!combat.value.currentEnemy) return
     sfx.action()
-    processBattleRound(action, skill)
+    performCombatRound(action, skill)
   }
   return [
     { key: 'attack', label: '出手', icon: 'combat', tip: '以兵器与拳脚硬攻', disabled: false, on: false, run: round('attack') },

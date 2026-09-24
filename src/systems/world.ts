@@ -9,7 +9,7 @@ import {
 } from '@/config'
 import { sample, randomInt, fillTemplate, findRoute as resolveRoute, round } from '@/utils'
 import { applyPassiveAction, attemptBreakthrough } from '@/systems/player'
-import { autoCombatTick, maybeStartEncounter, startPursuitEncounter, challengeRealm } from '@/systems/combat'
+import { autoCombatTick, maybeStartEncounter, processBattleRound, startPursuitEncounter, challengeRealm } from '@/systems/combat'
 import { advanceTradeRun, resolvePassiveTrade, maybeStartBestTradeRun } from '@/systems/trade'
 import { resolveAuctionVisit, resolveAuctionTurn, refreshMarketIfNeeded, maybeActivateRealm } from '@/systems/auction'
 import { hasActiveFactionPursuit, processRelationshipTick, processSectTick, processPlayerFactionTick, processFactionStatusTick, processTerritoryStatusTick } from '@/systems/social'
@@ -431,6 +431,17 @@ function processActionKey(actionKey: string | null) {
       autoCombatTick()
     }
   }
+}
+
+/** 亲手出一招：打一个回合，世界随之走过同样的时间，与自动出招一致。 */
+export function performCombatRound(action: string, skillId: string | null = null) {
+  const ctx = getContext()
+  if (!ctx.game.combat.currentEnemy) return false
+  ctx.game.player.action = 'combat'
+  processBattleRound(action, skillId)
+  tickWorld()
+  ctx.updateDerivedStats()
+  return true
 }
 
 export function performAction(actionKey: string) {

@@ -30,12 +30,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useGameStore } from '@/stores/game'
 import { RANKS, SAVE_KEY } from '@/config'
 import { SceneRenderer } from '@/art/scene/renderer'
 import { useGamePhase } from '@/composables/useGamePhase'
-import { useSettings } from '@/composables/useSettings'
+import { useReducedMotion } from '@/composables/useSettings'
 import { sfx } from '@/audio/sfx'
 import type { NewLifeOptions } from '@/stores/game/store'
 import NewLifeDialog from '@/components/shell/NewLifeDialog.vue'
@@ -43,7 +43,7 @@ import NewLifeDialog from '@/components/shell/NewLifeDialog.vue'
 defineEmits<{ settings: [] }>()
 
 const store = useGameStore()
-const settings = useSettings()
+const reduceMotion = useReducedMotion()
 const { enterGame } = useGamePhase()
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const creating = ref(false)
@@ -80,22 +80,26 @@ function beginLife(options: NewLifeOptions) {
   enterGame()
 }
 
+const titleScene = computed(() => ({
+  key: 'title',
+  archetype: {
+    relief: 'karst' as const, water: 'lake' as const, settlement: 'none' as const, flora: ['pine' as const],
+    smoke: false, mystic: false, snowCover: false, fields: false, warm: 0, seed: 'title-scroll',
+  },
+  hour: 9,
+  weather: 'clear' as const,
+  travel: false,
+  heroEffect: 'none' as const,
+  reduceMotion: reduceMotion.value,
+}))
+
+watch(titleScene, input => renderer?.setInput(input))
+
 onMounted(() => {
   if (!canvasEl.value) return
   renderer = new SceneRenderer(canvasEl.value)
   renderer.resize()
-  renderer.setInput({
-    key: 'title',
-    archetype: {
-      relief: 'karst', water: 'lake', settlement: 'none', flora: ['pine'],
-      smoke: false, mystic: false, snowCover: false, fields: false, warm: 0, seed: 'title-scroll',
-    },
-    hour: 9,
-    weather: 'clear',
-    travel: false,
-    heroEffect: 'none',
-    reduceMotion: settings.reduceMotion,
-  })
+  renderer.setInput(titleScene.value)
   renderer.start()
   window.addEventListener('resize', onResize)
 })

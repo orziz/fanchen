@@ -66,7 +66,7 @@ export function pluck(freq: number, options: PluckOptions = {}) {
   panner.connect(options.bus ?? audio.music)
   const send = ctx.createGain()
   send.gain.value = options.send ?? 0.5
-  panner.connect(send).connect(audio.reverbSend)
+  panner.connect(send).connect(audio.wetFor(options.bus ?? audio.music))
   source.start(when)
   source.stop(when + 3.3)
 }
@@ -102,7 +102,7 @@ export function tone(freq: number, options: ToneOptions = {}) {
   if (options.send) {
     const send = ctx.createGain()
     send.gain.value = options.send
-    gain.connect(send).connect(audio.reverbSend)
+    gain.connect(send).connect(audio.wetFor(options.bus ?? audio.sfx))
   }
   osc.start(when)
   osc.stop(when + attack + decay + 0.05)

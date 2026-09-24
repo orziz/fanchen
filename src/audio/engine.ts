@@ -12,6 +12,8 @@ class AudioEngine {
   ambience!: GainNode
   reverb!: ConvolverNode
   reverbSend!: GainNode
+  /** 各声部送往混响的入口，音量与该声部同步。 */
+  private wet = new Map<GainNode, GainNode>()
   private noiseBuffer: AudioBuffer | null = null
   private listeners: Array<() => void> = []
 
@@ -54,11 +56,21 @@ class AudioEngine {
     this.reverb = ctx.createConvolver()
     this.reverb.buffer = this.createImpulse(3.2, 2.6)
     this.reverbSend = ctx.createGain()
-    this.reverbSend.gain.value = 0.55
+    this.reverbSend.gain.value = 0.9
     this.reverbSend.connect(this.reverb).connect(this.master)
     this.music.connect(this.master)
     this.sfx.connect(this.master)
     this.ambience.connect(this.master)
+    for (const bus of [this.music, this.sfx, this.ambience]) {
+      const wet = ctx.createGain()
+      wet.connect(this.reverbSend)
+      this.wet.set(bus, wet)
+    }
+  }
+
+  /** 某一声部的混响入口；声部音量调到零时，它的混响也一并静下。 */
+  wetFor(bus: GainNode) {
+    return this.wet.get(bus) ?? this.reverbSend
   }
 
   private createImpulse(seconds: number, decay: number) {
@@ -85,9 +97,11 @@ class AudioEngine {
     if (!this.ctx) return
     const t = this.ctx.currentTime
     this.master.gain.setTargetAtTime(muted ? 0 : 0.9, t, 0.08)
-    this.music.gain.setTargetAtTime(music * 0.7, t, 0.2)
-    this.ambience.gain.setTargetAtTime(music * 0.5, t, 0.2)
-    this.sfx.gain.setTargetAtTime(sfx, t, 0.05)
+    const levels: Array<[GainNode, number, number]> = [[this.music, music * 0.7, 0.2], [this.ambience, music * 0.5, 0.2], [this.sfx, sfx, 0.05]]
+    for (const [bus, level, glide] of levels) {
+      bus.gain.setTargetAtTime(level, t, glide)
+      this.wetFor(bus).gain.setTargetAtTime(level, t, glide)
+    }
   }
 }
 

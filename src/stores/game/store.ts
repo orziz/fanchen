@@ -48,7 +48,7 @@ import {
   deriveLifeStage,
 } from '@/stores/game/factories'
 import { OBSOLETE_SAVE_STORAGE_KEYS, hydrateGameState, readStoredSave } from '@/stores/game/hydration'
-import { applyOrigin, looksLikeSave, type NewLifeOptions } from '@/stores/game/origin'
+import { applyOrigin, isPlayableSave, looksLikeSave, type NewLifeOptions } from '@/stores/game/origin'
 
 export type { NewLifeOptions } from '@/stores/game/origin'
 
@@ -302,10 +302,6 @@ export const useGameStore = defineStore('game', () => {
     bus.emit('state:derived-stats-updated')
   }
 
-  function clearStaleSaveKeys() {
-    STALE_SAVE_KEYS.forEach(key => localStorage.removeItem(key))
-  }
-
   function maybeStartOpeningTutorial() {
     if (!shouldAutoStartOpeningTutorial(game.value.story)) return
     if (startStory(OPENING_TUTORIAL_STORY_ID, { locationId: game.value.player.locationId }, 'overlay')) {
@@ -317,7 +313,7 @@ export const useGameStore = defineStore('game', () => {
   function commitSnapshot() {
     normalizeNumericState()
     persistSnapshot(JSON.stringify(game.value))
-    clearStaleSaveKeys()
+    STALE_SAVE_KEYS.forEach(key => localStorage.removeItem(key))
   }
 
   function persistSnapshot(snapshot: string) {
@@ -400,11 +396,26 @@ export const useGameStore = defineStore('game', () => {
     return JSON.stringify(game.value)
   }
 
-  /** 导入存档文本：先按现行规则修复成完整存档，确认可用后再落盘并读入。 */
+  /**
+   * 导入存档文本：先在候选副本上修复、校验形状并试算一遍派生属性，全部通过才落盘读入；
+   * 任何一步失败都原样保留当前进度、主档与备份。
+   */
   function importSave(raw: string) {
     const parsed = JSON.parse(raw)
     if (!looksLikeSave(parsed)) throw new Error('invalid_save')
-    persistSnapshot(JSON.stringify(hydrateGameState(parsed)))
+    const candidate = hydrateGameState(parsed)
+    if (!isPlayableSave(candidate)) throw new Error('invalid_save')
+    const current = game.value
+    let snapshot = ''
+    try {
+      game.value = candidate
+      normalizeNumericState()
+      updateDerivedStats()
+      snapshot = JSON.stringify(game.value)
+    } finally {
+      game.value = current
+    }
+    persistSnapshot(snapshot)
     loadGame()
     initialized.value = true
   }

@@ -53,8 +53,8 @@ function isTyping(target: EventTarget | null) {
 
 /** 快捷键：Esc 合书或开设置，空格暂停，字母键翻开对应书册。 */
 function onKeydown(event: KeyboardEvent) {
-  // 设置等弹窗开着时，按键交给弹窗自己处理。
-  if (props.modalOpen || isTyping(event.target) || event.metaKey || event.ctrlKey || event.altKey) return
+  // 设置等弹窗开着时，按键交给弹窗自己处理；按住不放的连发只认第一下。
+  if (props.modalOpen || event.repeat || isTyping(event.target) || event.metaKey || event.ctrlKey || event.altKey) return
   if (store.story.activeStoryId && store.story.presentation === 'overlay') return
   if (event.key === 'Escape') {
     if (strategyOpen.value) strategyOpen.value = false
