@@ -6,7 +6,6 @@ import {
   PLAYER_SECT_ENABLED,
   PLAYER_SECT_FROZEN_TEXT,
   getBreakthroughDisabledReason,
-  getBreakthroughReadyNeed,
 } from '@/config'
 import { addPlayerMetric, addPlayerSkill } from '@/core/integerProgress'
 import { clamp, round, sample, uid } from '@/utils'
@@ -89,15 +88,16 @@ export function attemptBreakthrough(): boolean {
   if (nextRankIndex >= RANKS.length) { ctx.appendLog('你已站在当前境界的极处，只能继续温养根基。', 'info'); return false }
   const need = ctx.getNextBreakthroughNeed()
   const location = ctx.getCurrentLocation()
-  if (p.breakthrough < getBreakthroughReadyNeed(need)) {
-    ctx.appendLog(getBreakthroughDisabledReason({
-      hasNextRank: true,
-      nextBreakthroughNeed: need,
-      cultivation: p.cultivation,
-      breakthrough: p.breakthrough,
-      rankIndex: p.rankIndex,
-      aura: location.aura,
-    }), 'warn')
+  const unavailableReason = getBreakthroughDisabledReason({
+    hasNextRank: true,
+    nextBreakthroughNeed: need,
+    cultivation: p.cultivation,
+    breakthrough: p.breakthrough,
+    rankIndex: p.rankIndex,
+    aura: location.aura,
+  })
+  if (unavailableReason) {
+    ctx.appendLog(unavailableReason, 'warn')
     return false
   }
   const successRate = clamp(p.breakthroughRate + location.aura / 520 + ctx.getPlayerInsight() / 760 + p.breakthrough / (need * 2.8), 0.1, 0.62)

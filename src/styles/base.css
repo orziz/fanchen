@@ -1,38 +1,28 @@
 :root {
   color-scheme: light;
-  /* 宣纸水墨风 (Light Mode) 变量体系 */
-  --bg-ink: #f2ebd9;
-  /* 亮宣纸色 */
-  --bg-deep: #e8decc;
-  /* 深宣纸色 */
+  --bg-ink: #eeece6;
+  --bg-deep: #dedbd3;
   --mist: rgba(0, 0, 0, 0.04);
-  --card: rgba(255, 255, 255, 0.9);
-  --card-soft: rgba(248, 245, 238, 0.7);
-  --border: rgba(0, 0, 0, 0.08);
-  --line: rgba(0, 0, 0, 0.05);
+  --card: rgba(255, 255, 255, 0.94);
+  --card-soft: rgba(244, 243, 239, 0.82);
+  --border: rgba(37, 34, 30, 0.14);
+  --line: rgba(37, 34, 30, 0.1);
 
-  /* 文本色：墨色为主 */
-  --text-main: #2b2823;
-  --text-dim: #5c5850;
-  --text-faint: #8e897f;
+  --text-main: #24221f;
+  --text-dim: #504c45;
+  --text-faint: #68635a;
 
-  /* 游戏内状态颜色：以不刺眼的古典色为主 */
-  --gold: #b3852b;
-  /* 暗琉璃黄 */
-  --gold-bright: #d4a340;
-  --jade: #427e61;
-  /* 翠玉绿 */
-  --cinnabar: #b44a42;
-  /* 朱砂红 */
-  --sky: #4682b4;
-  /* 苍石蓝 */
+  --gold: #765719;
+  --gold-bright: #805b10;
+  --jade: #356d53;
+  --cinnabar: #9b3f38;
+  --sky: #346f95;
 
-  --shadow: 0 16px 32px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.02);
-  --radius-xl: 22px;
-  /* 稍微减弱圆角更显修仙书卷感 */
-  --radius-lg: 16px;
-  --radius-md: 10px;
-  --radius-sm: 6px;
+  --shadow: 0 12px 28px rgba(24, 22, 19, 0.07), 0 2px 8px rgba(24, 22, 19, 0.04);
+  --radius-xl: 8px;
+  --radius-lg: 8px;
+  --radius-md: 6px;
+  --radius-sm: 4px;
   --font-title: "STKaiti", "KaiTi", "Kaiti SC", "FangSong", "STFangsong", serif;
   --font-body: "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
   --font-ui: "Microsoft YaHei UI", "Segoe UI", "Noto Sans SC", sans-serif;
@@ -84,40 +74,11 @@ body {
 
 body {
   position: relative;
-  /* 外部环境背景：极简宣纸过渡色 */
-  background:
-    radial-gradient(circle at top, rgba(230, 222, 204, 0.8), transparent 40%),
-    linear-gradient(180deg, #edebd9 0%, #e0dac2 100%);
+  background: var(--bg-deep);
   color: var(--text-main);
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.6;
-}
-
-body::before,
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-}
-
-body::before {
-  opacity: 0.16;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.22), transparent 18%),
-    radial-gradient(circle at 85% 8%, rgba(125, 178, 200, 0.18), transparent 16%),
-    radial-gradient(circle at 45% 78%, rgba(208, 171, 108, 0.14), transparent 24%);
-  filter: blur(18px);
-}
-
-body::after {
-  opacity: 0.08;
-  background-image:
-    linear-gradient(90deg, transparent 0, transparent 24%, rgba(255, 255, 255, 0.08) 24%, transparent 25%),
-    linear-gradient(transparent 0, transparent 24%, rgba(255, 255, 255, 0.08) 24%, transparent 25%);
-  background-size: 64px 64px;
-  mix-blend-mode: screen;
 }
 
 body.dragging-window,
@@ -129,9 +90,7 @@ body.dragging-window * {
 .backdrop {
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(circle at 50% 110%, rgba(242, 214, 162, 0.18), transparent 40%),
-    radial-gradient(circle at 50% -10%, rgba(125, 178, 200, 0.08), transparent 30%);
+  background: var(--bg-deep);
   pointer-events: none;
 }
 
@@ -149,7 +108,7 @@ body.dragging-window * {
 .section-kicker {
   margin: 0 0 8px;
   color: var(--gold);
-  letter-spacing: 0.22em;
+  letter-spacing: 0;
   text-transform: uppercase;
   font-size: 12px;
 }
@@ -190,7 +149,7 @@ body.dragging-window * {
 .npc-button {
   appearance: none;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   background: rgba(0, 0, 0, 0.03);
   color: var(--text-main);
   font-family: var(--font-ui);
@@ -319,7 +278,7 @@ body.dragging-window * {
 .npc-button,
 .mini-button {
   padding: 9px 12px;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
 }
 
 .inline-list {
@@ -355,5 +314,33 @@ body.dragging-window * {
 .divider {
   height: 1px;
   margin: 16px 0;
-  background: linear-gradient(90deg, transparent, rgba(242, 214, 162, 0.2), transparent);
+  background: var(--line);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+:focus-visible {
+  outline: 3px solid #2f718e;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

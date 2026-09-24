@@ -15,7 +15,10 @@ import {
   LEGACY_SAVE_KEYS,
   PLAYER_SECT_ENABLED,
   MAX_LOG,
+  SAVE_BACKUP_KEY,
   SAVE_KEY,
+  LOCATION_MAP,
+  STORY_MAP,
   getTechnique,
   getTechniqueByItemId,
 } from '@/config'
@@ -46,7 +49,7 @@ export const OBSOLETE_SAVE_STORAGE_KEYS = [`${SAVE_KEY}-active-slot`, ...OBSOLET
 
 export interface StoredSaveRecord {
   raw: string
-  source: 'primary' | 'slot-migrated' | 'legacy'
+  source: 'primary' | 'backup' | 'slot-migrated' | 'legacy'
 }
 
 function readLegacyEquipment(rawPlayer: Partial<PlayerState> | undefined): LegacyEquipmentState {
@@ -85,6 +88,8 @@ function hydrateStorySuspended(rawStory: Partial<GameState['story']> | undefined
   if (typeof suspended.storyId !== 'string' || typeof suspended.nodeId !== 'string' || typeof suspended.progressKey !== 'string') {
     return null
   }
+  const definition = STORY_MAP.get(suspended.storyId)
+  if (!definition?.nodes[suspended.nodeId]) return null
 
   const rawBindings = (suspended.bindings || {}) as Record<string, unknown>
 
@@ -92,7 +97,7 @@ function hydrateStorySuspended(rawStory: Partial<GameState['story']> | undefined
     storyId: suspended.storyId,
     nodeId: suspended.nodeId,
     progressKey: suspended.progressKey,
-    presentation: isStoryPresentation(suspended.presentation) ? suspended.presentation : null,
+    presentation: isStoryPresentation(suspended.presentation) && suspended.presentation ? 'overlay' : null,
     bindings: {
       npcId: typeof rawBindings.npcId === 'string' ? rawBindings.npcId : null,
       locationId: typeof rawBindings.locationId === 'string' ? rawBindings.locationId : null,
@@ -127,6 +132,14 @@ function readMainSaveRecord(): StoredSaveRecord | null {
   const raw = localStorage.getItem(SAVE_KEY)
   if (raw && parseStoredSnapshot(raw)) {
     return { raw, source: 'primary' }
+  }
+  return null
+}
+
+function readBackupSaveRecord(): StoredSaveRecord | null {
+  const raw = localStorage.getItem(SAVE_BACKUP_KEY)
+  if (raw && parseStoredSnapshot(raw)) {
+    return { raw, source: 'backup' }
   }
   return null
 }
@@ -225,6 +238,17 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
   const defaultSect = rawSect ? createInitialSect(rawSect.name || '') : null
   const defaultPF = rawPF ? createInitialPlayerFaction(rawPF.name || '') : null
   const rawStoryProgress = raw.story?.progress || {}
+  const playerLocationId = typeof raw.player?.locationId === 'string' && LOCATION_MAP.has(raw.player.locationId)
+    ? raw.player.locationId
+    : fresh.player.locationId
+  const activeStoryDefinition = typeof raw.story?.activeStoryId === 'string'
+    ? STORY_MAP.get(raw.story.activeStoryId)
+    : null
+  const activeStoryId = activeStoryDefinition ? raw.story!.activeStoryId! : null
+  const activeNodeId = activeStoryDefinition && typeof raw.story?.activeNodeId === 'string' && activeStoryDefinition.nodes[raw.story.activeNodeId]
+    ? raw.story.activeNodeId
+    : null
+  const hasValidActiveStory = Boolean(activeStoryId && activeNodeId && typeof raw.story?.activeProgressKey === 'string')
   const storyProgressDefaults: StoryProgressEntry = {
     status: 'idle',
     seenNodeIds: [],
@@ -236,6 +260,7 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
     ...fresh, ...raw,
     player: {
       ...fresh.player, ...raw.player,
+      locationId: playerLocationId,
       equipment: {
         weapon: typeof rawEquipment?.weapon === 'string'
           ? rawEquipment.weapon
@@ -282,6 +307,10 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
     combat: { ...fresh.combat, ...(raw.combat || {}) },
     story: {
       ...fresh.story, ...(raw.story || {}),
+      activeStoryId: hasValidActiveStory ? activeStoryId : null,
+      activeNodeId: hasValidActiveStory ? activeNodeId : null,
+      activeProgressKey: hasValidActiveStory ? raw.story!.activeProgressKey! : null,
+      presentation: hasValidActiveStory ? 'overlay' : null,
       bindings: { ...fresh.story.bindings, ...(raw.story?.bindings || {}) },
       suspended: hydrateStorySuspended(raw.story),
       progress: Object.fromEntries(
@@ -335,6 +364,9 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
 export function readStoredSave(): StoredSaveRecord | null {
   const mainRecord = readMainSaveRecord()
   if (mainRecord) return mainRecord
+
+  const backupRecord = readBackupSaveRecord()
+  if (backupRecord) return backupRecord
 
   const obsoleteSlotRecord = readObsoleteSlotRecord()
   if (obsoleteSlotRecord) return obsoleteSlotRecord

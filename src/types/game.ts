@@ -234,7 +234,7 @@ export interface IndustryOrder {
   rewardMoney: number; rewardReputation: number; standing: number
 }
 
-export interface MigrationFlags { deedRefundPatchApplied: boolean; [key: string]: unknown }
+export interface MigrationFlags { deedRefundPatchApplied: boolean; saveVersion: number; [key: string]: unknown }
 
 /* ─── Root Game State ─── */
 export interface GameState {

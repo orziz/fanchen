@@ -41,10 +41,15 @@ function setCarryValue(game: GameState, bucketKey: string, carry: number) {
   carryMap[bucketKey] = carry
 }
 
-function backfillCarriedValue(game: GameState, bucketKey: string, value: number, min = 0, max = Number.POSITIVE_INFINITY) {
+function normalizeCarriedValue(game: GameState, bucketKey: string, value: number, min = 0, max = Number.POSITIVE_INFINITY) {
   const { whole, carry } = splitDecimal(value)
-  setCarryValue(game, bucketKey, carry)
-  return clamp(whole, min, max)
+  if (!carry) return clamp(whole, min, max)
+
+  const carryMap = getCarryMap(game)
+  const total = (carryMap[bucketKey] || 0) + carry
+  const wholeDelta = total >= 0 ? Math.floor(total / SCALE) : Math.ceil(total / SCALE)
+  setCarryValue(game, bucketKey, total - wholeDelta * SCALE)
+  return clamp(whole + wholeDelta, min, max)
 }
 
 export function resolveCarriedDelta(game: GameState, bucketKey: string, delta: number) {
@@ -126,15 +131,15 @@ export function normalizeGameNumericState(game: GameState) {
     player[key] = asWhole(player[key], 0)
   })
 
-  player.cultivation = backfillCarriedValue(game, 'player.cultivation', player.cultivation)
-  player.breakthrough = backfillCarriedValue(game, 'player.breakthrough', player.breakthrough)
-  player.reputation = backfillCarriedValue(game, 'player.reputation', player.reputation)
-  player.insight = backfillCarriedValue(game, 'player.insight', player.insight)
-  player.power = backfillCarriedValue(game, 'player.power', player.power)
-  player.charisma = backfillCarriedValue(game, 'player.charisma', player.charisma)
-  player.skills.farming = backfillCarriedValue(game, 'player.skills.farming', player.skills.farming)
-  player.skills.crafting = backfillCarriedValue(game, 'player.skills.crafting', player.skills.crafting)
-  player.skills.trading = backfillCarriedValue(game, 'player.skills.trading', player.skills.trading)
+  player.cultivation = normalizeCarriedValue(game, 'player.cultivation', player.cultivation)
+  player.breakthrough = normalizeCarriedValue(game, 'player.breakthrough', player.breakthrough)
+  player.reputation = normalizeCarriedValue(game, 'player.reputation', player.reputation)
+  player.insight = normalizeCarriedValue(game, 'player.insight', player.insight)
+  player.power = normalizeCarriedValue(game, 'player.power', player.power)
+  player.charisma = normalizeCarriedValue(game, 'player.charisma', player.charisma)
+  player.skills.farming = normalizeCarriedValue(game, 'player.skills.farming', player.skills.farming)
+  player.skills.crafting = normalizeCarriedValue(game, 'player.skills.crafting', player.skills.crafting)
+  player.skills.trading = normalizeCarriedValue(game, 'player.skills.trading', player.skills.trading)
 
   player.inventory = player.inventory.map((entry) => ({
     ...entry,
@@ -153,11 +158,11 @@ export function normalizeGameNumericState(game: GameState) {
   })
 
   Object.keys(player.factionStanding || {}).forEach((factionId) => {
-    player.factionStanding[factionId] = backfillCarriedValue(game, `player.factionStanding.${factionId}`, player.factionStanding[factionId])
+    player.factionStanding[factionId] = normalizeCarriedValue(game, `player.factionStanding.${factionId}`, player.factionStanding[factionId])
   })
 
   Object.keys(player.regionStanding || {}).forEach((locationId) => {
-    player.regionStanding[locationId] = backfillCarriedValue(game, `player.regionStanding.${locationId}`, player.regionStanding[locationId])
+    player.regionStanding[locationId] = normalizeCarriedValue(game, `player.regionStanding.${locationId}`, player.regionStanding[locationId])
   })
 
   Object.keys(player.factionCooldowns || {}).forEach((factionId) => {
@@ -194,7 +199,7 @@ export function normalizeGameNumericState(game: GameState) {
 
   if (player.sect) {
     player.sect.foundedDay = asWhole(player.sect.foundedDay, 0)
-    player.sect.prestige = backfillCarriedValue(game, 'player.sect.prestige', player.sect.prestige)
+    player.sect.prestige = normalizeCarriedValue(game, 'player.sect.prestige', player.sect.prestige)
     player.sect.treasury = asWhole(player.sect.treasury, 0)
     player.sect.food = asWhole(player.sect.food, 0)
     player.sect.level = asWhole(player.sect.level, 1)
@@ -215,10 +220,10 @@ export function normalizeGameNumericState(game: GameState) {
 
   if (player.playerFaction) {
     player.playerFaction.foundedDay = asWhole(player.playerFaction.foundedDay, 0)
-    player.playerFaction.prestige = backfillCarriedValue(game, 'player.playerFaction.prestige', player.playerFaction.prestige)
+    player.playerFaction.prestige = normalizeCarriedValue(game, 'player.playerFaction.prestige', player.playerFaction.prestige)
     player.playerFaction.treasury = asWhole(player.playerFaction.treasury, 0)
     player.playerFaction.supplies = asWhole(player.playerFaction.supplies, 0)
-    player.playerFaction.influence = backfillCarriedValue(game, 'player.playerFaction.influence', player.playerFaction.influence)
+    player.playerFaction.influence = normalizeCarriedValue(game, 'player.playerFaction.influence', player.playerFaction.influence)
     player.playerFaction.level = asWhole(player.playerFaction.level, 1)
     player.playerFaction.missionDay = asWhole(player.playerFaction.missionDay, 0)
     player.playerFaction.eventCooldown = asWhole(player.playerFaction.eventCooldown, 0)
@@ -297,14 +302,14 @@ export function normalizeGameNumericState(game: GameState) {
   game.world.hour = asWhole(game.world.hour, 0)
   game.world.subStep = asWhole(game.world.subStep, 0)
   game.world.industryOrderDay = asWhole(game.world.industryOrderDay, 0)
-  game.world.factionFavor.merchants = backfillCarriedValue(game, 'world.factionFavor.merchants', game.world.factionFavor.merchants)
-  game.world.factionFavor.court = backfillCarriedValue(game, 'world.factionFavor.court', game.world.factionFavor.court)
-  game.world.factionFavor.sect = backfillCarriedValue(game, 'world.factionFavor.sect', game.world.factionFavor.sect)
-  game.world.factionFavor.rogues = backfillCarriedValue(game, 'world.factionFavor.rogues', game.world.factionFavor.rogues)
+  game.world.factionFavor.merchants = normalizeCarriedValue(game, 'world.factionFavor.merchants', game.world.factionFavor.merchants)
+  game.world.factionFavor.court = normalizeCarriedValue(game, 'world.factionFavor.court', game.world.factionFavor.court)
+  game.world.factionFavor.sect = normalizeCarriedValue(game, 'world.factionFavor.sect', game.world.factionFavor.sect)
+  game.world.factionFavor.rogues = normalizeCarriedValue(game, 'world.factionFavor.rogues', game.world.factionFavor.rogues)
   Object.keys(game.world.factions || {}).forEach((factionId) => {
     const entry = game.world.factions[factionId]
-    entry.standing = backfillCarriedValue(game, `world.factions.${factionId}.standing`, entry.standing)
-    entry.favor = backfillCarriedValue(game, `world.factions.${factionId}.favor`, entry.favor)
+    entry.standing = normalizeCarriedValue(game, `world.factions.${factionId}.standing`, entry.standing)
+    entry.favor = normalizeCarriedValue(game, `world.factions.${factionId}.favor`, entry.favor)
   })
   game.world.realm.cooldown = asWhole(game.world.realm.cooldown, 0)
   Object.keys(game.world.territories || {}).forEach((locationId) => {

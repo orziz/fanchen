@@ -42,35 +42,6 @@ export function fillTemplate(text: string, payload: Record<string, string | numb
   )
 }
 
-export interface MapGlow {
-  x: number; y: number; radius: number
-}
-export interface MapStroke {
-  x: number; y: number; cpX: number; cpY: number; endX: number; endY: number; width: number
-}
-export interface MapTexture {
-  glows: MapGlow[]; strokes: MapStroke[]
-}
-
-export function buildMapTexture(): MapTexture {
-  return {
-    glows: Array.from({ length: 26 }, () => ({
-      x: randomInt(0, 1120),
-      y: randomInt(0, 560),
-      radius: randomInt(42, 128),
-    })),
-    strokes: Array.from({ length: 22 }, () => ({
-      x: randomInt(0, 1120),
-      y: randomInt(0, 560),
-      cpX: randomInt(-80, 80),
-      cpY: randomInt(-54, 54),
-      endX: randomInt(-150, 150),
-      endY: randomInt(-60, 60),
-      width: randomInt(1, 3),
-    })),
-  }
-}
-
 import { LOCATION_MAP } from '@/config'
 
 export interface FindRouteOptions {

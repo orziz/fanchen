@@ -1,4 +1,4 @@
-﻿/* ═══════════════ V3 Responsive Breakpoints ═══════════════ */
+/* ═══════════════ V3 Responsive Breakpoints ═══════════════ */
 
 .hud-mobile-status {
   display: none;
@@ -91,19 +91,6 @@
   .dock-hotbar-copy {
     flex-wrap: wrap;
   }
-
-  .jianghu-topbar {
-    grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1fr);
-  }
-
-  .jianghu-top-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-  }
-
-  .jianghu-resource-strip {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 1360px) {
@@ -129,10 +116,6 @@
   .industry-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .map-panel-full { grid-template-columns: minmax(0, 1.16fr) minmax(320px, 0.84fr); }
   .map-stage-full .canvas-shell { min-height: clamp(360px, 56vh, 720px); }
-
-  .jianghu-body {
-    grid-template-columns: 136px minmax(0, 1fr) minmax(300px, 340px);
-  }
 }
 
 /* ── 中等屏幕：隐藏副栏，精简HUD ── */
@@ -169,38 +152,6 @@
   .map-stage-full .canvas-shell { min-height: min(56vh, 520px); }
   .location-panel-side { display: grid; max-height: none; }
   .toast-stack { top: auto; bottom: 82px; }
-
-  .jianghu-shell {
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
-  }
-
-  .jianghu-topbar {
-    grid-template-columns: 1fr;
-  }
-
-  .jianghu-resource-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .jianghu-body {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr) minmax(280px, auto);
-  }
-
-  .jianghu-nav {
-    grid-template-rows: auto auto;
-  }
-
-  .jianghu-nav-list {
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(132px, 1fr);
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-
-  .jianghu-footer {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ── 小横屏：Dock换行，Pin-rail收窄 ── */
@@ -212,17 +163,47 @@
     overflow-x: hidden;
     white-space: normal;
   }
-  .hud-pins { display: none; }
   .hud-resources { display: none; }
   .hud-speed { display: none; }
-  .hud-actions .control-button { padding: 6px 10px; font-size: 13px; }
+  .hud-pins {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
+  .hud-pin-btn,
+  .hud-actions .control-button {
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
 
   .hud-actions {
     width: 100%;
     justify-content: flex-end;
   }
 
-  .pin-rail { display: none; }
+  .pin-rail {
+    position: fixed;
+    inset: 0;
+    z-index: 24;
+    width: 100vw;
+    max-width: none;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    background: rgba(32, 31, 28, 0.82);
+    backdrop-filter: blur(12px);
+  }
+
+  .pin-card {
+    width: min(100%, 620px);
+    min-height: min(72vh, 620px);
+    margin: auto;
+    flex: 0 0 auto;
+  }
+
+  .pin-card .control-button,
+  .pin-card-filter-chip {
+    min-height: 44px;
+  }
 
   .v3-stage-wrap { padding: 6px; }
 
@@ -282,26 +263,6 @@
   .world-grid { grid-template-columns: 1fr; }
   .market-grid,
   .auction-list { grid-template-columns: 1fr; }
-
-  .ui-mode-switch {
-    top: auto;
-    bottom: 18px;
-  }
-
-  .jianghu-shell {
-    padding: 12px;
-  }
-
-  .jianghu-resource-strip {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .jianghu-stage-head,
-  .jianghu-footer,
-  .jianghu-topbar,
-  .jianghu-nav {
-    padding: 14px;
-  }
 }
 
 /* ── 最小横屏 / 大手机横屏 ── */
@@ -340,20 +301,32 @@
     padding: 4px 8px;
     font-size: 12px;
   }
+  .hud-pins,
   .hud-actions {
+    grid-column: 1 / -1;
     gap: 4px;
   }
+  .hud-actions {
+    justify-content: flex-start;
+  }
+  .hud-pin-btn,
   .hud-actions .control-button {
-    padding: 5px 7px;
+    min-height: 40px;
+    padding: 7px 10px;
     font-size: 12px;
   }
 
-  .game-dock { padding: 6px 8px; }
+  .game-dock { padding: 6px 8px max(6px, env(safe-area-inset-bottom)); }
   .dock-tabs { gap: 2px; }
-  .dock-tab-btn { padding: 5px 8px; font-size: 12px; }
-  .dock-hotbar-btn {
+  .dock-tab-btn {
+    min-height: 44px;
+    padding: 8px 11px;
     font-size: 12px;
-    padding: 5px 8px;
+  }
+  .dock-hotbar-btn {
+    min-height: 44px;
+    font-size: 12px;
+    padding: 8px 11px;
   }
   .dock-hotbar-state {
     font-size: 12px;
@@ -370,38 +343,6 @@
   .profile-fact-grid,
   .profile-summary-grid,
   .two-column { grid-template-columns: 1fr; }
-
-  .ui-mode-switch {
-    right: 10px;
-    bottom: 10px;
-    padding: 6px;
-  }
-
-  .ui-mode-switch__label {
-    display: none;
-  }
-
-  .ui-mode-switch__button {
-    padding: 7px 10px;
-    font-size: 12px;
-  }
-
-  .jianghu-shell {
-    gap: 10px;
-    padding: 10px;
-  }
-
-  .jianghu-resource-strip {
-    grid-template-columns: 1fr;
-  }
-
-  .jianghu-nav-list {
-    grid-auto-columns: minmax(110px, 1fr);
-  }
-
-  .jianghu-stage-panel .v3-panel-body {
-    padding: 12px 14px;
-  }
 }
 
 @media (max-width: 560px) {

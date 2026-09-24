@@ -120,14 +120,14 @@ textarea {
   margin: 0 0 8px;
   color: var(--tool-accent);
   font-size: 12px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0;
 }
 
 .tool-title {
   margin: 0;
   font-size: 30px;
   line-height: 1.1;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 
 .tool-subtitle {

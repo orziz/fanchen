@@ -304,7 +304,7 @@ export function createGameState(): GameState {
     world: createInitialWorld(),
     combat: createInitialCombat(),
     story: createInitialStory(),
-    migrationFlags: { deedRefundPatchApplied: false },
+    migrationFlags: { deedRefundPatchApplied: false, saveVersion: 2 },
     log: [], lastSavedAt: null,
   }
 }

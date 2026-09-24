@@ -24,16 +24,6 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
 }
 
-.command-hero::after {
-  content: "";
-  position: absolute;
-  inset: auto -60px -80px auto;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(70, 130, 180, 0.08), transparent 68%);
-}
-
 .command-hero-top {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(220px, 0.75fr);
@@ -43,7 +33,7 @@
 
 .command-hero-title {
   margin: 0;
-  font-size: clamp(28px, 4vw, 36px);
+  font-size: 32px;
 }
 
 .command-chip-row,
@@ -103,7 +93,7 @@
 
 .command-reading-card {
   padding: 14px 16px;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   border: 1px dashed var(--line);
   background: var(--card);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
@@ -173,7 +163,7 @@
 
 .command-strategy-card,
 .command-action-card {
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   padding: 16px 18px;
   border-color: rgba(0, 0, 0, 0.08);
   background: var(--card);
@@ -307,7 +297,7 @@
   background: rgba(179, 133, 43, 0.08);
   border: 1px dotted rgba(0, 0, 0, 0.2);
   font-size: 12px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 .command-footnote {
@@ -345,7 +335,7 @@
 }
 
 .pin-card-command .command-hero-title {
-  font-size: clamp(24px, 2.6vw, 28px);
+  font-size: 26px;
 }
 
 .pin-card-command .command-reading-card strong {

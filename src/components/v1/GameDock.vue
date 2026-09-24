@@ -8,11 +8,13 @@
         :class="{ active: activeTab === tab.id, 'is-locked': Boolean(tab.lockReason) }"
         type="button"
         :title="tab.lockReason || tab.label"
-        :disabled="Boolean(tab.lockReason)"
-        @click="setTab(tab.id)"
+        :aria-current="activeTab === tab.id ? 'page' : undefined"
+        :aria-disabled="Boolean(tab.lockReason)"
+        @click="selectTab(tab)"
       >
         <span class="dock-tab-label-full">{{ tab.label }}</span>
         <span class="dock-tab-label-short">{{ tab.shortLabel }}</span>
+        <span v-if="tab.lockReason" class="sr-only">：{{ tab.lockReason }}</span>
       </button>
     </div>
     <div class="dock-quick">
@@ -48,11 +50,11 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { useStage, STAGE_TABS } from '@/composables/useStage'
+import { useStage, STAGE_TABS, type StageTab } from '@/composables/useStage'
 import { ACTION_META, MODE_OPTIONS, RANKS, LOCATION_MAP } from '@/config'
 import { getModeLabel } from '@/composables/useUIHelpers'
 import { performAction } from '@/systems/world'
-import { attemptBreakthrough, setMode } from '@/systems/player'
+import { setMode } from '@/systems/player'
 import { getManualActionLockReason, getStageTabLockReason } from '@/systems/tutorial'
 
 const { activeTab, setTab } = useStage()
@@ -108,7 +110,9 @@ const nextModeId = computed(() => {
 const nextModeLabel = computed(() => getModeLabel(nextModeId.value))
 
 const canManualBreakthrough = computed(() =>
-  player.value.rankIndex < RANKS.length - 1 && player.value.breakthrough >= store.nextBreakthroughNeed * 0.85
+  player.value.rankIndex < RANKS.length - 1
+  && player.value.cultivation >= store.cultivationGateNeed
+  && player.value.breakthrough >= store.breakthroughReadyNeed
 )
 
 const stageTabs = computed(() => STAGE_TABS.map(tab => ({
@@ -138,6 +142,14 @@ const manualActions = computed(() => {
     }))
 })
 
+function selectTab(tab: { id: StageTab; lockReason: string | null }) {
+  if (tab.lockReason) {
+    store.appendLog(tab.lockReason, 'warn')
+    return
+  }
+  setTab(tab.id)
+}
+
 function isActionHighlighted(action: string) {
   return currentActionKey.value === action
 }
@@ -148,12 +160,6 @@ function cycleMode() {
 
 function performManualAction(actionKey: string) {
   if (getManualActionLockReason(actionKey, story.value, player.value)) return
-  if (actionKey === 'breakthrough') {
-    player.value.action = 'breakthrough'
-    attemptBreakthrough()
-    return
-  }
-
   const feedbackText: Record<string, string> = {
     rest: '你暂时收束心神，调息回元。',
     meditate: '你盘膝静坐，运转一轮内息。',

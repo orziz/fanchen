@@ -3,6 +3,7 @@
     <div class="v3-shell">
       <!-- 顶部 HUD 栏 -->
       <HudBar />
+      <CurrentFocus />
 
       <!-- 中间内容区：主场景 + 右侧导轨 -->
       <div class="v3-body">
@@ -32,6 +33,7 @@
 <script setup lang="ts">
 import { useStage } from '@/composables/useStage'
 import HudBar from '@/components/v1/HudBar.vue'
+import CurrentFocus from '@/components/v1/CurrentFocus.vue'
 import GameWorkbench from '@/components/v1/GameWorkbench.vue'
 import GameDock from '@/components/v1/GameDock.vue'
 import PinRail from '@/components/v1/PinRail.vue'

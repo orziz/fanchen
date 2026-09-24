@@ -13,14 +13,13 @@ export interface WindowState {
   dockSide: WindowDockZone | null
 }
 
-const WINDOW_IDS = ['map', 'journal', 'profile', 'command'] as const
+const WINDOW_IDS = ['journal', 'profile', 'command'] as const
 export type WindowId = typeof WINDOW_IDS[number]
 const LAYOUT_KEY = WINDOW_LAYOUT_KEY
 let zCounter = 3
 let layoutLoaded = false
 
 const windows = reactive<Record<WindowId, WindowState>>({
-  map: makeDefault('map'),
   journal: makeDefault('journal'),
   profile: makeDefault('profile'),
   command: makeDefault('command'),
@@ -29,7 +28,6 @@ const windows = reactive<Record<WindowId, WindowState>>({
 function makeDefault(id: string): WindowState {
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1440
   const vh = typeof window !== 'undefined' ? window.innerHeight : 900
-  if (id === 'map') return { open: true, left: Math.max(24, Math.round(vw * 0.08)), top: Math.max(92, Math.round(vh * 0.1)), z: 2, minimized: false, dockSide: null }
   if (id === 'profile') return { open: false, left: Math.max(24, vw - Math.min(Math.round(vw * 0.36), 620) - 44), top: Math.max(120, Math.round(vh * 0.18)), z: 4, minimized: false, dockSide: 'side' }
   if (id === 'command') return { open: false, left: Math.max(24, vw - Math.min(Math.round(vw * 0.42), 720) - 56), top: Math.max(116, Math.round(vh * 0.16)), z: 5, minimized: false, dockSide: 'bottom' }
   return { open: false, left: Math.max(24, vw - Math.min(Math.round(vw * 0.34), 560) - 28), top: Math.max(104, Math.round(vh * 0.14)), z: 3, minimized: false, dockSide: 'main' }

@@ -105,7 +105,6 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
             text: '先看看青禾周遭的路脉',
             effects: [
               { kind: 'run-script', scriptId: OPENING_TUTORIAL_SCRIPT_IDS.openMap },
-              { kind: 'set-presentation', presentation: 'rail' },
             ],
             next: 'map',
           },

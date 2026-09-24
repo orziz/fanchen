@@ -13,7 +13,9 @@ export function useGameLoop() {
   let saveTimer: ReturnType<typeof setInterval> | null = null
 
   function canAutoTick() {
-    return running.value && store.player.mode !== 'manual'
+    const isPageVisible = typeof document === 'undefined' || document.visibilityState === 'visible'
+    const hasBlockingStory = Boolean(store.story.activeStoryId && store.story.presentation === 'overlay')
+    return running.value && isPageVisible && !hasBlockingStory && store.player.mode !== 'manual'
   }
 
   function tick() {

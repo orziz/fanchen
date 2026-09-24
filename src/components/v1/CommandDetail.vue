@@ -114,8 +114,8 @@ import {
   getCultivationStatusCopy,
 } from '@/config'
 import { getModeLabel } from '@/composables/useUIHelpers'
-import { attemptBreakthrough, setMode } from '@/systems/player'
-import { performAction } from '@/systems/world'
+import { setMode } from '@/systems/player'
+import { getActionUnavailableReason, performAction } from '@/systems/world'
 import UiActionCardButton from '@/components/ui/UiActionCardButton.vue'
 import UiActionGroup from '@/components/ui/UiActionGroup.vue'
 import UiCardHeader from '@/components/ui/UiCardHeader.vue'
@@ -183,7 +183,9 @@ const routeDesc = computed(() => {
 })
 
 const breakthroughReady = computed(() =>
-  hasNextRank.value && player.value.breakthrough >= breakthroughReadyNeed.value
+  hasNextRank.value
+  && player.value.cultivation >= cultivationGateNeed.value
+  && player.value.breakthrough >= breakthroughReadyNeed.value
 )
 
 const breakthroughHint = computed(() => {
@@ -213,7 +215,7 @@ const manualActions = computed(() => {
     rankIndex: player.value.rankIndex,
     aura: currentLocation.value.aura,
   })
-  return [
+  const actions = [
     { key: 'meditate', label: '手动修炼', desc: '静坐一轮，补修为与真气。', theme: '补修为', disabled: false, reason: '' },
     {
       key: 'breakthrough',
@@ -243,6 +245,14 @@ const manualActions = computed(() => {
     },
     { key: 'rest', label: '短暂调息', desc: '先把状态拉回安全线。', theme: '回状态', disabled: false, reason: '' },
   ]
+  return actions.map((action) => {
+    const systemReason = getActionUnavailableReason(action.key)
+    return {
+      ...action,
+      disabled: action.disabled || Boolean(systemReason),
+      reason: action.reason || systemReason || '',
+    }
+  })
 })
 
 interface Recommendation {
@@ -316,18 +326,8 @@ function runQuickAction(actionKey: string) {
   const action = manualActions.value.find(entry => entry.key === actionKey)
   if (action?.disabled) return
   if (actionKey === 'rest') {
-    store.adjustResource('hp', 18, 'maxHp')
-    store.adjustResource('qi', 16, 'maxQi')
-    store.adjustResource('stamina', 20, 'maxStamina')
     store.appendLog('你暂时收束心神，运气回息。', 'info')
-    return
   }
-
-  if (actionKey === 'breakthrough') {
-    attemptBreakthrough()
-    return
-  }
-
   performAction(actionKey)
 }
 </script>

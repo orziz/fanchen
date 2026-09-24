@@ -9,6 +9,7 @@ import {
   LOCATION_MAP,
   PLAYER_SECT_ENABLED,
   RANKS,
+  SAVE_BACKUP_KEY,
   SAVE_KEY,
   TIME_LABELS,
   OPENING_TUTORIAL_STORY_ID,
@@ -20,8 +21,7 @@ import {
   getTechnique,
   getTechniqueResolvedEffectValue,
 } from '@/config'
-import { clamp, round, buildMapTexture, findRoute } from '@/utils'
-import type { MapTexture } from '@/utils'
+import { clamp, round, findRoute } from '@/utils'
 import { bus } from '@/core/events'
 import { normalizeGameNumericState, resolveCarriedDelta } from '@/core/integerProgress'
 import { setContext, type GameContext } from '@/core/context'
@@ -63,7 +63,6 @@ export const useGameStore = defineStore('game', () => {
   const selectedLocationId = ref('qinghe')
   const speed = ref(1)
   const saveState = ref('未存档')
-  const mapTexture = ref<MapTexture>(buildMapTexture())
   const feedback = ref<{ text: string; type: string } | null>(null)
   const initialized = ref(false)
 
@@ -152,7 +151,6 @@ export const useGameStore = defineStore('game', () => {
     if (typeof current !== 'number') return
     const max = maxKey && typeof p[maxKey] === 'number' ? p[maxKey] as number : Infinity
     ;(p[key] as number) = clamp(round(current + amount), 0, max)
-    normalizeNumericState()
     bus.emit('state:resource-changed', { key, amount, value: p[key] })
   }
 
@@ -161,7 +159,6 @@ export const useGameStore = defineStore('game', () => {
     const stamp = `第${w.day}日 ${TIME_LABELS[w.hour]}`
     game.value.log.unshift({ stamp, text, type })
     if (game.value.log.length > 80) game.value.log.length = 80
-    normalizeNumericState()
     if (['warn', 'loot', 'action'].includes(type)) {
       feedback.value = { text, type }
       setTimeout(() => { feedback.value = null }, 3000)
@@ -178,7 +175,6 @@ export const useGameStore = defineStore('game', () => {
     const wholeDelta = resolveCarriedDelta(game.value, `player.regionStanding.${locationId}`, amount)
     if (!wholeDelta) return
     game.value.player.regionStanding[locationId] = (game.value.player.regionStanding[locationId] || 0) + wholeDelta
-    normalizeNumericState()
     bus.emit('state:region-standing-changed', { locationId, amount })
   }
 
@@ -210,7 +206,6 @@ export const useGameStore = defineStore('game', () => {
         appendLog(`你在${affFaction.name}中的身份升为"${affFaction.titles[nextRank]}"。`, 'loot')
       }
     }
-    normalizeNumericState()
     bus.emit('state:faction-standing-changed', { factionId, amount })
     return p.factionStanding[factionId]
   }
@@ -298,7 +293,6 @@ export const useGameStore = defineStore('game', () => {
     p.qi = clamp(p.qi, 0, p.maxQi)
     p.hp = clamp(p.hp, 0, p.maxHp)
     p.stamina = clamp(p.stamina, 0, p.maxStamina)
-    normalizeNumericState()
     bus.emit('state:derived-stats-updated')
   }
 
@@ -314,14 +308,28 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
+  function persistSnapshot(snapshot: string) {
+    const previousSnapshot = localStorage.getItem(SAVE_KEY)
+    if (previousSnapshot && previousSnapshot !== snapshot) {
+      try {
+        JSON.parse(previousSnapshot)
+        localStorage.setItem(SAVE_BACKUP_KEY, previousSnapshot)
+      } catch {
+        /* Keep the last known-good backup when the primary record is corrupt. */
+      }
+    }
+    localStorage.setItem(SAVE_KEY, snapshot)
+  }
+
   function saveGame(manual = true) {
     try {
       game.value.lastSavedAt = Date.now()
       normalizeNumericState()
       const snapshot = JSON.stringify(game.value)
-      localStorage.setItem(SAVE_KEY, snapshot)
+      persistSnapshot(snapshot)
       clearStaleSaveKeys()
       saveState.value = `${manual ? '已手动存档' : '自动存档'} ${new Date(game.value.lastSavedAt).toLocaleTimeString('zh-CN', { hour12: false })}`
+      if (manual) feedback.value = { text: '当前进度已写入本地存档。', type: 'action' }
       bus.emit('game:saved', { manual })
     } catch {
       saveState.value = '存档失败'
@@ -336,7 +344,7 @@ export const useGameStore = defineStore('game', () => {
       game.value = hydrateGameState(JSON.parse(stored.raw))
       normalizeNumericState()
       const snapshot = JSON.stringify(game.value)
-      localStorage.setItem(SAVE_KEY, snapshot)
+      persistSnapshot(snapshot)
       clearStaleSaveKeys()
       updateDerivedStats()
       selectedLocationId.value = game.value.player.locationId
@@ -344,7 +352,14 @@ export const useGameStore = defineStore('game', () => {
       syncOpeningTutorialState()
       maybeStartOpeningTutorial()
       saveState.value = `已读取 ${new Date(game.value.lastSavedAt || Date.now()).toLocaleTimeString('zh-CN', { hour12: false })}`
-      appendLog(stored.source === 'slot-migrated' ? '旧日行程已并回单一存档。' : '旧日行程已经续上。', 'info')
+      appendLog(
+        stored.source === 'slot-migrated'
+          ? '旧日行程已并回单一存档。'
+          : stored.source === 'backup'
+            ? '主存档不可用，已从上一份有效备份恢复。'
+            : '旧日行程已经续上。',
+        stored.source === 'backup' ? 'warn' : 'info',
+      )
       bus.emit('game:loaded')
     } catch {
       appendLog('存档损坏或格式不兼容，读取失败。', 'warn')
@@ -361,6 +376,8 @@ export const useGameStore = defineStore('game', () => {
     meetNpcsAtLocation(game.value.player.locationId)
     appendLog('你在青禾镇街口惊醒，怀里只剩一点零碎盘缠。', 'info')
     maybeStartOpeningTutorial()
+    saveGame(false)
+    saveState.value = '新轮回已保存'
     bus.emit('game:reset')
   }
 
@@ -373,9 +390,9 @@ export const useGameStore = defineStore('game', () => {
         game.value = hydrateGameState(JSON.parse(stored.raw))
         normalizeNumericState()
         const snapshot = JSON.stringify(game.value)
-        localStorage.setItem(SAVE_KEY, snapshot)
+        persistSnapshot(snapshot)
         clearStaleSaveKeys()
-        saveState.value = '已载入本地存档'
+        saveState.value = stored.source === 'backup' ? '已从备份恢复' : '已载入本地存档'
         resumedStoredSave = true
       } catch {
         game.value = createGameState()
@@ -393,7 +410,6 @@ export const useGameStore = defineStore('game', () => {
       setTab('inventory')
     }
     meetNpcsAtLocation(game.value.player.locationId)
-    mapTexture.value = buildMapTexture()
     syncOpeningTutorialState()
     appendLog(resumedStoredSave ? '旧日行程已经续上。' : '你在青禾镇街口惊醒，怀里只剩一点零碎盘缠。', 'info')
     maybeStartOpeningTutorial()
@@ -425,7 +441,7 @@ export const useGameStore = defineStore('game', () => {
   setContext(contextAdapter)
 
   return {
-    game, selectedLocationId, speed, saveState, mapTexture, feedback, initialized,
+    game, selectedLocationId, speed, saveState, feedback, initialized,
     bus,
     player, npcs, combat, world, market, auction, log, story,
     currentLocation, selectedLocation, rankData, hasNextRank, nextBreakthroughNeed,

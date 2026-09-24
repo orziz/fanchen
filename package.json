@@ -8,6 +8,8 @@
     "build": "vite build",
     "dev:release": "vite build --watch",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:visual": "node scripts/visual-smoke.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -19,7 +21,9 @@
     "@types/node": "^25.6.0",
     "@vitejs/plugin-vue": "6.0.6",
     "@vue/compiler-sfc": "3.5.32",
+    "playwright-core": "^1.63.0",
     "typescript": "5.9.3",
-    "vite": "8.0.8"
+    "vite": "8.0.8",
+    "vitest": "^4.1.11"
   }
 }

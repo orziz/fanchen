@@ -1,4 +1,5 @@
 export const SAVE_KEY = 'fanchen_save'
+export const SAVE_BACKUP_KEY = `${SAVE_KEY}-backup`
 export const LEGACY_SAVE_KEYS = ['fan-chen-li-dao-save-v4'] as const
 export const WINDOW_LAYOUT_KEY = `${SAVE_KEY}-window-layout-v2`
 export const LEGACY_WINDOW_LAYOUT_KEYS = LEGACY_SAVE_KEYS.map(key => `${key}-window-layout-v2`)

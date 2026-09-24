@@ -4,7 +4,8 @@ import { addPlayerMetric } from '@/core/integerProgress'
 import type { PlayerState, TravelPlanState } from '@/types/game'
 import {
   LOCATION_MAP, LOCATIONS, TRAVEL_EVENT_TEMPLATES, DISTRIBUTABLE_ITEMS, TIME_LABELS,
-  ACTION_META, PLAYER_SECT_ENABLED, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
+  ACTION_META, PLAYER_SECT_ENABLED, RANKS, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
+  getBreakthroughDisabledReason,
 } from '@/config'
 import { sample, randomInt, fillTemplate, findRoute as resolveRoute, round } from '@/utils'
 import { applyPassiveAction, attemptBreakthrough, revivePlayer } from '@/systems/player'
@@ -15,6 +16,7 @@ import { hasActiveFactionPursuit, processRelationshipTick, processSectTick, proc
 import { meetNpcsAtLocation, processNpcLifeTick, runNpcAI } from '@/systems/npc'
 import { processIndustryTick } from '@/systems/industry'
 import { processWorldEconomyTick } from '@/systems/worldEconomy'
+import { getManualActionLockReason } from '@/systems/tutorial'
 
 /* ─── Travel Events ─── */
 
@@ -414,6 +416,38 @@ export function chooseAutoAction(): string | null {
 
 /* ─── Action Processing ─── */
 
+export function getActionUnavailableReason(actionKey: string): string | null {
+  const ctx = getContext()
+  const g = ctx.game
+  const location = ctx.getCurrentLocation()
+  const action = ACTION_META[actionKey]
+
+  if (!action && actionKey !== 'combat') return '这个动作当前不可用。'
+  if (g.story.activeStoryId && g.story.presentation === 'overlay') return '先完成眼前剧情，再处理其他事务。'
+
+  const tutorialReason = getManualActionLockReason(actionKey, g.story, g.player)
+  if (tutorialReason) return tutorialReason
+
+  if (g.combat.currentEnemy && actionKey !== 'combat') return '交战尚未结束，先处理眼前战斗。'
+  if (actionKey === 'combat') return g.combat.currentEnemy ? null : '当前没有正在交战的对手。'
+  if (actionKey === 'rest') return null
+  if (actionKey === 'trade' && g.player.tradeRun) return null
+  if (!location.actions.includes(actionKey)) return `${location.name}没有可执行“${action.label}”的门路。`
+  if (actionKey === 'breakthrough') {
+    const hasNextRank = g.player.rankIndex < RANKS.length - 1
+    const reason = getBreakthroughDisabledReason({
+      hasNextRank,
+      nextBreakthroughNeed: ctx.getNextBreakthroughNeed(),
+      cultivation: g.player.cultivation,
+      breakthrough: g.player.breakthrough,
+      rankIndex: g.player.rankIndex,
+      aura: location.aura,
+    })
+    if (reason) return reason
+  }
+  return null
+}
+
 function processActionKey(actionKey: string | null) {
   if (!actionKey) return
   const ctx = getContext()
@@ -460,9 +494,15 @@ function processActionKey(actionKey: string | null) {
 
 export function performAction(actionKey: string) {
   const ctx = getContext()
+  const unavailableReason = getActionUnavailableReason(actionKey)
+  if (unavailableReason) {
+    ctx.appendLog(unavailableReason, 'warn')
+    return false
+  }
   processActionKey(actionKey)
   tickWorld()
   ctx.updateDerivedStats()
+  return true
 }
 
 /* ─── World Tick ─── */

@@ -467,12 +467,6 @@ export function showStoryOverlay() {
   state.presentation = 'overlay'
 }
 
-export function showStoryInRail() {
-  const state = getStoryState()
-  if (!state.activeStoryId) return
-  state.presentation = 'rail'
-}
-
 export function getSuspendedStoryScene(): ActiveStoryScene | null {
   const state = getStoryState()
   const suspended = state.suspended

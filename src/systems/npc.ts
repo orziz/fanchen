@@ -87,7 +87,7 @@ function scoreRumorTarget(npc: any, venue: RumorVenue, anchorId: string, scope: 
     if (tags.some(tag => ['market', 'port', 'pass'].includes(tag))) score += 16
     score += npc.wealth * 0.04 + npc.mood.greed * 0.03
   }
-  return score + randomFloat(-3, 3)
+  return score
 }
 
 function pickRumorTargets(venue: RumorVenue) {

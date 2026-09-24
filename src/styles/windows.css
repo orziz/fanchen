@@ -160,7 +160,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .story-overlay__backdrop {
@@ -176,7 +176,7 @@
   max-height: min(78vh, 820px);
   overflow: auto;
   padding: 20px 22px 22px;
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(179, 133, 43, 0.24);
   background:
     radial-gradient(circle at top right, rgba(228, 206, 151, 0.2), transparent 36%),

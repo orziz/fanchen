@@ -130,7 +130,7 @@ function fanchenToolsPlugin() {
 
 export default defineConfig({
   plugins: [vue(), fanchenFileBuildPlugin(), fanchenToolsPlugin()],
-  publicDir: false,
+  publicDir: "public",
   resolve: {
     alias: {
       "@": resolve("src"),
@@ -143,6 +143,7 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
+    assetsInlineLimit: 0,
     emptyOutDir: true,
     sourcemap: true,
     cssCodeSplit: false,

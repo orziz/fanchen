@@ -1,8 +1,14 @@
 /* ═══════════════ V3 HUD Shell Layout ═══════════════ */
 
+.app-runtime {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .v3-shell-wrapper {
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -14,9 +20,9 @@
   z-index: 1;
   width: 100%;
   max-width: 1920px; /* 带鱼屏最大拉伸范围，超大宽屏下将居中显示安全区 */
-  height: 100vh;
+  height: 100dvh;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   overflow: hidden;
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.05); /* 超宽下屏幕边缘增加区隔 */
   background: var(--bg-ink); /* 给游戏本体垫底 */
@@ -354,13 +360,13 @@
   color: var(--text-main);
 }
 
-.dock-tab-btn:disabled {
+.dock-tab-btn.is-locked {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.58;
   color: var(--text-faint);
 }
 
-.dock-tab-btn:disabled:hover {
+.dock-tab-btn.is-locked:hover {
   background: transparent;
   color: var(--text-faint);
 }
@@ -403,7 +409,7 @@
 .dock-cluster-label {
   color: var(--text-faint);
   font-size: 12px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 .dock-hotbar {
