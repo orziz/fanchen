@@ -3,9 +3,9 @@
   "skills": {
     "odai": {
       "source": "orziz/odai",
-      "ref": "odai",
       "sourceType": "github",
-      "computedHash": "87660cd4587e415036b261e19a7018779846874c437c1d298d87e22215b50c18"
+      "skillPath": "skills/odai/SKILL.md",
+      "computedHash": "33a8f1a0a3a16f0deb830f3dc2b989e4a26771aadb6fbfd54b5790af33a27d14"
     }
   }
 }
