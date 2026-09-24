@@ -8,9 +8,9 @@ import {
   getBreakthroughDisabledReason,
 } from '@/config'
 import { sample, randomInt, fillTemplate, findRoute as resolveRoute, round } from '@/utils'
-import { applyPassiveAction, attemptBreakthrough, revivePlayer } from '@/systems/player'
+import { applyPassiveAction, attemptBreakthrough } from '@/systems/player'
 import { autoCombatTick, maybeStartEncounter, startPursuitEncounter, challengeRealm } from '@/systems/combat'
-import { advanceTradeRun, resolvePassiveTrade, isTradeHub, maybeStartBestTradeRun } from '@/systems/trade'
+import { advanceTradeRun, resolvePassiveTrade, maybeStartBestTradeRun } from '@/systems/trade'
 import { resolveAuctionVisit, resolveAuctionTurn, refreshMarketIfNeeded, maybeActivateRealm } from '@/systems/auction'
 import { hasActiveFactionPursuit, processRelationshipTick, processSectTick, processPlayerFactionTick, processFactionStatusTick, processTerritoryStatusTick } from '@/systems/social'
 import { meetNpcsAtLocation, processNpcLifeTick, runNpcAI } from '@/systems/npc'
@@ -291,7 +291,7 @@ function advancePlayerTravelStep(): TravelAdvanceResult {
   return { moved: true, arrived: false, waiting: false, pendingAction: null }
 }
 
-function consumePlayerTravelStep() {
+export function consumePlayerTravelStep() {
   const ctx = getContext()
   const step = advancePlayerTravelStep()
   if (!step.moved && !step.waiting && !step.arrived) return false
@@ -351,67 +351,6 @@ export function travelAndChallengeRealm(realmId: string) {
 export function currentLocationCanReach(targetId: string): boolean {
   const ctx = getContext()
   return Boolean(resolvePlayerRoute(ctx.getCurrentLocation().id, targetId).route)
-}
-
-/* ─── Auto Action Choice ─── */
-
-export function chooseAutoAction(): string | null {
-  const ctx = getContext()
-  const g = ctx.game
-  const location = ctx.getCurrentLocation()
-  const mode = g.player.mode
-
-  if (mode === 'manual') return null
-  if (g.combat.currentEnemy) return g.combat.autoBattle ? 'combat' : null
-  if (g.player.travelPlan) return null
-  if (g.player.hp < g.player.maxHp * 0.42 || g.player.qi < g.player.maxQi * 0.32 || g.player.stamina < g.player.maxStamina * 0.18) return 'rest'
-  if (g.player.breakthrough >= ctx.getNextBreakthroughNeed() * 0.92 && location.actions.includes('breakthrough')) return 'breakthrough'
-
-  if (mode === 'cultivation') {
-    if (location.aura < 42 && Math.random() < 0.34) {
-      const better = location.neighbors.map(id => LOCATION_MAP.get(id)!).sort((a, b) => b.aura - a.aura)[0]
-      if (better && better.aura > location.aura) {
-        travelTo(better.id, { advanceNow: false, consumeTime: false, silent: true })
-        return null
-      }
-    }
-    return location.actions.includes('meditate') ? 'meditate' : location.actions[0]
-  }
-  if (mode === 'merchant') {
-    if (g.player.tradeRun) {
-      if (location.id !== g.player.tradeRun.destinationId) {
-        travelTo(g.player.tradeRun.destinationId, { advanceNow: false, consumeTime: false, silent: true })
-        return null
-      }
-      return 'trade'
-    }
-    if (!isTradeHub(location) && Math.random() < 0.42) {
-      const target = ['anping', 'lantern', 'blackforge', 'reedbank', 'yanpass', 'yunze'].find(id => currentLocationCanReach(id))
-      if (target) {
-        travelTo(target, { advanceNow: false, consumeTime: false, silent: true })
-        return null
-      }
-    }
-    return location.actions.includes('trade') ? 'trade' : location.actions[0]
-  }
-  if (mode === 'adventure') {
-    if (location.danger < 4 && Math.random() < 0.36) {
-      const riskier = location.neighbors.map(id => LOCATION_MAP.get(id)!).sort((a, b) => b.danger - a.danger)[0]
-      if (riskier && riskier.danger > location.danger) {
-        travelTo(riskier.id, { advanceNow: false, consumeTime: false, silent: true })
-        return null
-      }
-    }
-    return location.actions.includes('quest') ? 'quest' : location.actions.includes('hunt') ? 'hunt' : location.actions[0]
-  }
-  if (PLAYER_SECT_ENABLED && mode === 'sect' && g.player.sect) {
-    if (!location.tags.includes('sect') && currentLocationCanReach('jadegate') && Math.random() < 0.3) {
-      travelTo('jadegate', { advanceNow: false, consumeTime: false, silent: true })
-      return null
-    }
-    return location.actions.includes('sect') ? 'sect' : 'meditate'
-  }
-  return ['meditate', 'trade', 'hunt', 'quest', 'train'].find(a => location.actions.includes(a)) || location.actions[0]
 }
 
 /* ─── Action Processing ─── */
@@ -532,29 +471,4 @@ export function tickWorld() {
     if (g.world.hour === 0) processNpcLifeTick()
   }
   runNpcAI()
-}
-
-/* ─── Game Step (main loop entry) ─── */
-
-export function gameStep() {
-  const ctx = getContext()
-  const g = ctx.game
-  if (g.player.travelPlan && !g.combat.currentEnemy && consumePlayerTravelStep()) {
-    if (g.player.hp <= 0) revivePlayer()
-    return
-  }
-  const action = chooseAutoAction()
-  if (!action) {
-    if (g.player.travelPlan && !g.combat.currentEnemy && consumePlayerTravelStep()) {
-      if (g.player.hp <= 0) revivePlayer()
-      return
-    }
-    if (g.player.mode === 'manual') {
-      tickWorld()
-      if (g.player.hp <= 0) revivePlayer()
-    }
-    return
-  }
-  performAction(action)
-  if (g.player.hp <= 0) revivePlayer()
 }

@@ -1,7 +1,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { gameStep } from '@/systems/world'
+import { gameStep } from '@/systems/autoplay'
 import { LOOP_INTERVALS, AUTO_SAVE_INTERVAL } from '@/config'
 
 export function useGameLoop() {

@@ -214,6 +214,7 @@ export function applyPassiveAction(actionKey: string) {
   if (action.reward.cultivation) addPlayerMetric('cultivation', action.reward.cultivation * cultivationBoost)
   if (action.reward.qi) ctx.adjustResource('qi', action.reward.qi, 'maxQi')
   if (action.reward.hp) ctx.adjustResource('hp', action.reward.hp, 'maxHp')
+  if (action.reward.stamina) ctx.adjustResource('stamina', action.reward.stamina, 'maxStamina')
   if (action.reward.money) p.money += Math.round(action.reward.money * (1 + p.reputation / 220))
   if (action.reward.reputation) addPlayerMetric('reputation', action.reward.reputation)
   if (action.reward.breakthrough) addPlayerMetric('breakthrough', action.reward.breakthrough * (1 + ctx.getPlayerInsight() / 420))

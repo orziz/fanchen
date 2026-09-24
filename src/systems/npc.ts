@@ -2,7 +2,7 @@ import { getContext } from '@/core/context'
 import { PLAYER_SECT_ENABLED } from '@/config'
 import { bus } from '@/core/events'
 import { LOCATION_MAP, FACTION_MAP } from '@/config'
-import type { NpcIntelSource } from '@/types/game'
+import type { NpcIntelSource, NpcState } from '@/types/game'
 import { sample, randomFloat, randomInt, findRoute } from '@/utils'
 import { recordNpcEconomicAction } from '@/systems/worldEconomy'
 
@@ -392,7 +392,14 @@ function processNpcAction(npc: any, action: string) {
       npc.lastEvent = `在${location.name}观望局势`
   }
   recordNpcEconomicAction(npc, action, npc.locationId)
-  if (Math.random() < 0.12) ctx.appendLog(`${npc.name}又有动作：${npc.lastEvent}。`, 'npc')
+  maybeReportKnownNpc(npc)
+}
+
+/** 只有玩家见过或听说过的人，其近况才会传进纪事。 */
+function maybeReportKnownNpc(npc: NpcState) {
+  const ctx = getContext()
+  if (!ctx.game.player.npcIntel[npc.id] || Math.random() >= 0.12) return
+  ctx.appendLog(`听说${npc.name}${npc.lastEvent}。`, 'npc')
 }
 
 /* ─── NPC AI ─── */
@@ -409,7 +416,7 @@ export function runNpcAI() {
     }
 
     if (npc.travelPlan && advanceNpcTravelStep(npc)) {
-      if (Math.random() < 0.12) ctx.appendLog(`${npc.name}又有动作：${npc.lastEvent}。`, 'npc')
+      maybeReportKnownNpc(npc)
       npc.cooldown = randomInt(1, 2)
       return
     }
