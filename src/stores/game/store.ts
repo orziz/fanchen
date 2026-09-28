@@ -187,7 +187,7 @@ export const useGameStore = defineStore('game', () => {
       if (nextRank > p.affiliationRank) {
         p.affiliationRank = nextRank
         p.title = `${affFaction.name}${affFaction.titles[nextRank]}`
-        appendLog(`你在${affFaction.name}中的身份升为"${affFaction.titles[nextRank]}"。`, 'loot')
+        appendLog(`你在${affFaction.name}当上了${affFaction.titles[nextRank]}。`, 'loot')
       }
     }
     bus.emit('state:faction-standing-changed', { factionId, amount })
@@ -369,7 +369,7 @@ export const useGameStore = defineStore('game', () => {
     closeBook()
     meetNpcsAtLocation(game.value.player.locationId)
     ensureOpportunities()
-    if (resumed) appendLog('旧日行程已经续上。', 'info')
+    if (resumed) appendLog('接着上回的日子过。', 'info')
     else startLifeEvent('opening')
     initialized.value = true
     bus.emit('game:initialized')

@@ -57,7 +57,7 @@ export function listActivities(): ActivityView[] {
   if (need && p.cultivation >= need) {
     list.push({
       id: 'breakthrough', label: '冲关', icon: 'breakthrough',
-      options: [{ days: 2, preview: '修为已满，择此地冲关' }],
+      options: [{ days: 2, preview: '修为满了，就在此地冲关' }],
       issue: breakthroughIssue(p, location), hint: '冲关前会写明几成把握',
     })
   }
@@ -89,7 +89,7 @@ export function listActivities(): ActivityView[] {
   if (location.tags.some(tag => ['town', 'city', 'port', 'market'].includes(tag))) {
     list.push({
       id: 'rumor', label: '茶馆打听', icon: 'bell',
-      options: [{ days: 1, preview: '听听附近各处的机缘' }],
+      options: [{ days: 1, preview: '听听附近各处的消息' }],
       issue: null, hint: '花一日，知道别处在发生什么',
     })
   }

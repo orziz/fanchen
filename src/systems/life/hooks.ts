@@ -2,6 +2,7 @@ import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
 import { addPlayerMetric } from '@/core/integerProgress'
 import { LOCATIONS, RANKS, type LocationData } from '@/config'
+import { chineseNumber } from '@/config/calendar'
 import { consumeItem } from '@/systems/player'
 import { getTravelPreview } from '@/systems/world'
 import { currentGoal } from '@/systems/life/goals'
@@ -32,7 +33,7 @@ function rankUp() {
   ctx.adjustResource('qi', p.maxQi, 'maxQi')
   recordDeed(`${ageOf(p)}岁踏入${RANKS[p.rankIndex].name}境`)
   ctx.game.life.runner?.notes.push(`踏入${RANKS[p.rankIndex].name}境`)
-  ctx.appendLog(`灵机贯体，你踏入了${RANKS[p.rankIndex].name}境。`, 'loot')
+  ctx.appendLog(`你踏进了${RANKS[p.rankIndex].name}境。`, 'loot')
   bus.emit('player:breakthrough', { success: true, rankIndex: p.rankIndex })
   return [`踏入${RANKS[p.rankIndex].name}境`, `寿元 ${before} → ${lifespanOf(p)}`, `声望 +${2 + p.rankIndex * 2}`]
 }
@@ -50,7 +51,7 @@ function breakthroughFail() {
   }
   adjustInjury(1)
   passDays(10, 'idle')
-  ctx.appendLog('冲关受挫，经脉震荡，需要重新稳固根基。', 'warn')
+  ctx.appendLog('冲关没成，受了内伤。', 'warn')
   bus.emit('player:breakthrough', { success: false, rankIndex: p.rankIndex })
   return [`修为 −${lost}`, '带伤一级', '养伤十日']
 }
@@ -95,27 +96,31 @@ function nearest(match: (location: LocationData) => boolean) {
 
 const TOWN_TAGS = ['town', 'city', 'market', 'port']
 
-/** 说书先生按你眼下的志向指一条路；求心法时顺带在近处摆出旧书摊。 */
+const far = (days: number) => (days <= 0 ? '就在这儿' : `离这儿${chineseNumber(days)}天的路`)
+
+/** 老江湖按你眼下的志向指一条路；求心法时顺带在近处摆出旧书摊。 */
 function goalTip() {
   const here = getContext().game.player.locationId
   const goal = currentGoal()?.id
-  if (goal === 'foothold') return ['“镇上几家铺子都缺短工，镇外河滩的雾心草也能换钱。”']
-  if (goal === 'strength') return ['“练力靠的是一天天打熬筋骨。药铺的养元散能托一把冲关。”']
+  if (goal === 'foothold') return ['“手头紧？镇上几家铺子都缺短工。再不然去镇外河滩转转，雾心草药铺是收的。”']
+  if (goal === 'strength') return ['“想练出力气，没别的巧，天天练。药铺有种养元散，冲关前吃一包，稳当些。”']
   if (goal === 'heart') {
     const stall = nearest(loc => opportunitiesAt(loc.id).some(card => card.templateId === 'old-bookstall'))
       || nearest(loc => loc.id !== here && loc.tags.some(tag => TOWN_TAGS.includes(tag)))
-    if (!stall) return []
-    spawnOpportunity('old-bookstall', stall.location.id)
-    return [`“${stall.location.name}的街角有个旧书摊，摊主手里有本《养气入门诀》。走过去约莫${stall.days}日。”`]
+    if (stall) {
+      spawnOpportunity('old-bookstall', stall.location.id)
+      return [`“${stall.location.name}街角有个旧书摊，摊主手里有本《养气入门诀》，${far(stall.days)}。”`]
+    }
   }
   if (goal === 'sense') {
     const spot = nearest(loc => loc.aura >= 34 && (loc.actions.includes('meditate') || loc.aura >= 30) && loc.danger <= 3)
-    return spot ? [`“要感气，得去灵气足的地方。${spot.location.name}灵气有${spot.location.aura}，离这儿约莫${spot.days}日。”`] : []
+    if (spot) return [`“要感气，得找灵气厚的地方坐。${spot.location.name}就不错，${far(spot.days)}。”`]
   }
-  if (goal === 'referral') return ['“玉阙行院的执事常在行院与云梯岭、丹井坪一带找人跑腿。替行院办上几回事，自然有人肯替你作保。”']
-  if (goal === 'trial') return ['“行院每旬都收试炼的人，到了玉阙就能报名。根骨、心性、身手，三关缺一不可。”']
+  if (goal === 'referral') return ['“玉阙收人，得有人作保。行院的执事常在玉阙、云梯岭、丹井坪一带找人跑腿，你多替他们跑几趟，自然有人肯替你说话。”']
+  if (goal === 'trial') return ['“行院每旬都有试炼，到了玉阙就能报名。根骨、心性、身手，三关都得过。”']
   const shrine = nearest(loc => loc.actions.includes('breakthrough'))
-  return shrine ? [`“往上的关隘要在有冲关门路的灵地冲，${shrine.location.name}就是一处。”`] : []
+  if (shrine) return [`“再往上冲关，就得挑地方了。${shrine.location.name}就是一处，${far(shrine.days)}。”`]
+  return ['“你问的这个，我也说不好。”']
 }
 
 const HOOKS: Record<string, (hook: HookContext) => string[]> = {

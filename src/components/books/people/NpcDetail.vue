@@ -4,21 +4,21 @@
       <SealAvatar :name="known ? npc.name : '？'" :seed="npc.id" size="lg" :variant="relation.role !== 'none' ? 'cinnabar' : 'ink'" />
       <div>
         <h3>{{ known ? npc.name : '面生之人' }}</h3>
-        <p v-if="met">{{ npc.title }} · {{ npc.profession || '江湖人' }} · {{ npc.personalityLabel }} · {{ rankName }}</p>
+        <p v-if="met">{{ standing }}</p>
         <p v-else-if="known">只闻其名，尚未照面</p>
         <p v-else>此人就在{{ locationName }}，还没打过交道</p>
       </div>
     </header>
 
     <template v-if="met">
-      <p class="faction-detail__desc">{{ npc.personalityDesc }}</p>
+      <p class="faction-detail__desc">{{ personality }}</p>
       <dl class="fact-list">
         <div><dt>所在</dt><dd>{{ locationName }}</dd></div>
         <div><dt>年岁</dt><dd>{{ npc.lifeStage }} · {{ npc.age }} 岁</dd></div>
         <div><dt>归属</dt><dd>{{ factionName }}</dd></div>
         <div><dt>家底</dt><dd class="num">{{ wealth }}</dd></div>
         <div><dt>所图</dt><dd>{{ npc.goal }}</dd></div>
-        <div><dt>近况</dt><dd>{{ npc.lastEvent }}</dd></div>
+        <div><dt>近况</dt><dd>{{ npc.lastEvent || '没听说什么' }}</dd></div>
       </dl>
 
       <section>
@@ -58,7 +58,7 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { FACTION_MAP, LOCATION_MAP, PLAYER_SECT_ENABLED, RANKS } from '@/config'
+import { FACTION_MAP, LOCATION_MAP, PERSONALITIES, PLAYER_SECT_ENABLED, RANKS } from '@/config'
 import { formatNumber } from '@/utils'
 import {
   becomeMasterBond, becomePartner, canBecomeMaster, canBecomePartner, canRecruitDisciple, canRecruitFactionMember, declareRival,
@@ -85,6 +85,13 @@ const known = computed(() => Boolean(player.value.npcIntel[props.npcId]))
 const here = computed(() => npc.value?.locationId === player.value.locationId)
 const relation = computed(() => player.value.relations[props.npcId] || { affinity: 0, trust: 0, romance: 0, rivalry: 0, role: 'none' })
 const rankName = computed(() => RANKS[Math.min(npc.value?.rankIndex || 0, RANKS.length - 1)].name)
+// 凡人只报行当；入了感气境的，才说得上修的是哪一路。
+const standing = computed(() => {
+  const n = npc.value
+  if (!n) return ''
+  return [n.profession || '江湖人', n.rankIndex >= 2 ? n.title : '', n.personalityLabel, rankName.value].filter(Boolean).join(' · ')
+})
+const personality = computed(() => PERSONALITIES.find(entry => entry.id === npc.value?.personalityId)?.desc || npc.value?.personalityDesc || '')
 const locationName = computed(() => LOCATION_MAP.get(npc.value?.locationId || '')?.name || '')
 const factionName = computed(() => (npc.value?.factionId ? FACTION_MAP.get(npc.value.factionId)?.name || '某方势力' : '尚无'))
 const wealth = computed(() => formatNumber(npc.value?.wealth || 0))

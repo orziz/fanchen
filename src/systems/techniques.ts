@@ -128,9 +128,9 @@ export function learnTechnique(skillId: string, options: { skipRequirement?: boo
   ensureLearnedTechnique(skillId)
   if (technique.kind === 'heart' && !ctx.game.player.equipment.heart) {
     ctx.game.player.equipment.heart = skillId
-    ctx.appendLog(`你参透了${technique.name}，并将其定为当前心法。`, 'loot')
+    ctx.appendLog(`你学会了${technique.name}，往后就照着它修行。`, 'loot')
   } else {
-    ctx.appendLog(`你学会了${technique.name}${options.sourceText ? `，来源：${options.sourceText}` : ''}。`, 'loot')
+    ctx.appendLog(`你学会了${technique.name}。`, 'loot')
   }
   ctx.updateDerivedStats()
   return true
@@ -142,7 +142,7 @@ export function equipHeartTechnique(skillId: string) {
   if (!technique || technique.kind !== 'heart' || !hasLearnedTechnique(skillId)) return false
   ctx.game.player.equipment.heart = skillId
   ctx.updateDerivedStats()
-  ctx.appendLog(`你将当前心法切换为${technique.name}。`, 'info')
+  ctx.appendLog(`你改修${technique.name}。`, 'info')
   return true
 }
 
@@ -157,12 +157,13 @@ function maybeUnlockTechniqueDiscoveries() {
     if (!ready) return
     if (learnTechnique(recipe.resultSkillId, { skipRequirement: true, sourceText: '悟道领悟' })) {
       const result = getTechnique(recipe.resultSkillId)
-      if (result) ctx.appendLog(`你由${recipe.desc}，悟出了${result.name}。`, 'loot')
+      const sources = recipe.sourceSkillIds.map(id => getTechnique(id)?.name).filter(Boolean).join('和')
+      if (result) ctx.appendLog(`你把${sources}对照着练，悟出了${result.name}。`, 'loot')
     }
   })
 }
 
-export function gainTechniqueMastery(skillId: string, amount: number, sourceText = '修炼') {
+export function gainTechniqueMastery(skillId: string, amount: number) {
   const ctx = getContext()
   const technique = getTechnique(skillId)
   if (!technique || amount <= 0 || !hasLearnedTechnique(skillId)) return false
@@ -171,7 +172,7 @@ export function gainTechniqueMastery(skillId: string, amount: number, sourceText
   state.mastery = Math.min(technique.masteryNeed, state.mastery + amount)
   if (state.mastery < technique.masteryNeed) return true
   state.mastery = technique.masteryNeed
-  ctx.appendLog(`${technique.name}在${sourceText}中修至圆满，解锁圆满加成，并可无限誊写。`, 'loot')
+  ctx.appendLog(`${technique.name}练到了圆满，往后能随时抄成秘籍。`, 'loot')
   maybeUnlockTechniqueDiscoveries()
   ctx.updateDerivedStats()
   return true
@@ -182,7 +183,7 @@ export function gainHeartMasteryFromAction(actionKey: string) {
   const heartId = ctx.game.player.equipment.heart
   if (!heartId || !HEART_MASTERY_ACTIONS.has(actionKey)) return false
   const amount = actionKey === 'meditate' ? 3.2 : actionKey === 'train' ? 2.2 : actionKey === 'breakthrough' ? 2.8 : 1.8
-  return gainTechniqueMastery(heartId, amount, actionKey === 'sect' ? '门内值役' : '修炼')
+  return gainTechniqueMastery(heartId, amount)
 }
 
 export function getCastableSpells(maxQi = getContext().game.player.qi) {
@@ -254,7 +255,7 @@ export function scribeTechnique(skillId: string) {
   })
   ctx.adjustResource('qi', -technique.scribeQiCost, 'maxQi')
   ctx.addItemToInventory(item.id, 1)
-  ctx.appendLog(`你将${technique.name}誊写成了一册${item.name}。`, 'info')
+  ctx.appendLog(`你把${technique.name}抄成了一册${item.name}。`, 'info')
   return true
 }
 

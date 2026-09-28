@@ -56,7 +56,7 @@ function clearExpiredFactionStatuses() {
     const factionName = FACTION_MAP.get(player.wantedByFactionId)?.name || '原势力'
     player.wantedByFactionId = null
     player.wantedUntilDay = 0
-    ctx.appendLog(`${factionName}对你的追缉逐渐平息。`, 'info')
+    ctx.appendLog(`${factionName}不再追你了。`, 'info')
   }
 }
 
@@ -87,7 +87,7 @@ function checkAffiliationRankUp() {
   if (nextRank <= g.player.affiliationRank) return
   g.player.affiliationRank = nextRank
   g.player.title = `${faction.name}${faction.titles[nextRank]}`
-  ctx.appendLog(`你在${faction.name}中的身份升为"${faction.titles[nextRank]}"。`, 'loot')
+  ctx.appendLog(`你在${faction.name}当上了${faction.titles[nextRank]}。`, 'loot')
 }
 
 export function adjustFactionStanding(factionId: string, amount: number) {
@@ -300,7 +300,7 @@ export function completeAffiliationTask(taskId: string) {
   ctx.adjustRegionStanding(taskLocationId, task.rewardRegion)
   g.player.stats.affiliationTasksCompleted += 1
   g.player.affiliationTasks = tasks.filter((entry: any) => entry.id !== taskId)
-  ctx.appendLog(`你替${FACTION_MAP.get(task.factionId)?.name || '势力'}办妥"${task.title}"，门路更稳了。`, 'loot')
+  ctx.appendLog(`你替${FACTION_MAP.get(task.factionId)?.name || '势力'}办妥了“${task.title}”。`, 'loot')
 }
 
 export function getFactionJoinIssues(factionId: string): string[] {
@@ -349,9 +349,9 @@ export function joinFaction(factionId: string, options: { force?: boolean } = {}
     g.world.factions[factionId].joined = true
     g.world.factions[factionId].standing = g.player.factionStanding[factionId]
   }
-  if (previous && previous.id !== factionId) ctx.appendLog(`你离开了${previous.name}，转而投向${faction.name}。`, 'npc')
+  if (previous && previous.id !== factionId) ctx.appendLog(`你离开${previous.name}，投了${faction.name}。`, 'npc')
   g.player.title = `${faction.name}${faction.titles[0]}`
-  ctx.appendLog(`你正式加入${faction.name}，身份为"${faction.titles[0]}"。`, 'loot')
+  ctx.appendLog(`你成了${faction.name}的${faction.titles[0]}。`, 'loot')
   bus.emit('faction:joined', { factionId, name: faction.name, title: faction.titles[0] })
   syncOpeningTutorialState({ announce: true })
 }
@@ -382,9 +382,9 @@ export function leaveFaction() {
   if (isOfficialFaction(faction)) {
     g.player.wantedByFactionId = faction.id
     g.player.wantedUntilDay = g.world.day + OFFICIAL_PURSUIT_DAYS
-    ctx.appendLog(`你脱离了${faction.name}，声望受损，且接下来${OFFICIAL_PURSUIT_DAYS}天仍可能遭遇追缉。`, 'warn')
+    ctx.appendLog(`你脱离了${faction.name}，声望掉了一截。接下来${OFFICIAL_PURSUIT_DAYS}天里，还可能被他们的人追上。`, 'warn')
     return
   }
 
-  ctx.appendLog(`你退出了${faction.name}，声望受损，且${FACTION_REJOIN_COOLDOWN_DAYS}天内不得重返。`, 'warn')
+  ctx.appendLog(`你退出了${faction.name}，声望掉了一截，${FACTION_REJOIN_COOLDOWN_DAYS}天内不能再回去。`, 'warn')
 }

@@ -20,7 +20,7 @@ export const ORIGINS: OriginData[] = [
   {
     id: 'farmhand',
     name: '田家子',
-    desc: '青禾田埂上长大，肩能挑、腰能弯，最知道一粒米的分量。',
+    desc: '在青禾的田埂上长大，一担谷子挑起来就走。家里那几亩地，年年交完租就不剩什么了。',
     perks: '战力 +1 · 农务 +2 · 粗灵米 ×2',
     bonus: { power: 1, farming: 2 },
     items: [{ itemId: 'spirit-grain', quantity: 2 }],
@@ -28,7 +28,7 @@ export const ORIGINS: OriginData[] = [
   {
     id: 'hunter',
     name: '猎户后人',
-    desc: '随父辈进过几回迷林，认得兽踪，手上有股狠劲。',
+    desc: '跟着爹进过几回迷雾林，认得兽踪，下手也狠。',
     perks: '战力 +2 · 兽皮 ×1',
     bonus: { power: 2 },
     items: [{ itemId: 'beast-hide', quantity: 1 }],
@@ -36,7 +36,7 @@ export const ORIGINS: OriginData[] = [
   {
     id: 'peddler',
     name: '货郎之子',
-    desc: '自小跟着担子走街串巷，一张嘴能把死货说活。',
+    desc: '打小跟着爹的货担走街串巷，一张嘴能把陈货说成新货。',
     perks: '灵石 +12 · 商道 +2 · 魅力 +1',
     bonus: { money: 12, trading: 2, charisma: 1 },
     items: [],
@@ -44,7 +44,7 @@ export const ORIGINS: OriginData[] = [
   {
     id: 'scholar',
     name: '落魄书生',
-    desc: '读过几卷残书，考场失意，倒把心思养得比旁人静。',
+    desc: '读过几卷书，考了三回没考上。别的本事没有，倒是坐得住。',
     perks: '悟性 +2 · 工艺 +1 · 空白册页 ×1',
     bonus: { insight: 2, crafting: 1 },
     items: [{ itemId: 'blank-codex', quantity: 1 }],

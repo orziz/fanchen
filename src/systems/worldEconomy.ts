@@ -396,19 +396,19 @@ export function processWorldEconomyTick() {
     const after = getLocationEconomyOverview(location.id)
     if (location.id !== ctx.game.player.locationId) return
     if (before.needPressure < 72 && territory.needPressure >= 72) {
-      ctx.appendLog(`${location.name}外货骤紧，街上商人开始争抢来路稳的货。`, 'warn')
+      ctx.appendLog(`${location.name}外头的货进不来了，铺子里的东西一天一个价。`, 'warn')
       return
     }
     if (before.localSupply > 20 && territory.localSupply <= 20) {
-      ctx.appendLog(`${location.name}本地货色断得快，坊间价签立刻抬了起来。`, 'warn')
+      ctx.appendLog(`${location.name}本地的货卖断了，价钱跟着往上涨。`, 'warn')
       return
     }
     if (before.prosperity < 74 && territory.prosperity >= 74) {
-      ctx.appendLog(`${location.name}商气骤起，往来脚商与柜坊一下都活了。`, 'info')
+      ctx.appendLog(`${location.name}这阵子来了不少客商，街上热闹起来了。`, 'info')
       return
     }
     if (before.summary !== after.summary && after.needPressure >= 78) {
-      ctx.appendLog(`${location.name}${after.summary}。`, 'warn')
+      ctx.appendLog(`${location.name}到处都在抢货，价钱涨得厉害。`, 'warn')
     }
   })
 }

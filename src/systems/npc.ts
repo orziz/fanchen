@@ -20,19 +20,29 @@ function getNpcProfessionPool(npc: { lifeStage: string; homeId: string; location
   const home = LOCATION_MAP.get(npc.homeId) || LOCATION_MAP.get(npc.locationId)
   const tags = home?.tags || []
   if (tags.includes('sect')) return npc.lifeStage === '少年' ? ['杂役弟子', '抄经童子', '听差弟子'] : npc.lifeStage === '壮年' ? ['外门弟子', '内门行走', '丹房执役', '护山弟子'] : npc.lifeStage === '中年' ? ['执事', '丹房教习', '护法', '司库'] : ['守阁老人', '宗门宿老', '外门教习']
-  if (tags.includes('court')) return npc.lifeStage === '少年' ? ['衙门杂役', '跑堂信差', '文牍学徒'] : npc.lifeStage === '壮年' ? ['皂隶', '书吏', '巡街快手', '税契小吏'] : npc.lifeStage === '中年' ? ['捕头', '典吏', '粮台主事'] : ['老书办', '退居老吏', '旧案守库人']
-  if (tags.includes('pass')) return npc.lifeStage === '少年' ? ['趟子学徒', '关城杂役', '驿卒'] : npc.lifeStage === '壮年' ? ['镖师', '关城军健', '赶车把式', '护货刀手'] : npc.lifeStage === '中年' ? ['押队头', '老镖头', '关市主事'] : ['守关老人', '退役镖师', '驿路旧人']
-  if (tags.includes('forge')) return npc.lifeStage === '少年' ? ['打杂学徒', '矿场童工', '送炭小厮'] : npc.lifeStage === '壮年' ? ['学徒铁匠', '匠工', '押镖好手', '矿场工头'] : npc.lifeStage === '中年' ? ['监造', '工坊主事', '老镖头'] : ['老匠', '炉前师傅', '退役镖师']
-  if (tags.includes('port') || tags.includes('market')) return npc.lifeStage === '少年' ? ['脚夫', '船行杂役', '跑街小厮'] : npc.lifeStage === '壮年' ? ['脚商', '船工', '分号伙计', '掮客'] : npc.lifeStage === '中年' ? ['掌柜', '行会执事', '船队老大'] : ['老账房', '退居掌柜', '市井说书人']
-  if (tags.includes('town') || tags.includes('starter')) return npc.lifeStage === '少年' ? ['佃户子弟', '跑堂杂工', '药圃学徒'] : npc.lifeStage === '壮年' ? ['农户', '货郎', '药农', '店伙'] : npc.lifeStage === '中年' ? ['里正助手', '小店东家', '药铺主事'] : ['乡里老人', '田契看守', '退居掌柜']
-  return npc.lifeStage === '少年' ? ['野路学徒', '走山少年'] : npc.lifeStage === '壮年' ? ['游侠', '散户', '猎手', '采药人'] : npc.lifeStage === '中年' ? ['老猎手', '山路向导', '散修执事'] : ['隐居老人', '看山人', '退隐游侠']
+  if (tags.includes('court')) return npc.lifeStage === '少年' ? ['衙门杂役', '送信的小厮', '抄书学徒'] : npc.lifeStage === '壮年' ? ['皂隶', '书吏', '巡街快手', '税契小吏'] : npc.lifeStage === '中年' ? ['捕头', '典吏', '粮台主事'] : ['老书办', '告老的书吏', '看库房的老吏']
+  if (tags.includes('pass')) return npc.lifeStage === '少年' ? ['趟子学徒', '关城杂役', '驿卒'] : npc.lifeStage === '壮年' ? ['镖师', '关城军健', '赶车把式', '护货刀手'] : npc.lifeStage === '中年' ? ['押队头', '老镖头', '关市主事'] : ['守关老人', '洗手的老镖师', '驿站老卒']
+  if (tags.includes('forge')) return npc.lifeStage === '少年' ? ['打杂学徒', '矿场童工', '送炭小厮'] : npc.lifeStage === '壮年' ? ['学徒铁匠', '匠工', '押镖好手', '矿场工头'] : npc.lifeStage === '中年' ? ['监造', '工坊主事', '老镖头'] : ['老铁匠', '炉前师傅', '洗手的老镖师']
+  if (tags.includes('port') || tags.includes('market')) return npc.lifeStage === '少年' ? ['脚夫', '船行杂役', '跑街小厮'] : npc.lifeStage === '壮年' ? ['脚商', '船工', '分号伙计', '掮客'] : npc.lifeStage === '中年' ? ['掌柜', '行会执事', '船队老大'] : ['老账房', '歇了业的老掌柜', '说书先生']
+  if (tags.includes('town') || tags.includes('starter')) return npc.lifeStage === '少年' ? ['佃户子弟', '跑堂杂工', '药圃学徒'] : npc.lifeStage === '壮年' ? ['农户', '货郎', '药农', '店伙'] : npc.lifeStage === '中年' ? ['里正助手', '小店东家', '药铺主事'] : ['乡里老人', '看祠堂的', '歇了业的老掌柜']
+  return npc.lifeStage === '少年' ? ['放牛娃', '采药童子'] : npc.lifeStage === '壮年' ? ['游侠', '樵夫', '猎户', '采药人'] : npc.lifeStage === '中年' ? ['老猎户', '山路向导', '山货贩子'] : ['山里的老人', '看山人', '老樵夫']
 }
 
-function getNpcGoalPool(npc: { lifeStage: string }) {
-  if (npc.lifeStage === '少年') return ['找门路入宗', '攒学徒钱', '学一门手艺', '替家里挣口粮']
-  if (npc.lifeStage === '壮年') return ['攒钱买田', '跑货翻身', '争取晋升', '替自己置办铺面']
-  if (npc.lifeStage === '中年') return ['坐稳门内位置', '攒下家底', '收徒传手艺', '替晚辈铺路']
-  return ['回乡养老', '守着家业', '留下门路给后人', '安稳度日']
+function getNpcGoalPool(npc: { lifeStage: string; factionId?: string | null }) {
+  const pool = npc.lifeStage === '少年' ? ['想拜进宗门', '想攒够学徒钱', '想学一门手艺', '想替家里挣口饭吃']
+    : npc.lifeStage === '壮年' ? ['想攒钱买几亩田', '想跑几趟货翻身', '想在门里往上走一步', '想自己开间铺子']
+      : npc.lifeStage === '中年' ? ['想在门里站稳脚跟', '想给家里攒点底子', '想收个徒弟传手艺', '想给儿女铺条路']
+        : ['想回老家养老', '想守着家里那点产业', '想把手艺传下去', '只想安安稳稳过日子']
+  // 没投靠哪一家的人，谈不上在门里往上走。
+  return npc.factionId ? pool : pool.filter(goal => !goal.includes('门里'))
+}
+
+/** 到了一个年纪，街坊嘴里会怎么说这个人。 */
+const STAGE_REMARKS: Record<string, string> = {
+  少年: '个头蹿高了一大截',
+  壮年: '成了能顶事的人',
+  中年: '鬓角见了白',
+  老年: '腿脚不如从前了',
 }
 
 function appendNpcLifeEvent(npc: any, text: string) {
@@ -273,7 +283,7 @@ function advanceNpcTravelStep(npc: any) {
   if (blockedReason) {
     activePlan.pausedReason = blockedReason
     npc.action = 'travel'
-    npc.lastEvent = `在${current.name}附近被关隘拦下`
+    npc.lastEvent = `在${current.name}被关卡拦了回来`
     return true
   }
 
@@ -284,11 +294,11 @@ function advanceNpcTravelStep(npc: any) {
 
   if (activePlan.nextIndex >= activePlan.route.length) {
     npc.travelPlan = null
-    npc.lastEvent = `抵达${nextStop.name}`
+    npc.lastEvent = `到了${nextStop.name}`
     return true
   }
 
-  npc.lastEvent = `沿路赶到${nextStop.name}`
+  npc.lastEvent = `到了${nextStop.name}`
   return true
 }
 
@@ -307,43 +317,44 @@ export function processNpcLifeTick() {
       npc.lifeStage = ctx.deriveLifeStage(npc.age)
       if (npc.lifeStage !== prevStage) {
         refreshNpcLifeProfile(npc, true)
-        appendNpcLifeEvent(npc, `${npc.age}岁步入${npc.lifeStage}`)
-        npc.lastEvent = `人生进入${npc.lifeStage}阶段`
+        const remark = STAGE_REMARKS[npc.lifeStage] || '又长了一岁'
+        appendNpcLifeEvent(npc, `${npc.age}岁，${remark}`)
+        npc.lastEvent = remark
       }
       if (!npc.factionId && LOCATION_MAP.get(npc.homeId)?.factionIds?.length && Math.random() < 0.22) {
         npc.factionId = sample(LOCATION_MAP.get(npc.homeId)!.factionIds)
         npc.factionRank = 0
         refreshNpcLifeProfile(npc, true)
         const factionName = FACTION_MAP.get(npc.factionId)?.name || '一方势力'
-        appendNpcLifeEvent(npc, `投身${factionName}`)
-        npc.lastEvent = `投身${factionName}`
+        appendNpcLifeEvent(npc, `进了${factionName}`)
+        npc.lastEvent = `进了${factionName}`
       }
       if (npc.factionId && npc.factionRank < 3 && (npc.cultivation > 140 + npc.factionRank * 180 || npc.wealth > 180 + npc.factionRank * 120) && Math.random() < 0.18) {
         npc.factionRank += 1
         const faction = FACTION_MAP.get(npc.factionId)
         const title = faction?.titles[Math.min(npc.factionRank, (faction?.titles.length || 1) - 1)] || '更进一步'
-        appendNpcLifeEvent(npc, `在${faction?.name || '门内'}升为${title}`)
-        npc.lastEvent = `在${faction?.name || '门内'}升为${title}`
+        appendNpcLifeEvent(npc, `在${faction?.name || '门里'}当上了${title}`)
+        npc.lastEvent = `在${faction?.name || '门里'}当上了${title}`
       }
       if (npc.lifeStage === '老年' && Math.random() < 0.24) {
         if (npc.locationId !== npc.homeId && planNpcTravel(npc, npc.homeId)) {
           refreshNpcLifeProfile(npc, true)
-          appendNpcLifeEvent(npc, `起意回到${LOCATION_MAP.get(npc.homeId)?.name || '故地'}安顿余生`)
-          npc.lastEvent = `正沿路回${LOCATION_MAP.get(npc.homeId)?.name || '故地'}`
+          appendNpcLifeEvent(npc, `想回${LOCATION_MAP.get(npc.homeId)?.name || '老家'}养老`)
+          npc.lastEvent = `正往${LOCATION_MAP.get(npc.homeId)?.name || '老家'}走，说是回去养老`
         } else if (npc.locationId === npc.homeId) {
           refreshNpcLifeProfile(npc, true)
-          appendNpcLifeEvent(npc, `回到${LOCATION_MAP.get(npc.homeId)?.name || '故地'}安顿余生`)
-          npc.lastEvent = `回到${LOCATION_MAP.get(npc.homeId)?.name || '故地'}安顿余生`
+          appendNpcLifeEvent(npc, `回${LOCATION_MAP.get(npc.homeId)?.name || '老家'}养老了`)
+          npc.lastEvent = `回${LOCATION_MAP.get(npc.homeId)?.name || '老家'}养老了`
         }
       }
     }
     if (npc.age >= npc.lifespan && Math.random() < 0.34) {
       const rel = ctx.ensurePlayerRelation(npc.id)
-      if (rel.role !== 'none') ctx.appendLog(`${npc.name}走完了一生，旧事也随风而去。`, 'npc')
+      if (rel.role !== 'none') ctx.appendLog(`${npc.name}过世了。`, 'npc')
       const successor = ctx.createNPC(index + 1)
       successor.id = npc.id
-      successor.lastEvent = '新近来到此地谋生'
-      successor.lifeEvents = ['新近来到此地谋生']
+      successor.lastEvent = '刚来这边讨生活'
+      successor.lifeEvents = ['来这边讨生活']
       return successor
     }
     if (Math.random() < 0.1) refreshNpcLifeProfile(npc, false)
@@ -360,12 +371,12 @@ function processNpcAction(npc: any, action: string) {
   switch (action) {
     case 'meditate':
       npc.cultivation += (2 + location.aura * 0.08) * (npc.skillBias.meditate || 1)
-      npc.lastEvent = `在${location.name}闭关修炼`
+      npc.lastEvent = `在${location.name}闭关，好些日子没露面`
       break
     case 'trade': {
       const profit = Math.round((4 + location.marketTier * 6) * (npc.skillBias.trade || 1))
       npc.wealth += profit
-      npc.lastEvent = `在${location.name}行商获利${profit}`
+      npc.lastEvent = `在${location.name}做成了几笔买卖`
       if (Math.random() < 0.18) ctx.adjustRelation(npc.id, { affinity: npc.mood.kindness > 60 ? 1 : -1, trust: npc.mood.kindness > 60 ? 1 : 0 })
       break
     }
@@ -377,20 +388,22 @@ function processNpcAction(npc: any, action: string) {
         const reward = Math.round((8 + location.danger * 6) * (npc.skillBias.combat || 1))
         npc.wealth += reward
         npc.cultivation += reward * 0.05
-        npc.lastEvent = `在${location.name}${action === 'quest' ? '夺得机缘' : '历练得手'}`
+        npc.lastEvent = action === 'quest' ? `在${location.name}接了趟差事，挣了些钱` : `在${location.name}打了头野物，卖了个好价`
         if (Math.random() < 0.16) npc.inventory.push({ itemId: sample(['mist-herb', 'timber', 'scrap-iron', 'iron-sand', 'beast-hide']), quantity: 1 })
       } else {
-        npc.lastEvent = `在${location.name}受挫而回`
+        npc.lastEvent = `在${location.name}吃了亏，带着伤回来`
         ctx.adjustRelation(npc.id, { affinity: -1, rivalry: 1 })
       }
       break
     }
     case 'sect':
-      npc.lastEvent = npc.sectId === 'player-sect' ? '在宗门内值守听令' : `在${location.name}处理门内事务`
+      npc.lastEvent = `在${location.name}替门里跑腿`
       if (PLAYER_SECT_ENABLED && npc.sectId === 'player-sect' && g.player.sect) g.player.sect.treasury += 4
       break
     default:
-      npc.lastEvent = `在${location.name}观望局势`
+      // 闲着的日子没什么可传的。
+      recordNpcEconomicAction(npc, action, npc.locationId)
+      return
   }
   recordNpcEconomicAction(npc, action, npc.locationId)
   maybeReportKnownNpc(npc)
@@ -429,7 +442,7 @@ export function runNpcAI() {
       npc.lastEvent = npc.locationId === g.player.locationId ? '赶来宗门听候安排' : '正沿路赶来宗门听候安排'
     } else if (Math.random() < (npc.lifeStage === '老年' ? 0.12 : npc.lifeStage === '少年' ? 0.32 : 0.26)) {
       npc.locationId = sample(current.neighbors)
-      npc.lastEvent = `动身前往${LOCATION_MAP.get(npc.locationId)!.name}`
+      npc.lastEvent = `动身去了${LOCATION_MAP.get(npc.locationId)!.name}`
     }
 
     const loc = LOCATION_MAP.get(npc.locationId)!

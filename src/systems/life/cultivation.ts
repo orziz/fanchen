@@ -61,19 +61,19 @@ export function trainPowerGain(player: PlayerState) {
 
 const BASE_ODDS = [0, 0.7, 0.55, 0.45, 0.4, 0.35, 0.3]
 
-/** 冲关要的地利：入练力不挑地方，入感气要灵气够足，再往上须在有冲关门路的灵地。 */
+/** 冲关要的地利：入练力不挑地方，入感气要灵气够足，再往上须在能冲关的灵地。 */
 export function breakthroughPlaceIssue(rankIndex: number, location: Pick<LocationData, 'aura' | 'actions' | 'name'>) {
   const target = rankIndex + 1
   if (target <= 1) return null
-  if (target === 2) return location.aura >= 34 ? null : `${location.name}灵气太薄，感气须在灵气三十四以上之地冲关。`
-  return location.actions.includes('breakthrough') ? null : `${location.name}接不住天机，须往有冲关门路的灵地。`
+  if (target === 2) return location.aura >= 34 ? null : `${location.name}灵气太薄，感气要在灵气三十四以上的地方冲。`
+  return location.actions.includes('breakthrough') ? null : `${location.name}冲不了这一关，要去山河图上标着“可冲关”的地方。`
 }
 
 export function breakthroughIssue(player: PlayerState, location: Pick<LocationData, 'aura' | 'actions' | 'name'>) {
   if (player.rankIndex >= RANKS.length - 1) return '已到当前境界尽头。'
   const need = nextRealmNeed(player.rankIndex)
   if (player.cultivation < need) return `修为还差 ${Math.ceil(need - player.cultivation)}。`
-  if (player.rankIndex === 1 && !hasHeartMethod(player)) return '没有心法引气，冲不开感气这一关。'
+  if (player.rankIndex === 1 && !hasHeartMethod(player)) return '没有心法引气，感气这一关冲不开。'
   return breakthroughPlaceIssue(player.rankIndex, location)
 }
 

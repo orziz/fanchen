@@ -14,7 +14,7 @@
         <p v-if="entry.speaker" class="timeline-entry__speaker">{{ entry.speaker }}</p>
         <p class="timeline-entry__text">{{ entry.text }}</p>
       </article>
-      <p v-if="!current && !history.length" class="empty-note">尚无悬着的线头，江湖里多走动，自有际遇找上门来。</p>
+      <p v-if="!current && !history.length" class="empty-note">眼下没有悬着的事。多出去走走，事情自己会找上门。</p>
     </section>
 
     <section v-else class="log-view">

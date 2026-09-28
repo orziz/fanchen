@@ -4,6 +4,8 @@ import { LOCATION_MAP, RANKS } from '@/config'
 import { bus } from '@/core/events'
 import { useFx } from '@/composables/useFx'
 import { sfx } from '@/audio/sfx'
+import { lifespanOf } from '@/systems/life/cultivation'
+import { currentGoal } from '@/systems/life/goals'
 
 /**
  * 把规则层的变化翻成可感的反馈：数值飘字、破境横幅、战斗打击感、抵达与入门的提示音。
@@ -41,19 +43,19 @@ export function useGameFeedback() {
 
   offs.push(bus.on('player:breakthrough', ({ success, rankIndex }: { success: boolean; rankIndex: number }) => {
     if (success) {
-      banner('breakthrough', `踏入${RANKS[rankIndex]?.name || ''}境`, '灵机贯体，根基再上一层', 3600)
+      banner('breakthrough', `踏入${RANKS[rankIndex]?.name || ''}境`, `寿元增至${lifespanOf(store.player)}岁`, 3600)
       flash('rgba(255, 238, 196, 0.85)')
       heroMotion('surge', 1600)
       sfx.breakthrough()
     } else {
-      banner('breakthrough-fail', '冲关受挫', '经脉震荡，修为折损三成', 2600)
+      banner('breakthrough-fail', '冲关没成', '受了内伤，修为折了三成', 2600)
       shake(1.4)
       sfx.breakthroughFail()
     }
   }))
 
   offs.push(bus.on('combat:start', ({ enemy }: { enemy: { name: string; boss: boolean } }) => {
-    banner('faction', enemy.boss ? `${enemy.name}现身` : `遭遇 ${enemy.name}`, enemy.boss ? '秘境深处，退路已封' : '', 1800)
+    banner('faction', enemy.boss ? `${enemy.name}现身` : `遭遇 ${enemy.name}`, enemy.boss ? '进来了就没有退路' : '', 1800)
     sfx.swing()
   }))
   offs.push(bus.on('combat:enemy-hit', ({ damage }: { damage: number }) => {
@@ -88,12 +90,12 @@ export function useGameFeedback() {
   offs.push(bus.on('combat:victory', ({ name, boss, money }: { name: string; boss: boolean; money: number }) => {
     enemyMotion('defeated', 900)
     window.setTimeout(() => {
-      banner('victory', boss ? `斩落${name}` : '得胜', `灵石 +${money}`, 2200)
+      banner('victory', boss ? `打倒${name}` : '得胜', `灵石 +${money}`, 2200)
       sfx.victory()
     }, 450)
   }))
   offs.push(bus.on('combat:defeat', ({ name }: { name: string }) => {
-    banner('defeat', '败退', `${name}将你逼入绝境`, 2400)
+    banner('defeat', '输了', `被${name}打倒在地`, 2400)
     shake(1.6)
     sfx.defeat()
   }))
@@ -112,7 +114,8 @@ export function useGameFeedback() {
     sfx.chime()
   }))
   offs.push(bus.on('goal:completed', ({ title }: { title: string }) => {
-    banner('unlock', `志向 · ${title}`, '又近了一步', 2600)
+    const next = currentGoal()
+    banner('unlock', `志向 · ${title}`, next ? `下一步：${next.title}` : '', 2600)
     sfx.chime()
   }))
   offs.push(bus.on('life:ended', () => {

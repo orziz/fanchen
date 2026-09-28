@@ -72,7 +72,7 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
   {
     id: 'opening-guidance',
     title: '青禾醒世',
-    summary: '先在青禾站住脚，再谈拜师入门。',
+    summary: '先在青禾站住脚。',
     defaultPresentation: 'overlay',
     startNodeId: 'wake',
     bindings: ['location'],
@@ -86,11 +86,11 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       wake: {
         id: 'wake',
         speaker: '路人',
-        text: '醒醒。你在青禾镇街口睡得都快着凉了，还能起身么？',
+        text: '醒醒，后生。睡在街口要着凉的，起得来吗？',
         choices: [
           {
             id: 'answer',
-            text: '我想拜入宗门，可盘缠已经见底，只能先求个活路。',
+            text: '我想去拜师学仙法，可身上的钱快花光了。',
             next: 'guidance',
           },
         ],
@@ -98,11 +98,11 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       guidance: {
         id: 'guidance',
         speaker: '路人',
-        text: '前面这片就是青禾镇。先认清地界，再挑一方势力挂个名头，把日子稳下来，别急着空谈宗门。',
+        text: '这儿是青禾镇。拜师的事先放一放，先找个地方落脚，把饭吃上。',
         choices: [
           {
             id: 'open-map',
-            text: '先看看青禾周遭的路脉',
+            text: '看看青禾周围的路',
             effects: [
               { kind: 'run-script', scriptId: OPENING_TUTORIAL_SCRIPT_IDS.openMap },
             ],
@@ -113,11 +113,11 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       map: {
         id: 'map',
         speakerMode: 'narrator',
-        text: '山河图在你眼前铺开。青禾镇不大，却有田货、人情和落脚的门路；先在这里站稳，往后的路才好走。',
+        text: '你摊开山河图。青禾镇在图的最下角，一条河从镇子中间穿过去，往北是云泽渡，往东是芦湾埠。',
         choices: [
           {
             id: 'take-pack',
-            text: '把护身和口粮先收下',
+            text: '收下木枪和口粮',
             effects: [{ kind: 'run-script', scriptId: OPENING_TUTORIAL_SCRIPT_IDS.grantStarterPack }],
             next: 'supplies',
           },
@@ -126,11 +126,11 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       supplies: {
         id: 'supplies',
         speaker: '路人',
-        text: '这把木柄短枪拿去防身，草膏和口粮也别省着。你先在青禾找个愿意收人的门路，等有了身份，再谈拜师入门。',
+        text: '这杆枪拿去防身，草膏和米也收着。镇上的乡社缺人手，你去问问，先有个落脚的地方。',
         choices: [
           {
             id: 'open-affiliation',
-            text: '去青禾找一家势力挂靠',
+            text: '去乡社问问',
             effects: [{ kind: 'run-script', scriptId: OPENING_TUTORIAL_SCRIPT_IDS.openAffiliation }],
             next: 'affiliation',
           },
@@ -139,14 +139,14 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       affiliation: {
         id: 'affiliation',
         speakerMode: 'narrator',
-        text: '青禾各家门路的名帖已摊在眼前。先挂靠一方势力，把第一口饭稳住，街面上的其余门路才会慢慢向你打开。',
+        text: '青禾乡社的管事把名册摊在桌上，蘸了蘸墨：“叫什么？打哪儿来的？”',
       },
     },
   },
   {
     id: 'local-undercurrent',
-    title: '市井暗流',
-    summary: '零散风闻开始拼成一条真正的线。',
+    title: '对不上的事',
+    summary: '有些事对不上。',
     defaultPresentation: 'overlay',
     startNodeId: 'intro',
     bindings: ['npc', 'location'],
@@ -160,23 +160,23 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       intro: {
         id: 'intro',
         speakerMode: 'narrator',
-        text: '几次搭话之后，你把{location}的碎话拼成了一条线。有人在暗里收货，也有人在盯着新来的修行人。真正的门路，不在明面上。',
+        text: '跟人聊得多了，你觉出{location}有些事对不上：药铺的货越收越多，价钱却不见涨；这阵子还总有生面孔在打听新来的人。',
         choices: [
           {
             id: 'follow-trade',
-            text: '先从货路和铺面查起',
+            text: '盯一盯那家药铺',
             effects: [
               { kind: 'set-flag', key: 'story.mainline.trade-route' },
-              { kind: 'append-log', logType: 'action', text: '你决定先沿着{location}的货路摸清门道。' },
+              { kind: 'append-log', logType: 'action', text: '你在{location}的药铺对面蹲了两个晌午。' },
             ],
             next: 'trade-route',
           },
           {
             id: 'follow-field',
-            text: '先从镇外与山野风闻查起',
+            text: '去外头转转，看是谁在打听',
             effects: [
               { kind: 'set-flag', key: 'story.mainline.field-route' },
-              { kind: 'append-log', logType: 'action', text: '你决定先去{location}外的荒道和山野里碰一碰真风声。' },
+              { kind: 'append-log', logType: 'action', text: '你去{location}外头的岔路口转了一圈。' },
             ],
             next: 'field-route',
           },
@@ -185,19 +185,19 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       'trade-route': {
         id: 'trade-route',
         speakerMode: 'narrator',
-        text: '你把目光先落在货路上。接下来若想把这条线坐实，商路、铺面和压货动向都会变成关键线索。',
+        text: '你在药铺对面的茶摊上坐了两个晌午。第二天傍晚，一辆盖着油布的车从后门进去，天黑透了才出来，车辙压得很深。',
       },
       'field-route': {
         id: 'field-route',
         speakerMode: 'narrator',
-        text: '你先把注意力放到镇外。接下来若想把线头拽出来，野外风闻、猎场异象和路上人心都会是切入口。',
+        text: '岔路口的老槐树下蹲着两个外乡人，正凑在一起说话。见你走过来，两人站起身，拍拍土走了。',
       },
     },
   },
   {
     id: 'npc-first-impression',
     title: '街头搭话',
-    summary: '第一次和江湖人把话题坐实。',
+    summary: '头一回搭上话。',
     defaultPresentation: 'overlay',
     startNodeId: 'intro',
     bindings: ['npc', 'location'],
@@ -210,34 +210,34 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       intro: {
         id: 'intro',
         speakerMode: 'npc',
-        text: '{npc}在{location}抬眼看了你一阵，压低嗓音问道：“你是来讨生活，还是来找门路的？”',
+        text: '{npc}上下打量了你一眼：“面生啊。打哪儿来的？”',
         choices: [
           {
             id: 'ask-rumor',
-            text: '先听听这里最近的风声',
+            text: '跟对方打听打听这一带的事',
             effects: [
               { kind: 'add-relation', affinity: 2, trust: 1 },
               { kind: 'set-flag', key: 'story.rumor.heard' },
-              { kind: 'append-log', logType: 'npc', text: '你从{npc}口中听来一段关于{location}的门路风闻。' },
+              { kind: 'append-log', logType: 'npc', text: '{npc}跟你说了些{location}的事。' },
             ],
             next: 'rumor',
           },
           {
             id: 'tip-for-truth',
-            text: '递上十枚灵石，请他把话讲实些',
+            text: '塞过去十块灵石，请对方多说几句',
             conditions: [{ kind: 'money-at-least', amount: 10 }],
             effects: [
               { kind: 'add-money', amount: -10 },
               { kind: 'add-relation', affinity: 4, trust: 2 },
               { kind: 'set-flag', key: 'story.rumor.heard' },
               { kind: 'run-script', scriptId: 'npc-visit-bonus' },
-              { kind: 'append-log', logType: 'loot', text: '你花了十枚灵石，换来{npc}一句更值钱的提醒。' },
+              { kind: 'append-log', logType: 'loot', text: '你塞给{npc}十块灵石，换了几句实在话。' },
             ],
             next: 'favor',
           },
           {
             id: 'just-greet',
-            text: '只点头致意，先把这个人记下',
+            text: '点个头，报上名字',
             effects: [{ kind: 'add-relation', affinity: 1 }],
           },
         ],
@@ -245,12 +245,12 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       rumor: {
         id: 'rumor',
         speakerMode: 'npc',
-        text: '“这地方近来不算太平。”{npc}扫了扫街角，声音压得更低，“要摸门路，先记住谁在这里说话算数。”',
+        text: '“最近不大太平，前两天还有人在{location}外头叫人劫了。”{npc}往街角瞥了一眼，“要出门就赶早，天黑前回来。”',
       },
       favor: {
         id: 'favor',
         speakerMode: 'npc',
-        text: '“真想走门路，先别急着站队。”{npc}收下灵石，朝远处抬了抬下巴，“先看清谁在收货，谁又在等你犯错。”',
+        text: '{npc}把灵石揣进袖子，凑近了些：“想知道哪儿有活干，去茶馆坐坐，那儿消息最灵。进林子别一个人去，也别走夜路。”',
       },
     },
   },

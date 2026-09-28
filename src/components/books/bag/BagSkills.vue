@@ -3,7 +3,7 @@
     <section class="skill-hero" :class="currentHeart ? `rarity--${currentHeart.rarity}` : 'is-empty'">
       <span class="skill-hero__kicker">所运心法</span>
       <h3 class="skill-hero__name">{{ currentHeart ? currentHeart.name : '尚未启用' }}</h3>
-      <p class="skill-hero__desc">{{ currentHeart ? currentHeart.desc : '研习一门心法秘籍并启用，静坐修炼时便会随之精进，也会抬高各项根基。' }}</p>
+      <p class="skill-hero__desc">{{ currentHeart ? currentHeart.desc : '学会一门心法后，静坐时照着它修，修为长得快，心法也会越练越熟。' }}</p>
       <template v-if="currentHeart">
         <InkBar label="熟练" tone="breakthrough" :value="mastery(currentHeart.id)" :max="100" :text="`${mastery(currentHeart.id)}%`" />
         <p class="skill-hero__effect">{{ effectText(currentHeart.id) }}</p>
@@ -47,7 +47,7 @@
           </div>
         </article>
       </div>
-      <p v-else class="empty-note">还没学会任何功法。秘籍可在市集、拍卖、秘境与机缘中得来。</p>
+      <p v-else class="empty-note">还没学会任何功法。秘籍能在市集上买到，旧书摊和秘境里也碰得上。</p>
     </section>
 
     <section class="skill-section">

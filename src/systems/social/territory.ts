@@ -68,7 +68,7 @@ export function getTerritoryState(locationId: string): TerritoryEntry {
 function getTerritoryControllerName(territory: TerritoryEntry) {
   const playerFaction = getContext().game.player.playerFaction
   if (territory.controllerId && playerFaction && territory.controllerId === playerFaction.id) return playerFaction.name
-  return FACTION_MAP.get(territory.controllerId || '')?.name || '散户地头'
+  return FACTION_MAP.get(territory.controllerId || '')?.name || '本地人各管各的'
 }
 
 function getFactionLiquidFunds() {

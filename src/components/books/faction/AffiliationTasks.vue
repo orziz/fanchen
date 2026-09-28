@@ -1,6 +1,6 @@
 <template>
   <div class="task-board">
-    <p v-if="!currentAffiliation" class="empty-note">尚未投身门路，自然也没有差使可领。先在“投势”里择一家。</p>
+    <p v-if="!currentAffiliation" class="empty-note">还没投靠哪一家，自然没有差使可领。先在“投势”里挑一家。</p>
     <template v-else>
       <p class="sheet__note">{{ currentAffiliation.name }}今日的差使，完成后可得灵石、声望与门中立场；立场攒够便能升一阶身份。</p>
       <div v-if="tasks.length" class="task-grid">

@@ -1,6 +1,6 @@
 import { getContext } from '@/core/context'
 import { addPlayerMetric } from '@/core/integerProgress'
-import { getItem } from '@/config'
+import { FACTION_MAP, getItem } from '@/config'
 import { MAX_INJURY } from '@/config/life'
 import type { LifeEffects } from '@/types/life'
 
@@ -86,7 +86,7 @@ export function applyLifeEffects(effects: LifeEffects | undefined, context: { np
   }
   if (effects.standing && context.factionId) {
     ctx.adjustFactionStanding(context.factionId, effects.standing)
-    lines.push(`门路好感 ${sign(effects.standing)}`)
+    lines.push(`${FACTION_MAP.get(context.factionId)?.name || '当地'}好感 ${sign(effects.standing)}`)
   }
   if (effects.affinity && context.npcId) {
     const npc = ctx.getNpc(context.npcId)

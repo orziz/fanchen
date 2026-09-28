@@ -28,8 +28,8 @@
     </section>
 
     <section class="location-info__section">
-      <h4 class="sheet__heading">本旬机缘</h4>
-      <p v-if="!cards.length" class="location-info__empty">眼下没听说此地有什么机缘。</p>
+      <h4 class="sheet__heading">本旬消息</h4>
+      <p v-if="!cards.length" class="location-info__empty">眼下没听说此地有什么事。</p>
       <ul v-else class="location-info__cards">
         <li v-for="card in cards" :key="card.id"><strong>{{ card.title }}</strong><span>{{ card.reward }}</span></li>
       </ul>
@@ -118,7 +118,7 @@ const territoryHolder = computed(() => {
   if (!t) return '无主'
   const pf = player.value.playerFaction
   if (pf && t.controllerId === pf.id) return pf.name
-  return FACTIONS.find(f => f.id === t.controllerId)?.name || '散户地头'
+  return FACTIONS.find(f => f.id === t.controllerId)?.name || '本地人各管各的'
 })
 const residents = computed(() => store.npcs
   .filter(n => n.alive && n.locationId === selected.value.id && player.value.npcIntel[n.id])

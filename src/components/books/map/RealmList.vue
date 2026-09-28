@@ -1,6 +1,6 @@
 <template>
   <div class="realm-list">
-    <p class="sheet__note">秘境随天象时隐时现，一处显世时方可闯入；首领守关，退路封死，胜则满载而归。</p>
+    <p class="sheet__note">秘境时开时关，开着的时候才进得去。里头有守关的，进去了就没有退路。</p>
     <article v-for="realm in realms" :key="realm.id" class="realm-row" :class="{ 'is-active': realm.active, 'is-locked': realm.locked }">
       <div class="realm-row__seal"><GameIcon :name="realm.active ? 'storm' : 'relic'" /></div>
       <div class="realm-row__body">

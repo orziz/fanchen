@@ -1,9 +1,9 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
 import type { PlayerState } from '@/types/game'
-import { LOCATION_MAP, WORLD_EVENT_TEMPLATES } from '@/config'
+import { LOCATION_MAP } from '@/config'
 import { calendarOf } from '@/config/calendar'
-import { sample, fillTemplate, findRoute as resolveRoute } from '@/utils'
+import { sample, findRoute as resolveRoute } from '@/utils'
 import { processRelationshipTick, processFactionStatusTick, processTerritoryStatusTick } from '@/systems/social'
 import { meetNpcsAtLocation, processNpcLifeTick, runNpcAI } from '@/systems/npc'
 import { processWorldEconomyTick } from '@/systems/worldEconomy'
@@ -117,6 +117,5 @@ export function announceRealm(locationId: string, realmName: string) {
   const loc = LOCATION_MAP.get(locationId)
   if (!loc) return
   const ctx = getContext()
-  ctx.appendLog(fillTemplate(sample(WORLD_EVENT_TEMPLATES).text, { location: loc.name, resource: loc.resource }), 'npc')
-  ctx.appendLog(`${realmName}在${loc.name}附近出现了波动。`, 'npc')
+  ctx.appendLog(`听说${loc.name}那边出了异象，都说是${realmName}开了。`, 'npc')
 }

@@ -86,37 +86,37 @@ export interface RealmTemplate {
 export const REALM_TEMPLATES: RealmTemplate[] = [
   {
     id: 'marsh-manor', name: '云梦遗府', locationId: 'yunze', unlockRep: 0,
-    desc: '泽底旧府偶现光影，守关首领会掉落早期珍材。',
+    desc: '云泽底下沉着一座旧宅子，水浅的日子能看见屋脊。夜里偶尔有光从水底透上来。',
     boss: { name: '泽主残魂', hpMul: 2.2, powerMul: 1.1, affixes: ['mirror-step', 'soul-drain'] },
     rewards: { money: 70, prestige: 4, items: ['mist-herb', 'compass-realm'] },
   },
   {
     id: 'mist-hunt', name: '迷林狩境', locationId: 'misty', unlockRep: 8,
-    desc: '迷雾林深处开启猎场，狼王与迷行剑魄同在。',
+    desc: '迷雾林最深处有片林子，猎户们管那儿叫狩境。进去过的人说，雾里有狼叫，还有剑鸣。',
     boss: { name: '魇雾狼王', hpMul: 2.2, powerMul: 1.15, affixes: ['swift', 'feral'] },
     rewards: { money: 92, prestige: 6, items: ['wind-sword', 'mist-herb'] },
   },
   {
     id: 'ice-cavern', name: '寒魄冰窟', locationId: 'snowpeak', unlockRep: 18,
-    desc: '万年冰窟灵压极重，适合冲关者搏一线机缘。',
+    desc: '寒魄峰腰上裂开一个冰窟，里头冷得喘气都疼。听说有人在里面坐过一夜，下山就破了境。',
     boss: { name: '裂冰古猿', hpMul: 2.4, powerMul: 1.1, affixes: ['ironhide', 'frostmail'] },
     rewards: { money: 120, prestige: 8, items: ['cold-crystal', 'jade-spring'] },
   },
   {
     id: 'tide-ruins', name: '潮渊遗墟', locationId: 'lantern', unlockRep: 14,
-    desc: '港外遗墟在涨潮时露出入口，海魇首领守着旧朝宝库。',
+    desc: '涨潮的时候，港外的海面上会露出一截石门。老渔民说，那是前朝沉下去的宫殿。',
     boss: { name: '深潮主祭', hpMul: 2.2, powerMul: 1.15, affixes: ['soul-drain', 'mirror-step'] },
     rewards: { money: 132, prestige: 7, items: ['tide-amber', 'star-scroll'] },
   },
   {
     id: 'ember-palace', name: '赤焰宫阙', locationId: 'redcliff', unlockRep: 26,
-    desc: '赤霞崖地火漫天，宫阙一现便意味着大机缘与大凶险。',
+    desc: '赤霞崖的地火烧红了半边天，火里隐约现出一座宫殿的影子。',
     boss: { name: '离火真君遗魄', hpMul: 2.4, powerMul: 1.18, affixes: ['ember', 'feral', 'ironhide'] },
     rewards: { money: 180, prestige: 12, items: ['flame-sand', 'manual-sect'] },
   },
   {
     id: 'star-sanctum', name: '星陨圣阙', locationId: 'starfall', unlockRep: 40,
-    desc: '最强秘境之一，只有真正的大修才敢踏入。',
+    desc: '星坠谷最深处有座石殿，门口的台阶上刻满了名字。刻名字的人，没一个出来过。',
     boss: { name: '吞星龙骸', hpMul: 2.6, powerMul: 1.2, affixes: ['swift', 'soul-drain', 'ember', 'mirror-step'] },
     rewards: { money: 260, prestige: 18, items: ['manual-sun', 'manual-moon', 'bond-token'] },
   },

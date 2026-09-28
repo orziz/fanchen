@@ -156,6 +156,18 @@ export function createLootBundle(
   return bundle
 }
 
+/* ─── 人名：像真名，凡人多用小名俗名，修士与读书人用正经名字 ─── */
+
+const SURNAMES = '周吴郑王陈李张刘赵孙韩沈陆许何秦苏叶温顾宋唐冯邓杜程贺方胡梁罗曹蒋夏钟汪田任姜范石姚谭廖邹熊金郝孔白崔康毛邱江史侯邵孟万段雷钱汤尹黎易常武乔龚文'
+const PLAIN_GIVEN = ['大柱', '二牛', '满仓', '有福', '冬生', '春来', '石头', '根生', '顺子', '长贵', '老三', '阿福', '水生', '来旺', '平安', '小五', '秀兰', '春燕', '小娥', '杏花', '巧儿', '翠屏', '桂香', '月娥', '玉珍', '秋菊', '二丫', '招娣']
+const FINE_GIVEN = ['远舟', '长庚', '怀山', '子川', '伯言', '仲平', '云生', '知秋', '守拙', '明远', '景行', '致远', '青', '砚', '衡', '默', '婉清', '素心', '如意', '采薇', '映雪', '晚晴', '清歌', '若兰', '明月', '疏影']
+
+function npcName(fine: boolean) {
+  const surname = SURNAMES[Math.floor(Math.random() * SURNAMES.length)]
+  const pool = fine || Math.random() < 0.3 ? FINE_GIVEN : PLAIN_GIVEN
+  return `${surname}${sample(pool)}`
+}
+
 export function createNPC(index: number): NpcState {
   const archetype = sample(NPC_ARCHETYPES)
   const personality = sample(PERSONALITIES)
@@ -173,8 +185,8 @@ export function createNPC(index: number): NpcState {
         ? ['脚商', '船工', '分号伙计', '掮客']
         : home.tags.includes('town')
           ? ['农户', '货郎', '药农', '店伙']
-          : ['游侠', '散户', '猎手', '采药人']
-  const name = `${sample(['沈', '陆', '柳', '苏', '白', '秦', '叶', '温', '洛', '宁'])}${sample(archetype.styles)}${sample(['子', '娘', '客', '尘', '书', '川', '歌', '雨', '岚', '舟'])}`
+          : ['游侠', '樵夫', '猎户', '采药人']
+  const name = npcName(rankIndex >= 2 || home.tags.includes('sect') || home.tags.includes('court'))
   const mood = {
     greed: clamp(50 + (personality.moodBias.greed || 0) + randomInt(-10, 10), 0, 100),
     kindness: clamp(50 + (personality.moodBias.kindness || 0) + randomInt(-10, 10), 0, 100),
@@ -192,12 +204,12 @@ export function createNPC(index: number): NpcState {
     cultivation: cultivationBase + randomInt(0, Math.max(20, cultivationBase)),
     mood, ambition: randomInt(20, 90), wealth: randomInt(18, 240 + home.marketTier * 90),
     favor: randomInt(0, 18), action: sample(['meditate', 'trade', 'hunt', 'quest', 'sect']),
-    goal: sample(['积蓄家底', '找门路入宗', '攒钱买田', '跑货翻身', '学一门手艺', '争取晋升']),
+    goal: sample(['想攒下一份家底', '想拜进宗门', '想攒钱买几亩田', '想跑几趟货翻身', '想学一门手艺', ...(factionId ? ['想在门里往上走一步'] : [])]),
     inventory: createLootBundle(randomInt(1, 3), { minRarity: 0, maxRarity: Math.min(2, home.marketTier + 1), minTier: 0, maxTier: Math.min(3, home.marketTier + 1) }),
     skillBias: archetype.skillBias, favoriteItems: archetype.favoriteItems,
-    lastEvent: '初入江湖', lifeEvents: ['初入江湖'], cooldown: randomInt(1, 3),
-    age, ageProgress: randomInt(0, 11), lifeStage: deriveLifeStage(age),
-    lifespan: randomInt(62, 88), alive: true, birthDay: -(age * 12 + randomInt(0, 11)),
+    lastEvent: '', lifeEvents: [], cooldown: randomInt(1, 3),
+    age, ageProgress: randomInt(0, 359), lifeStage: deriveLifeStage(age),
+    lifespan: randomInt(62, 88), alive: true, birthDay: -(age * 360 + randomInt(0, 359)),
     sectId: factionId && FACTIONS.find(f => f.id === factionId)?.type === 'sect' ? factionId : null,
     factionId, factionRank: factionId ? randomInt(0, 1) : 0,
     relation: createRelationState(), partnerId: null, masterId: null, apprenticeIds: [],

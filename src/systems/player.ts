@@ -80,7 +80,7 @@ export function consumeItem(itemId: string) {
   const item = getItem(itemId)
   if (!item) return
   if ((item.type === 'weapon' || item.type === 'armor') && item.minRankIndex > p.rankIndex) {
-    ctx.appendLog(`${item.name}需${RANKS[Math.min(item.minRankIndex, RANKS.length - 1)].name}以上的根基才驾驭得住。`, 'warn')
+    ctx.appendLog(`${item.name}要到${RANKS[Math.min(item.minRankIndex, RANKS.length - 1)].name}境才用得上。`, 'warn')
     return
   }
   if (item.type === 'weapon') {

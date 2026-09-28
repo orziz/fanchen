@@ -13,49 +13,49 @@ export interface FactionData {
 export const FACTIONS: FactionData[] = [
   {
     id: 'qinghe-commons', name: '青禾乡社', type: 'village', locationId: 'qinghe',
-    desc: '由佃户、店家和乡勇构成的乡社，适合从种田和小买卖起步。',
+    desc: '青禾镇的佃户、店家和乡勇凑起来的乡社。谁家修堤、谁家办丧事，都是乡社出人。',
     joinRequirement: { money: 0, reputation: 0, rankIndex: 0 },
     titles: ['帮工', '佃户', '里正助手', '乡社掌事'], unlocks: ['farm', 'shop'],
   },
   {
     id: 'mist-hunt-lodge', name: '迷林猎社', type: 'society', locationId: 'misty',
-    desc: '靠采药、打猎和走险维生的地方行社。',
+    desc: '靠采药、打猎过日子的一帮人，常年在迷雾林和青松坳一带出没。门口挂满了兽头。',
     joinRequirement: { money: 12, reputation: 2, rankIndex: 0 },
     titles: ['杂役猎手', '见习猎手', '正社猎手', '执事猎官'], unlocks: ['farm', 'workshop'],
   },
   {
     id: 'blackforge-guild', name: '玄铁工盟', type: 'guild', locationId: 'blackforge',
-    desc: '匠人和押镖修士的地盘，工坊与打造体系最完整。',
+    desc: '玄铁城的铁匠和镖师结成的工盟。城里的炉子，一大半归他们管。',
     joinRequirement: { money: 40, reputation: 4, rankIndex: 1 },
     titles: ['学徒', '匠工', '监造', '工坊主'], unlocks: ['workshop', 'shop'],
   },
   {
     id: 'tide-market', name: '听潮商盟', type: 'guild', locationId: 'lantern',
-    desc: '控制外海货路和拍市消息的商帮，擅长铺面经营。',
+    desc: '灯海古港的大商帮。外海来的货，十船有七船要过他们的手。',
     joinRequirement: { money: 60, reputation: 6, rankIndex: 1 },
     titles: ['脚商', '行商', '分号执事', '掌柜'], unlocks: ['shop'],
   },
   {
     id: 'river-transport-office', name: '漕河转运司', type: 'bureau', locationId: 'reedbank',
-    desc: '半官半商的水路转运衙门，擅长把南北货路接成稳定财路。',
+    desc: '管漕河运粮运货的衙门，一半像官府，一半像商号。河上的船都得看它的脸色。',
     joinRequirement: { money: 36, reputation: 5, rankIndex: 1 },
     titles: ['河埠脚夫', '押舱行役', '转运书吏', '河路总办'], unlocks: ['farm', 'shop'],
   },
   {
     id: 'anping-yamen', name: '安平府衙', type: 'court', locationId: 'anping',
-    desc: '管税契、路引和地方缉事的州府衙门，讲规矩，也认地方声望。',
+    desc: '管税契、路引和缉捕的州府衙门。讲规矩，也看你在地方上有没有名声。',
     joinRequirement: { money: 48, reputation: 7, rankIndex: 1 },
     titles: ['缉事白役', '巡街快手', '书办典吏', '都捕头'], unlocks: ['farm', 'shop', 'workshop'],
   },
   {
     id: 'yanpass-escort', name: '雁回镖局', type: 'escort', locationId: 'yanpass',
-    desc: '吃边关饭的老牌镖局，跑长线货路、军需押送和护商最有门路。',
+    desc: '吃边关饭的老镖局，押军粮、护商队。雁回关一带的路，没有他们不熟的。',
     joinRequirement: { money: 54, reputation: 7, rankIndex: 1 },
     titles: ['趟子手', '镖师', '押队头', '总镖头'], unlocks: ['workshop', 'shop'],
   },
   {
     id: 'jadegate-courtyard', name: '玉阙行院', type: 'order', locationId: 'jadegate',
-    desc: '玉阙山系设在山外的行院，只给你江湖身份和门路，不算真正属于你的宗门。',
+    desc: '玉阙在山外设的行院，收外院弟子，也替山上打理外头的杂事。',
     joinRequirement: { money: 20, reputation: 8, rankIndex: 1 },
     titles: ['听差行走', '外院弟子', '采办执事', '巡山统筹'], unlocks: ['farm', 'workshop', 'shop'],
   },
@@ -81,25 +81,25 @@ export const PROPERTY_DEFS: PropertyDef[] = [
     id: 'village-farm', label: '薄田一亩', kind: 'farm', cost: 120,
     locationTags: ['town', 'starter'],
     allowedFactionIds: ['qinghe-commons', 'mist-hunt-lodge', 'river-transport-office', 'anping-yamen', 'jadegate-courtyard'],
-    capacity: 1, desc: '挂在自己名下的小田地，适合从口粮和药草起步。',
+    capacity: 1, desc: '一亩薄田，种粮种药都行，收成看天。',
   },
   {
     id: 'herb-garden', label: '药圃小院', kind: 'farm', cost: 260,
     locationTags: ['town', 'sect', 'cultivation'],
     allowedFactionIds: ['mist-hunt-lodge', 'anping-yamen', 'jadegate-courtyard'],
-    capacity: 2, desc: '能种植药草和灵谷，需要一定门路才能租买。',
+    capacity: 2, desc: '带院墙的药圃，能种药草和灵谷。要有熟人引荐才租得到。',
   },
   {
     id: 'forge-bench', label: '小铁匠棚', kind: 'workshop', cost: 320,
     locationTags: ['forge', 'town'],
     allowedFactionIds: ['blackforge-guild', 'anping-yamen', 'yanpass-escort', 'jadegate-courtyard'],
-    capacity: 2, desc: '能打造低阶兵器与护具的小工坊。',
+    capacity: 2, desc: '一个能生火打铁的棚子，打些刀枪和护具。',
   },
   {
     id: 'market-stall', label: '街边小铺', kind: 'shop', cost: 380,
     locationTags: ['market', 'port', 'town'],
     allowedFactionIds: ['qinghe-commons', 'tide-market', 'blackforge-guild', 'river-transport-office', 'anping-yamen', 'yanpass-escort', 'jadegate-courtyard'],
-    capacity: 1, desc: '挂名在自己名下的小铺面，可慢慢滚动赚差价。',
+    capacity: 1, desc: '街边一间小门面，进货卖货，赚点差价。',
   },
 ]
 
@@ -118,8 +118,8 @@ export interface CropData {
 
 /* ─── Crops ─── */
 export const CROPS: CropData[] = [
-  { id: 'grain-crop', label: '粗灵米', seedItemId: 'seed-grain', harvestItemId: 'spirit-grain', growDays: 3, yield: 3, desc: '最适合凡人起步的稳妥作物。' },
-  { id: 'herb-crop', label: '雾心草', seedItemId: 'seed-herb', harvestItemId: 'mist-herb', growDays: 4, yield: 2, desc: '成长更慢，但比种粮更值钱。' },
+  { id: 'grain-crop', label: '粗灵米', seedItemId: 'seed-grain', harvestItemId: 'spirit-grain', growDays: 3, yield: 3, desc: '好种，收得快，饿不死人。' },
+  { id: 'herb-crop', label: '雾心草', seedItemId: 'seed-herb', harvestItemId: 'mist-herb', growDays: 4, yield: 2, desc: '长得慢些，卖得比粮食贵。' },
 ]
 
 export const CROP_MAP = new Map(CROPS.map(c => [c.id, c]))

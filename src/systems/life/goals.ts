@@ -20,22 +20,22 @@ export const GOALS: GoalDef[] = [
   },
   {
     id: 'strength', title: '练出一身力气',
-    detail: '练体攒修为，修为满了就冲关；入练力不挑地方，有丹药托着更稳。',
+    detail: '练体攒修为，修为满了就冲关。入练力不挑地方，冲关前服一包养元散更稳。',
     done: g => g.player.rankIndex >= 1,
   },
   {
     id: 'heart', title: '求一门心法',
-    detail: '没有心法引气，感气这一关冲不开。书肆、旧书摊与茶馆里的消息，都可留心《养气入门诀》。',
+    detail: '感气要有心法引气。留意镇上的旧书摊，或去茶馆问问哪里有《养气入门诀》卖。',
     done: g => hasHeartMethod(g.player),
   },
   {
     id: 'sense', title: '感气入门',
-    detail: '去灵气三十四以上的地方静坐（霜桥镇、迷雾林、寒溪坞一带），修为满了就地冲关。',
+    detail: '去灵气三十四以上的地方静坐（霜桥镇、迷雾林、寒溪坞一带），修为满了就在那儿冲关。',
     done: g => g.player.rankIndex >= 2,
   },
   {
     id: 'referral', title: '求一份引荐',
-    detail: '玉阙行院收外院弟子要有人作保：替行院办事攒下好感，或是声望到二十。',
+    detail: '玉阙行院收外院弟子要有人作保：替行院办事攒到行院好感十二，或是声望到二十。',
     done: g => (g.player.factionStanding['jadegate-courtyard'] || 0) >= 12 || g.player.reputation >= 20 || Boolean(g.story.flags['jadegate.referral']),
   },
   {
@@ -45,12 +45,12 @@ export const GOALS: GoalDef[] = [
   },
   {
     id: 'refine', title: '修到炼气',
-    detail: '外院弟子的本分：修到炼气境，才算真正摸到修行的门槛。冲关须在有冲关门路的灵地。',
+    detail: '把感气境修满，到能冲关的灵地（山河图上标着“可冲关”）冲入炼气。',
     done: g => g.player.rankIndex >= 3,
   },
   {
     id: 'foundation', title: '筑基',
-    detail: '筑基之后寿元两百，才有余裕去争更大的局面。',
+    detail: '炼气修满，再找灵地冲关筑基。筑基之后寿元两百。',
     done: g => g.player.rankIndex >= 4,
   },
 ]

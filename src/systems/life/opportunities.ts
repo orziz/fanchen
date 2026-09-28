@@ -1,5 +1,5 @@
 import { getContext } from '@/core/context'
-import { LOCATIONS, LOCATION_MAP, REALM_TEMPLATES } from '@/config'
+import { FACTION_MAP, LOCATIONS, LOCATION_MAP, REALM_TEMPLATES } from '@/config'
 import { calendarOf, nextXunStart, DAYS_PER_XUN } from '@/config/calendar'
 import { OPPORTUNITY_TEMPLATES, type OpportunityTemplate } from '@/config/opportunities'
 import { uid } from '@/utils'
@@ -31,7 +31,12 @@ function localAcquaintance(locationId: string): NpcState | null {
 function makeCard(template: OpportunityTemplate, location: LocationData, npc: NpcState | null): OpportunityCard {
   const g = getContext().game
   const lasts = template.lasts ?? 2
-  const fill = (text: string) => text.replace(/\{npc\}/g, npc?.name || '熟人').replace(/\{location\}/g, location.name)
+  // 当地没有门路时，卡上就不写“某某好感”。
+  const faction = location.factionIds?.[0] ? FACTION_MAP.get(location.factionIds[0])?.name : null
+  const fill = (text: string) => text
+    .replace(/，\{faction\}好感/g, faction ? `，${faction}好感` : '')
+    .replace(/\{npc\}/g, npc?.name || '熟人')
+    .replace(/\{location\}/g, location.name)
   return {
     id: uid('opp'), templateId: template.id, locationId: location.id,
     title: fill(template.title), desc: fill(template.desc), reward: fill(template.reward),
@@ -46,7 +51,7 @@ function realmCard(): OpportunityCard | null {
   if (!realm) return null
   return {
     id: uid('opp'), templateId: 'realm', locationId: realm.locationId,
-    title: `秘境 · ${realm.name}`, desc: realm.desc, reward: '首领所守的珍宝', days: 1,
+    title: `秘境 · ${realm.name}`, desc: realm.desc, reward: '守关者看着的东西', days: 1,
     eventId: 'realm', npcId: null, expiresDay: nextXunStart(g.world.day) - 1 + DAYS_PER_XUN,
   }
 }

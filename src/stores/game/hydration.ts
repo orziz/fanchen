@@ -344,7 +344,7 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
     npcs: rawNpcs.length
       ? rawNpcs.map((npc, i) => ({
           ...createNPC(i + 80), ...npc,
-          lifeEvents: ensureArray<string>(npc.lifeEvents).length ? npc.lifeEvents : [npc.lastEvent || '初入江湖'],
+          lifeEvents: ensureArray<string>(npc.lifeEvents).length ? npc.lifeEvents : npc.lastEvent ? [npc.lastEvent] : [],
           relation: { ...createRelationState(), ...(npc.relation || {}) },
           travelPlan: npc.travelPlan || null,
         }))

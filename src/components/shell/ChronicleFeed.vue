@@ -14,7 +14,7 @@
         </div>
       </li>
     </TransitionGroup>
-    <p v-if="!entries.length" class="chronicle-feed__empty">{{ current === 'rumor' ? '尚未听到什么风声。' : '一切尚未开始。' }}</p>
+    <p v-if="!entries.length" class="chronicle-feed__empty">{{ current === 'rumor' ? '还没听到什么传闻。' : '还没发生什么事。' }}</p>
   </section>
 </template>
 

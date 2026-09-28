@@ -11,7 +11,7 @@
 ### src/components
 
 - `GameRoot.vue`：按画面阶段切换标题页与游戏画面，挂载设置、悬停提示与横置提示。
-- `shell/`：游戏画面外壳——`GameScreen`（热键与整体布局）、`TopBar`、`CharacterCard`、`ObjectiveCard`（志向与刚做完的事）、`LocalPanel`（本旬机缘与熟人）、`ChronicleFeed`、`ActionDock`（此地可做的事与交战指令）、`LifeEndDialog`、`SettingsDialog`、`TitleScreen`、`NewLifeDialog`。
+- `shell/`：游戏画面外壳——`GameScreen`（热键与整体布局）、`TopBar`、`CharacterCard`、`ObjectiveCard`（志向与刚做完的事）、`LocalPanel`（本旬消息与熟人）、`ChronicleFeed`、`ActionDock`（此地可做的事与交战指令）、`LifeEndDialog`、`SettingsDialog`、`TitleScreen`、`NewLifeDialog`。
 - `scene/`：`SceneView`（画布与人物层、日夜快进、屏震、横幅）、`EventScroll`（事件卷轴）、`HeroFigure`、`EnemyFigure`、`LocationPlate`、`CombatHud`。
 - `books/`：书册（营生书留到中期，入口先关）。`BookHost` 负责挂载当前书册，`BookFrame` 是统一的书册框（标题、页签、关闭）；每本书的子视图放在同名子目录（`bag/`、`map/`、`market/`、`industry/`、`faction/`、`people/`）。
 - `common/`：跨处复用的小件——`GameIcon`、`InkBar`、`SealAvatar`、`ItemTile`、`TooltipLayer`（读取 `data-tip` / `data-tip-title`）。

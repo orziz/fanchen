@@ -143,9 +143,9 @@ export function estimateFight(spec: CombatSpec) {
   const enemyHit = base.power * (template?.powerMul || 1) * (spec.powerMul || 1)
   const playerHit = Math.max(6, ctx.getPlayerPower() + ctx.getPlayerInsight() * 0.28) * 0.96
   const ratio = (p.hp / Math.max(4, enemyHit)) / (enemyHp / playerHit)
-  if (ratio >= 2) return { label: '稳操胜券', ratio }
-  if (ratio >= 1.3) return { label: '胜算颇大', ratio }
-  if (ratio >= 0.9) return { label: '胜负难料', ratio }
+  if (ratio >= 2) return { label: '十拿九稳', ratio }
+  if (ratio >= 1.3) return { label: '赢面大', ratio }
+  if (ratio >= 0.9) return { label: '胜负难说', ratio }
   return { label: '凶多吉少', ratio }
 }
 
@@ -159,7 +159,7 @@ export function startEncounter(source = 'hunt') {
   g.combat.playerEffects = g.combat.playerEffects || { burn: 0, guard: 0, chill: 0 }
   g.player.action = source
   addCombatHistory(`你遭遇了${enemy.affixIds.length ? `${enemy.affixIds.map(id => getAffix(id)?.label || '').join('、')}·` : ''}${enemy.name}。`, 'warn')
-  ctx.appendLog(`你在${location.name}遭遇${enemy.name}，战斗一触即发。`, 'warn')
+  ctx.appendLog(`你在${location.name}跟${enemy.name}动起了手。`, 'warn')
   bus.emit('combat:start', { enemy })
   return enemy
 }
@@ -182,8 +182,8 @@ export function challengeRealm(realmId: string) {
   enemy.rewards.money = Math.max(enemy.rewards.money, realm.rewards.money)
   g.combat.history = []; g.combat.currentEnemy = enemy; g.combat.pendingRealmId = realmId
   g.combat.autoBattle = true; g.combat.playerEffects = g.combat.playerEffects || { burn: 0, guard: 0, chill: 0 }
-  addCombatHistory(`你踏入${realm.name}，${enemy.name}自深处现身。`, 'warn')
-  ctx.appendLog(`你闯入${realm.name}，与${enemy.name}正面相逢。`, 'warn')
+  addCombatHistory(`你踏进${realm.name}，${enemy.name}从深处走了出来。`, 'warn')
+  ctx.appendLog(`你闯进${realm.name}，${enemy.name}就守在里头。`, 'warn')
   bus.emit('combat:start', { enemy })
 }
 
@@ -237,8 +237,8 @@ function applyOngoingEffects() {
   const enemy = combat.currentEnemy
   if (!enemy) return
   combat.playerEffects = combat.playerEffects || { burn: 0, guard: 0, chill: 0 }
-  if (combat.playerEffects.burn > 0) { combat.playerEffects.burn -= 1; ctx.adjustResource('hp', -6, 'maxHp'); addCombatHistory('你身上的灼烧持续灼痛气血。', 'warn') }
-  if (enemy.effects.burn > 0) { enemy.effects.burn -= 1; enemy.hp = Math.max(0, enemy.hp - 8); addCombatHistory(`${enemy.name}被火劲反噬，气息一乱。`, 'info') }
+  if (combat.playerEffects.burn > 0) { combat.playerEffects.burn -= 1; ctx.adjustResource('hp', -6, 'maxHp'); addCombatHistory('你身上还烧着，又掉了些气血。', 'warn') }
+  if (enemy.effects.burn > 0) { enemy.effects.burn -= 1; enemy.hp = Math.max(0, enemy.hp - 8); addCombatHistory(`${enemy.name}身上的火还在烧。`, 'info') }
   if (enemy.effects.exposed > 0) enemy.effects.exposed -= 1
 }
 
@@ -284,7 +284,7 @@ function playerCastSpell(enemy: EnemyState, skillId: string) {
   if (burn) enemy.effects.burn = Math.max(enemy.effects.burn, burn)
   if (expose) enemy.effects.exposed = Math.max(enemy.effects.exposed, expose)
   if (chill) enemy.effects.chill = Math.max(enemy.effects.chill, chill)
-  gainTechniqueMastery(skillId, 4 + qiCost * 0.25, '施术')
+  gainTechniqueMastery(skillId, 4 + qiCost * 0.25)
   return true
 }
 
@@ -304,10 +304,10 @@ function tryFlee(): boolean {
   const ctx = getContext()
   const enemy = ctx.game.combat.currentEnemy
   if (!enemy) return false
-  if (enemy.boss) { addCombatHistory('首领秘境已封锁退路，无法轻易脱身。', 'warn'); return false }
+  if (enemy.boss) { addCombatHistory('秘境里没有退路。', 'warn'); return false }
   if (Math.random() < 0.56 + ctx.getPlayerCharisma() / 200) {
     addCombatHistory(`你成功摆脱了${enemy.name}。`, 'info')
-    ctx.appendLog(`你从${enemy.name}手中脱身，暂避锋芒。`, 'info')
+    ctx.appendLog(`你从${enemy.name}手里逃了出来。`, 'info')
     ctx.game.combat.currentEnemy = null; ctx.game.combat.pendingRealmId = null
     bus.emit('combat:flee')
     return true
@@ -323,7 +323,7 @@ function enemyTurn(enemy: EnemyState) {
   const chillMultiplier = enemy.effects.chill > 0 ? Math.max(0.72, 1 - enemy.effects.chill * 0.08) : 1
   const damage = Math.max(4, Math.round(enemy.power * randomFloat(0.84, 1.12) * guardMultiplier * chillMultiplier))
   ctx.adjustResource('hp', -damage, 'maxHp')
-  addCombatHistory(`${enemy.name}反击，令你损失${damage}点气血。`, 'warn')
+  addCombatHistory(`${enemy.name}还了一击，你掉了${damage}点气血。`, 'warn')
   bus.emit('combat:player-hit', { damage, guarded: guardMultiplier < 1 })
   if (enemy.qiBurn) ctx.adjustResource('qi', -enemy.qiBurn, 'maxQi')
   if (enemy.burnOnHit) effects.burn = Math.max(effects.burn, enemy.burnOnHit)
@@ -350,11 +350,11 @@ function resolveVictory(enemy: EnemyState) {
     ctx.game.world.realm.bossVictories.push(enemy.realmId!)
     ctx.game.world.realm.cooldown = 8; ctx.game.world.realm.activeRealmId = null
     ctx.game.combat.pendingRealmId = null
-    ctx.appendLog(`你斩落${enemy.name}，秘境灵机尽归己身。`, 'loot')
+    ctx.appendLog(`你打倒了${enemy.name}，秘境里的东西归你了。`, 'loot')
   } else {
-    ctx.appendLog(`你击败${enemy.name}，战果已收入囊中。`, 'loot')
+    ctx.appendLog(`你打赢了${enemy.name}。`, 'loot')
   }
-  addCombatHistory('战斗结束，你赢下了这场厮杀。', 'loot')
+  addCombatHistory('打完了，你赢了。', 'loot')
   ctx.game.combat.lastResult = { outcome: 'victory', enemy: enemy.name, boss: enemy.boss }
   ctx.game.combat.currentEnemy = null; ctx.game.combat.autoBattle = false
   bus.emit('combat:victory', { name: enemy.name, boss: enemy.boss, money: enemy.rewards.money, cultivation: enemy.rewards.cultivation })
@@ -363,8 +363,8 @@ function resolveVictory(enemy: EnemyState) {
 
 function resolveDefeat(enemy: EnemyState) {
   const ctx = getContext()
-  addCombatHistory(`${enemy.name}将你逼入绝境，这一战败了。`, 'warn')
-  ctx.appendLog(`你败给了${enemy.name}，所幸留得性命。`, 'warn')
+  addCombatHistory(`你被${enemy.name}打倒在地，这一架输了。`, 'warn')
+  ctx.appendLog(`你输给了${enemy.name}，好在捡回一条命。`, 'warn')
   ctx.game.combat.lastResult = { outcome: 'defeat', enemy: enemy.name, boss: enemy.boss }
   ctx.game.combat.currentEnemy = null; ctx.game.combat.pendingRealmId = null; ctx.game.combat.autoBattle = false
   revivePlayer()

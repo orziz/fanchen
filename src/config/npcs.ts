@@ -6,11 +6,11 @@ export interface PersonalityData {
 }
 
 export const PERSONALITIES: PersonalityData[] = [
-  { id: 'ambitious', label: '野心', desc: '偏爱高风险任务和高价竞拍，会主动抢占稀有资源。', moodBias: { greed: 18, courage: 16, sociability: -2 } },
-  { id: 'merciful', label: '仁心', desc: '常在城镇扶助他人，更愿意提供援手，关系提升更快。', moodBias: { kindness: 20, greed: -12, patience: 10 } },
-  { id: 'schemer', label: '机心', desc: '善于套利与布局，偏好商贸和拍卖，也容易引发口舌风波。', moodBias: { greed: 14, intellect: 18, honor: -10 } },
-  { id: 'wanderer', label: '游侠', desc: '常年游历四方，机缘多但不易深交，更常触发旅途事件。', moodBias: { curiosity: 20, courage: 10, patience: -8 } },
-  { id: 'stoic', label: '苦修', desc: '以修炼为先，闭关频率高，不轻易参与拍卖和人情往来。', moodBias: { patience: 20, greed: -14, courage: 6 } },
+  { id: 'ambitious', label: '心气高', desc: '什么都想争一争。看上的东西，价钱再高也要弄到手。', moodBias: { greed: 18, courage: 16, sociability: -2 } },
+  { id: 'merciful', label: '心软', desc: '街坊有难处总肯搭把手，借出去的钱常常忘了要。', moodBias: { kindness: 20, greed: -12, patience: 10 } },
+  { id: 'schemer', label: '精明', desc: '算盘打得响，一文钱掰成两半花。说话常留半句。', moodBias: { greed: 14, intellect: 18, honor: -10 } },
+  { id: 'wanderer', label: '好游', desc: '在一个地方待不住，隔些日子就收拾包袱出门。朋友满天下，交心的没几个。', moodBias: { curiosity: 20, courage: 10, patience: -8 } },
+  { id: 'stoic', label: '寡言', desc: '话少，一门心思练功。人情往来，能推就推。', moodBias: { patience: 20, greed: -14, courage: 6 } },
 ]
 
 export interface NpcArchetype {

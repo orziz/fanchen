@@ -58,7 +58,7 @@ export function learnKnowledge(knowledgeId: string, options: { skipRequirement?:
   applyKnowledgeEffect(knowledge.effect)
   ctx.game.player.learnedKnowledges[knowledgeId] = ctx.game.world.day
   ctx.updateDerivedStats()
-  ctx.appendLog(`你研读了${knowledge.name}${options.sourceText ? `，来源：${options.sourceText}` : ''}。`, 'loot')
+  ctx.appendLog(`你读通了${knowledge.name}。`, 'loot')
   return true
 }
 

@@ -2,10 +2,10 @@ import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
 import { addPlayerMetric } from '@/core/integerProgress'
 import {
-  LOCATIONS, LOCATION_MAP, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
+  LOCATIONS, LOCATION_MAP, REALM_TEMPLATES,
   getItem,
 } from '@/config'
-import { sample, randomInt, fillTemplate, round } from '@/utils'
+import { sample, randomInt, round } from '@/utils'
 import { createDynamicMarketListings } from '@/systems/worldEconomy'
 
 /* ─── Reserved Funds ─── */
@@ -118,7 +118,7 @@ export function refreshMarketIfNeeded() {
   const g = ctx.game
   if (g.world.hour % 4 !== 0 || g.world.subStep !== 0) return
   LOCATIONS.forEach(loc => { g.market[loc.id] = createDynamicMarketListings(loc) })
-  ctx.appendLog('各地商铺与黑市货架焕然一新。', 'info')
+  ctx.appendLog('各地的铺子进了新货。', 'info')
 }
 
 /* ─── Realm Activation ─── */
@@ -134,7 +134,6 @@ export function maybeActivateRealm() {
     const realm = sample(eligible)
     g.world.realm.activeRealmId = realm.id
     const loc = LOCATION_MAP.get(realm.locationId)!
-    ctx.appendLog(fillTemplate(sample(WORLD_EVENT_TEMPLATES).text, { location: loc.name, resource: loc.resource }), 'npc')
-    ctx.appendLog(`${realm.name}在${loc.name}附近出现了波动。`, 'npc')
+    ctx.appendLog(`听说${loc.name}那边出了异象，都说是${realm.name}开了。`, 'npc')
   }
 }

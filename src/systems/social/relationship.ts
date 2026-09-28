@@ -140,14 +140,14 @@ export function becomeMasterBond(npcId: string) {
   const npc = ctx.getNpc(npcId)!
   rememberNpcIntel(npcId, 'met')
   if (!canBecomeMaster(npcId)) {
-    ctx.appendLog('对方还未到愿意收你入门的地步。', 'warn')
+    ctx.appendLog('对方还不肯收你。', 'warn')
     return
   }
   ctx.game.player.masterId = npcId
   npc.apprenticeIds = npc.apprenticeIds || []
   if (!npc.apprenticeIds.includes('player')) npc.apprenticeIds.push('player')
   ctx.adjustRelation(npcId, { role: 'master', affinity: 6, trust: 8 })
-  ctx.appendLog(`${npc.name}收你为门下弟子，今后可获更多指点。`, 'loot')
+  ctx.appendLog(`${npc.name}收你做了徒弟。`, 'loot')
 }
 
 export function getPartnerBondIssues(npcId: string): string[] {
@@ -178,14 +178,14 @@ export function becomePartner(npcId: string) {
   const npc = ctx.getNpc(npcId)!
   rememberNpcIntel(npcId, 'met')
   if (!canBecomePartner(npcId)) {
-    ctx.appendLog('你们之间的情分还未到水到渠成的程度。', 'warn')
+    ctx.appendLog('你们的交情还没到那一步。', 'warn')
     return
   }
   ctx.game.player.partnerId = npcId
   npc.partnerId = 'player'
   ctx.adjustRelation(npcId, { role: 'partner', affinity: 8, trust: 8, romance: 10 })
   if (ctx.findInventoryEntry('bond-token')) ctx.removeItemFromInventory('bond-token', 1)
-  ctx.appendLog(`你与${npc.name}互许道心，正式结为道侣。`, 'loot')
+  ctx.appendLog(`你和${npc.name}结成了道侣。`, 'loot')
 }
 
 export function declareRival(npcId: string) {
@@ -198,5 +198,5 @@ export function declareRival(npcId: string) {
   relation.rivalry = clamp(relation.rivalry + 28, 0, 100)
   relation.affinity = clamp(relation.affinity - 18, -100, 100)
   if (!ctx.game.player.rivalIds.includes(npcId)) ctx.game.player.rivalIds.push(npcId)
-  ctx.appendLog(`你与${npc.name}彻底撕破脸，今后必有争斗。`, 'warn')
+  ctx.appendLog(`你和${npc.name}撕破了脸。`, 'warn')
 }
