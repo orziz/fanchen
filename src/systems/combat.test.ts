@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { processBattleRound, startEncounter } from '@/systems/combat'
-import { performCombatRound } from '@/systems/world'
 
 describe('combat rounds', () => {
   beforeEach(() => {
@@ -22,18 +21,5 @@ describe('combat rounds', () => {
 
     expect(count('herb-paste')).toBe(pastes - 1)
     expect(count('mist-herb')).toBe(herbs)
-  })
-
-  it('lets the world move on by one step for every round fought by hand', () => {
-    const store = useGameStore()
-    startEncounter('hunt')
-    store.combat.currentEnemy!.hp = store.combat.currentEnemy!.maxHp = 9999
-    const steps = () => store.world.day * 24 + store.world.hour * 2 + store.world.subStep
-
-    const before = steps()
-    expect(performCombatRound('defend')).toBe(true)
-    expect(performCombatRound('attack')).toBe(true)
-
-    expect(steps()).toBe(before + 2)
   })
 })

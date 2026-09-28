@@ -287,6 +287,7 @@
 .tooltip-layer {
   position: fixed;
   z-index: 200;
+  width: max-content;
   max-width: 18rem;
   padding: 0.45rem 0.65rem;
   border: 1px solid var(--panel-line-strong);

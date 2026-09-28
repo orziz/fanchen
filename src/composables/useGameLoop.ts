@@ -1,78 +1,62 @@
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { useGameStore } from '@/stores/game'
-import { gameStep } from '@/systems/autoplay'
-import { AUTO_SAVE_INTERVAL, LOOP_INTERVALS } from '@/config'
+import { AUTO_SAVE_INTERVAL } from '@/config'
 import { useGamePhase } from '@/composables/useGamePhase'
+import { bus } from '@/core/events'
+import { autoCombatTick } from '@/systems/combat'
 
-const paused = ref(false)
+/** 自动出招的回合间隔：一场厮杀十来秒打完，看得清每一招。 */
+const COMBAT_ROUND_MS = 700
+
 const holdReasons = ref(new Set<string>())
 
 /**
- * 世界时钟：游戏中才走；暂停、剧情遮罩、设置面板、页面隐藏或“手动操作”时停。
- * 交战时回合加快，让一场厮杀在十几秒内打完。
+ * 时间只在玩家做事时流动，这里不再推进世界；
+ * 只负责两件事：交战时替玩家自动出招，以及定时与做完事后存档。
  */
 export function useGameLoop() {
   const store = useGameStore()
   const { phase } = useGamePhase()
-  let timer = 0
+  let combatTimer = 0
   let saveTimer = 0
 
-  function canTick() {
+  function canFight() {
     const visible = typeof document === 'undefined' || document.visibilityState === 'visible'
-    const storyBlocking = Boolean(store.story.activeStoryId && store.story.presentation === 'overlay')
-    return phase.value === 'playing'
-      && store.initialized
-      && !paused.value
-      && holdReasons.value.size === 0
-      && visible
-      && !storyBlocking
-      && store.player.mode !== 'manual'
+    return phase.value === 'playing' && holdReasons.value.size === 0 && visible
+      && Boolean(store.combat.currentEnemy) && store.combat.autoBattle
   }
 
-  function interval() {
-    const base = LOOP_INTERVALS[store.speed] ?? LOOP_INTERVALS[1]
-    return store.combat.currentEnemy ? Math.max(260, Math.round(base * 0.55)) : base
+  function scheduleCombat() {
+    window.clearTimeout(combatTimer)
+    if (!store.combat.currentEnemy) return
+    combatTimer = window.setTimeout(() => {
+      if (canFight()) autoCombatTick()
+      scheduleCombat()
+    }, COMBAT_ROUND_MS)
   }
 
-  function schedule() {
-    window.clearTimeout(timer)
-    timer = window.setTimeout(tick, interval())
+  function saveSoon() {
+    if (phase.value === 'playing' && store.initialized) store.saveGame(false)
   }
 
-  function tick() {
-    if (canTick()) {
-      store.updateDerivedStats()
-      gameStep()
-      store.updateDerivedStats()
-    }
-    schedule()
-  }
+  watch(() => store.combat.currentEnemy?.id, scheduleCombat)
+  watch(() => store.combat.autoBattle, scheduleCombat)
 
-  function startAutoSave() {
-    window.clearInterval(saveTimer)
-    saveTimer = window.setInterval(() => {
-      if (phase.value === 'playing' && store.initialized) store.saveGame(false)
-    }, AUTO_SAVE_INTERVAL)
-  }
-
-  watch(() => store.speed, schedule)
-  watch(phase, value => { if (value === 'playing') schedule() })
-
-  schedule()
-  startAutoSave()
+  const offDone = bus.on('life:activity-done', saveSoon)
+  const offEnded = bus.on('life:ended', saveSoon)
+  saveTimer = window.setInterval(saveSoon, AUTO_SAVE_INTERVAL)
+  scheduleCombat()
 
   onBeforeUnmount(() => {
-    window.clearTimeout(timer)
+    window.clearTimeout(combatTimer)
     window.clearInterval(saveTimer)
+    offDone()
+    offEnded()
   })
-
-  return { paused }
 }
 
-/** 其他界面借此暂停时钟（如设置面板），release 后恢复。 */
+/** 其他界面借此暂停自动出招（如设置面板），release 后恢复。 */
 export function useClock() {
-  function togglePause() { paused.value = !paused.value }
-  function resume() { paused.value = false }
   function hold(reason: string) {
     const next = new Set(holdReasons.value)
     next.add(reason)
@@ -83,5 +67,5 @@ export function useClock() {
     next.delete(reason)
     holdReasons.value = next
   }
-  return { paused, togglePause, resume, hold, release }
+  return { hold, release }
 }

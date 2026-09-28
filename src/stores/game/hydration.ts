@@ -22,6 +22,7 @@ import {
   getTechnique,
   getTechniqueByItemId,
 } from '@/config'
+import { LIFE_SAVE_VERSION } from '@/config/life'
 import { normalizeGameNumericState } from '@/core/integerProgress'
 import { ensureArray } from '@/utils'
 import {
@@ -31,7 +32,9 @@ import {
   createInitialTechniqueState,
   createNPC,
   createRelationState,
+  createInitialLife,
 } from '@/stores/game/factories'
+import type { LifeState } from '@/types/life'
 
 type TeachingState = SectState['teachings'][number]
 type LegacyEquipmentState = Partial<PlayerState['equipment']> & { manual?: string | null | undefined }
@@ -347,6 +350,7 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
         }))
       : fresh.npcs,
     log: ensureArray<LogEntry>(raw.log).slice(0, MAX_LOG),
+    life: hydrateLife(raw.life),
   }
 
   game.player.assets.farms = hydrateAssetCollection(game.player.assets.farms)
@@ -359,6 +363,58 @@ export function hydrateGameState(raw: Partial<GameState> = {}): GameState {
   normalizeGameNumericState(game)
 
   return game
+}
+
+/* ─── 旧玩法存档封存 ─── */
+
+/** 旧玩法（挂机时代）的存档另存于此，不删除、也不再读取。 */
+export const RETIRED_SAVE_KEY = `${SAVE_KEY}-retired`
+
+function snapshotVersion(raw: string) {
+  const parsed = parseStoredSnapshot(raw) as { migrationFlags?: { saveVersion?: unknown }; life?: unknown } | null
+  if (!parsed) return -1
+  return parsed.life ? Number(parsed.migrationFlags?.saveVersion) || 0 : 0
+}
+
+function retire(raw: string) {
+  if (!localStorage.getItem(RETIRED_SAVE_KEY)) localStorage.setItem(RETIRED_SAVE_KEY, raw)
+}
+
+/** 读当前这一世的存档：旧玩法的存档先原样封存，再当作没有存档。 */
+export function readLifeSave(): StoredSaveRecord | null {
+  for (const key of [SAVE_KEY, SAVE_BACKUP_KEY]) {
+    const raw = localStorage.getItem(key)
+    if (!raw) continue
+    const version = snapshotVersion(raw)
+    if (version < 0 || version >= LIFE_SAVE_VERSION) continue
+    retire(raw)
+    localStorage.removeItem(key)
+  }
+  const stored = readStoredSave()
+  if (!stored) return null
+  if (snapshotVersion(stored.raw) < LIFE_SAVE_VERSION) {
+    retire(stored.raw)
+    return null
+  }
+  return stored
+}
+
+/** 是否留有封存的旧玩法存档（标题页据此提一句）。 */
+export function hasRetiredSave() {
+  return Boolean(localStorage.getItem(RETIRED_SAVE_KEY))
+}
+
+function hydrateLife(raw: Partial<LifeState> | undefined): LifeState {
+  const fresh = createInitialLife()
+  if (!raw || typeof raw !== 'object') return fresh
+  return {
+    ...fresh, ...raw,
+    opportunities: raw.opportunities && typeof raw.opportunities === 'object' ? raw.opportunities : {},
+    deeds: ensureArray<string>(raw.deeds),
+    goalsDone: ensureArray<string>(raw.goalsDone),
+    seenEvents: ensureArray<string>(raw.seenEvents),
+    legacy: { ...fresh.legacy, ...(raw.legacy || {}), items: ensureArray(raw.legacy?.items) },
+  }
 }
 
 export function readStoredSave(): StoredSaveRecord | null {

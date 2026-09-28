@@ -1,0 +1,419 @@
+/* 凡尘一世：事件卷轴、此地一栏、行动时长、人物三项与一世结算。 */
+
+/* ─── 事件卷轴 ─── */
+.event-scroll {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--topbar-h) + 3.2rem);
+  z-index: 12;
+  width: min(36rem, calc(100% - var(--side-left-w) - var(--side-right-w) - 4 * var(--gutter)));
+  max-height: calc(100% - var(--topbar-h) - var(--dock-h) - 4.4rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem 1.2rem 1.1rem;
+  overflow-y: auto;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(199, 162, 90, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(22, 26, 31, 0.94), rgba(10, 12, 15, 0.96));
+  border: 1px solid var(--panel-line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+}
+
+.event-scroll__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.event-scroll__seal {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--cinnabar-soft);
+  color: #f3d8cf;
+  font-family: var(--font-title);
+  font-size: var(--fs-base);
+}
+
+.event-scroll__title {
+  margin: 0;
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-title);
+  letter-spacing: 0.12em;
+}
+
+.event-scroll__text {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: 1.85;
+  white-space: pre-line;
+}
+
+.event-scroll__choices {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.event-choice {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  grid-template-areas: "key body" "key tags";
+  align-items: center;
+  column-gap: 0.6rem;
+  row-gap: 0.25rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-md);
+  background: rgba(30, 36, 42, 0.6);
+  color: var(--text);
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.event-choice:hover:not(.is-blocked) {
+  border-color: rgba(227, 198, 135, 0.55);
+  background: rgba(40, 46, 52, 0.72);
+}
+
+.event-choice.is-blocked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.event-choice__key {
+  grid-area: key;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--panel-line-strong);
+  border-radius: 50%;
+  color: var(--gold);
+  font-size: var(--fs-small);
+}
+
+.event-choice__body {
+  grid-area: body;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.event-choice__body strong {
+  font-family: var(--font-title);
+  font-size: var(--fs-base);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.event-choice__body small {
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+}
+
+.event-choice__tags {
+  grid-area: tags;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.event-tag {
+  padding: 0.05rem 0.45rem;
+  border-radius: 0.8rem;
+  background: rgba(199, 162, 90, 0.12);
+  color: var(--gold-bright);
+  font-size: var(--fs-micro);
+  font-style: normal;
+  letter-spacing: 0.04em;
+}
+
+.event-choice--fight .event-tag { background: rgba(194, 74, 59, 0.16); color: #eab0a4; }
+.event-tag--issue { background: rgba(120, 120, 120, 0.16); color: var(--text-dim); }
+
+.event-scroll__verdict {
+  align-self: center;
+  padding: 0.1rem 1.1rem;
+  border: 2px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-title);
+  font-size: var(--fs-display);
+  letter-spacing: 0.3em;
+  animation: verdict-stamp 0.42s var(--ease-out);
+}
+
+.event-scroll__verdict.is-success { color: var(--jade); }
+.event-scroll__verdict.is-failure { color: var(--cinnabar); }
+
+@keyframes verdict-stamp {
+  from { opacity: 0; transform: scale(1.6) rotate(-6deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+.event-scroll__gains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-scroll__gains li {
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(106, 168, 147, 0.1);
+  color: var(--paper-100);
+  font-size: var(--fs-small);
+}
+
+.event-scroll__continue { align-self: flex-end; min-width: 6rem; }
+
+.scroll-in-enter-active { transition: opacity 0.28s var(--ease-out), transform 0.28s var(--ease-out); }
+.scroll-in-leave-active { transition: opacity 0.16s ease-in; }
+.scroll-in-enter-from { opacity: 0; transform: translate(-50%, 0.8rem); }
+.scroll-in-leave-to { opacity: 0; }
+
+/* ─── 此地 ─── */
+.local-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 44%;
+  padding: 0.6rem 0.65rem;
+  overflow-y: auto;
+}
+
+.local-panel__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.local-panel__kicker {
+  color: var(--gold);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.2em;
+}
+
+.local-panel__head strong {
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-lead);
+}
+
+.local-panel__meta {
+  margin-left: auto;
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+}
+
+.local-panel__section { display: grid; gap: 0.3rem; }
+
+.local-panel__section h4 {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+}
+
+.local-panel__empty {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+}
+
+.opportunity-card,
+.person-row {
+  display: grid;
+  align-items: center;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(30, 36, 42, 0.5);
+  color: var(--text);
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.opportunity-card:hover,
+.person-row:hover {
+  border-color: rgba(227, 198, 135, 0.5);
+  background: rgba(40, 46, 52, 0.66);
+}
+
+.opportunity-card[aria-disabled="true"],
+.person-row[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+
+.opportunity-card {
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "title meta" "reward reward";
+  row-gap: 0.1rem;
+}
+
+.opportunity-card__title { grid-area: title; font-family: var(--font-title); font-size: var(--fs-body); letter-spacing: 0.06em; }
+.opportunity-card__reward { grid-area: reward; color: var(--gold-bright); font-size: var(--fs-micro); }
+.opportunity-card__meta { grid-area: meta; color: var(--text-faint); font-size: var(--fs-micro); }
+
+.person-row {
+  grid-template-columns: auto 1fr auto;
+  gap: 0.45rem;
+}
+
+.person-row__name { font-size: var(--fs-body); }
+.person-row__meta { color: var(--text-faint); font-size: var(--fs-micro); }
+
+/* ─── 行动时长 ─── */
+.action-slot { position: relative; }
+
+.action-btn__days {
+  color: var(--text-faint);
+  font-family: var(--font-ui);
+  font-size: var(--fs-micro);
+  letter-spacing: 0;
+}
+
+.action-btn.is-open { border-color: var(--gold); color: var(--gold-bright); }
+
+.duration-pop {
+  position: absolute;
+  bottom: calc(100% + 0.45rem);
+  left: 50%;
+  z-index: 30;
+  display: grid;
+  gap: 0.3rem;
+  width: 12.5rem;
+  padding: 0.45rem;
+  transform: translateX(-50%);
+  background: var(--panel-bg-strong);
+  border: 1px solid var(--panel-line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+  animation: rise-in 0.18s var(--ease-out);
+}
+
+.duration-pop__option {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-align: left;
+}
+
+.duration-pop__option:hover { background: rgba(199, 162, 90, 0.12); }
+.duration-pop__option strong { color: var(--gold-bright); font-size: var(--fs-body); }
+.duration-pop__option span { color: var(--text-dim); font-size: var(--fs-micro); }
+
+.travel-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--panel-line-strong);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(63, 111, 97, 0.7), rgba(33, 62, 54, 0.82));
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  letter-spacing: 0.12em;
+}
+
+.travel-btn:hover { border-color: var(--jade); }
+.travel-btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+
+/* ─── 人物卡：伤势与三项 ─── */
+.character-card__injury {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+}
+
+.character-card__injury.is-level-1 { color: #e0b27a; }
+.character-card__injury.is-level-2 { color: #e39282; }
+.character-card__injury.is-level-3 { color: var(--cinnabar); }
+
+.character-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.character-card__stats > div {
+  display: grid;
+  justify-items: center;
+  padding: 0.3rem 0.2rem;
+  border: 1px solid var(--panel-line);
+  border-radius: var(--radius-sm);
+  background: rgba(30, 36, 42, 0.45);
+}
+
+.character-card__stats dt { color: var(--text-dim); font-size: var(--fs-micro); }
+.character-card__stats dd { margin: 0; color: var(--paper-50); font-size: var(--fs-lead); }
+
+/* ─── 一世结算 ─── */
+.life-end__sheet { width: min(30rem, calc(100% - 2rem)); }
+
+.life-end__body {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem 1.1rem;
+  overflow-y: auto;
+}
+
+.life-end__epitaph {
+  margin: 0;
+  color: var(--paper-50);
+  font-family: var(--font-title);
+  font-size: var(--fs-lead);
+  line-height: 1.7;
+}
+
+.life-end__facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.life-end__facts dt { color: var(--text-dim); font-size: var(--fs-micro); }
+.life-end__facts dd { margin: 0; color: var(--paper-50); font-size: var(--fs-lead); }
+.life-end__deeds-title { margin: 0; color: var(--text-dim); font-size: var(--fs-small); font-weight: 500; }
+.life-end__deeds { margin: 0; padding-left: 1.1rem; color: var(--text); font-size: var(--fs-body); line-height: 1.8; }
+.life-end__empty, .life-end__legacy { margin: 0; color: var(--text-dim); font-size: var(--fs-small); }
+.life-end__actions { display: flex; justify-content: flex-end; padding: 0 1.1rem 1rem; }
+
+/* ─── 山河图：此地机缘 ─── */
+.location-info__empty { margin: 0; color: var(--text-faint); font-size: var(--fs-small); }
+
+.location-info__cards {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.location-info__cards li { display: flex; justify-content: space-between; gap: 0.5rem; font-size: var(--fs-small); }
+.location-info__cards strong { font-weight: 500; }
+.location-info__cards span { color: var(--gold-bright); }
+
+/* ─── 标题页：旧档封存提示 ─── */
+.title-screen__notice {
+  margin: 0.3rem 0 0;
+  color: var(--text-dim);
+  font-size: var(--fs-small);
+  letter-spacing: 0.06em;
+}

@@ -16,7 +16,7 @@
     <section class="journey-card" :class="{ 'is-current': isCurrent, 'is-blocked': !isCurrent && !reachable }">
       <span class="journey-card__kicker">{{ journeyTag }}</span>
       <p class="journey-card__text">{{ journeySummary }}</p>
-      <button v-if="!isCurrent" class="ink-btn ink-btn--primary" type="button" :aria-disabled="!reachable" :data-tip="reachable ? undefined : journeySummary" @click="travel">
+      <button v-if="!isCurrent" class="ink-btn ink-btn--primary" type="button" :aria-disabled="!reachable || busy" :data-tip="reachable ? undefined : journeySummary" @click="travel">
         <GameIcon name="travel" />{{ travelLabel }}
       </button>
     </section>
@@ -24,18 +24,21 @@
     <section v-if="activeRealm" class="realm-card">
       <span class="realm-card__kicker">异象显世</span>
       <strong class="realm-card__name">{{ activeRealm.name }}</strong>
-      <p class="realm-card__desc">{{ activeRealm.desc }}</p>
-      <button class="ink-btn ink-btn--danger" type="button" :aria-disabled="!canEnterRealm" :data-tip="realmReason || undefined" @click="challenge">
-        {{ isCurrent ? '闯入秘境' : '赶赴并闯入' }}
-      </button>
+      <p class="realm-card__desc">{{ activeRealm.desc }} 到了此地，可在“此地”一栏里闯秘境。</p>
     </section>
 
     <section class="location-info__section">
-      <h4 class="sheet__heading">可做之事</h4>
+      <h4 class="sheet__heading">本旬机缘</h4>
+      <p v-if="!cards.length" class="location-info__empty">眼下没听说此地有什么机缘。</p>
+      <ul v-else class="location-info__cards">
+        <li v-for="card in cards" :key="card.id"><strong>{{ card.title }}</strong><span>{{ card.reward }}</span></li>
+      </ul>
+    </section>
+
+    <section class="location-info__section">
+      <h4 class="sheet__heading">到了能做</h4>
       <div class="location-info__actions">
-        <button v-for="action in selected.actions" :key="action" class="ink-btn ink-btn--small" type="button" :data-tip="isCurrent ? '就地去做' : '赶到后便去做'" @click="doAction(action)">
-          <GameIcon :name="iconFor(action)" />{{ actionLabel(action) }}
-        </button>
+        <span v-for="label in doable" :key="label" class="tag">{{ label }}</span>
       </div>
     </section>
 
@@ -52,42 +55,62 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { ACTION_META, FACTIONS, LOCATION_MAP, REALM_TEMPLATES } from '@/config'
-import { iconForAction } from '@/art/icons'
+import { FACTIONS, LOCATION_MAP, REALM_TEMPLATES } from '@/config'
+import { formatDays } from '@/config/calendar'
 import { getTerritoryState } from '@/systems/social'
-import { getTravelPreview, performAction, travelAndAct, travelAndChallengeRealm, travelTo } from '@/systems/world'
+import { getTravelPreview } from '@/systems/world'
+import { startTravel } from '@/systems/life/activities'
+import { opportunitiesAt } from '@/systems/life/opportunities'
+import { useBooks } from '@/composables/useBooks'
 import { sfx } from '@/audio/sfx'
 import GameIcon from '@/components/common/GameIcon.vue'
 
 const store = useGameStore()
 const { player, world, currentLocation, selectedLocation: selected } = storeToRefs(store)
+const { closeBook } = useBooks()
 
 const preview = computed(() => {
-  void world.value.hour
+  void world.value.day
   void player.value.locationId
   return getTravelPreview(selected.value.id)
 })
 const isCurrent = computed(() => selected.value.id === currentLocation.value.id)
-const isHeading = computed(() => player.value.travelPlan?.destinationId === selected.value.id)
 const reachable = computed(() => isCurrent.value || Boolean(preview.value.route))
+const busy = computed(() => Boolean(store.game.life.runner || store.game.life.event || store.combat.currentEnemy || store.game.life.ended))
 
-const journeyTag = computed(() => (isCurrent.value ? '身在此地' : isHeading.value ? '正在赶路' : reachable.value ? '可以前往' : '前路受阻'))
+const journeyTag = computed(() => (isCurrent.value ? '身在此地' : reachable.value ? '可以前往' : '前路受阻'))
 const journeySummary = computed(() => {
   if (isCurrent.value) return '此地诸事都可就地去做。'
   if (!reachable.value) return preview.value.blockedReason || '眼下没有能走通的路。'
   const via = preview.value.viaIds.map(id => LOCATION_MAP.get(id)?.name || id).join('、')
-  const segments = preview.value.segments <= 1 ? '一程可到' : `共 ${preview.value.segments} 程`
-  return via ? `${segments}，途经${via}。每程约半个时辰。` : `${segments}。`
+  return via ? `约走${formatDays(preview.value.days)}，途经${via}。路上可能遇事。` : `约走${formatDays(preview.value.days)}。`
 })
-const travelLabel = computed(() => (isHeading.value ? '继续赶路' : reachable.value ? `前往${selected.value.name}` : '前路受阻'))
+const travelLabel = computed(() => (reachable.value ? `前往${selected.value.name}（${formatDays(preview.value.days)}）` : '前路受阻'))
 
 const activeRealm = computed(() => {
   const realmId = selected.value.realmId
   if (!realmId || world.value.realm.activeRealmId !== realmId) return null
   return REALM_TEMPLATES.find(r => r.id === realmId) || null
 })
-const realmReason = computed(() => (activeRealm.value && player.value.reputation < activeRealm.value.unlockRep ? `声望需 ${activeRealm.value.unlockRep}` : ''))
-const canEnterRealm = computed(() => Boolean(activeRealm.value) && !realmReason.value && (isCurrent.value || reachable.value))
+
+const cards = computed(() => {
+  void world.value.day
+  return opportunitiesAt(selected.value.id)
+})
+
+const doable = computed(() => {
+  const loc = selected.value
+  const settled = loc.tags.some(tag => ['town', 'city', 'port', 'market', 'village', 'pass', 'sect'].includes(tag)) || loc.actions.includes('trade')
+  const list = ['练体']
+  if (loc.actions.includes('meditate') || loc.aura >= 30) list.push('静坐')
+  if (settled) list.push('打零工')
+  list.push(settled ? '镇外转转' : '四处探探')
+  if (loc.tags.some(tag => ['town', 'city', 'port', 'market'].includes(tag))) list.push('茶馆打听')
+  if (loc.aura >= 34) list.push('可冲感气')
+  if (loc.actions.includes('breakthrough')) list.push('可冲高境')
+  if (loc.marketTier) list.push('市集')
+  return list
+})
 
 const factionsHere = computed(() => FACTIONS.filter(f => selected.value.factionIds?.includes(f.id)))
 const territoryHolder = computed(() => {
@@ -102,30 +125,13 @@ const residents = computed(() => store.npcs
   .slice(0, 5)
   .map(n => (player.value.npcIntel[n.id] === 'met' ? n.name : `${n.name}（耳闻）`)))
 
-const actionLabel = (action: string) => ACTION_META[action]?.label || action
-const iconFor = (action: string) => iconForAction(action)
-
 function travel() {
-  if (!reachable.value || isCurrent.value) {
+  if (!reachable.value || isCurrent.value || busy.value) {
     sfx.deny()
     return
   }
   sfx.confirm()
-  travelTo(selected.value.id)
-}
-
-function doAction(action: string) {
-  sfx.action()
-  if (isCurrent.value) performAction(action)
-  else travelAndAct(selected.value.id, action)
-}
-
-function challenge() {
-  if (!activeRealm.value || !canEnterRealm.value) {
-    sfx.deny()
-    return
-  }
-  sfx.confirm()
-  travelAndChallengeRealm(activeRealm.value.id)
+  closeBook()
+  startTravel(selected.value.id)
 }
 </script>

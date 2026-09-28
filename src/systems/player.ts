@@ -1,4 +1,5 @@
 import { getContext } from '@/core/context'
+import { MAX_INJURY } from '@/config/life'
 import { bus } from '@/core/events'
 import {
   RANKS, MODE_OPTIONS, ACTION_META, PROPERTY_DEFS,
@@ -69,53 +70,8 @@ function claimAssetFromItem(item: ReturnType<typeof getItem>) {
   return { handled: true, success: true, message: `${item.name}兑成了${created.join('、')}，已经记在你名下。` }
 }
 
-export function setMode(modeId: string) {
-  const ctx = getContext()
-  if (!MODE_OPTIONS.find(m => m.id === modeId)) return
-  ctx.game.player.mode = modeId
-  bus.emit('state:player-mode', { mode: modeId })
-  ctx.appendLog(`挂机模式切换为"${MODE_OPTIONS.find(m => m.id === modeId)?.label || modeId}"。`, 'info')
-}
-
 export function checkRankGrowth() {
   getContext().updateDerivedStats()
-}
-
-export function attemptBreakthrough(): boolean {
-  const ctx = getContext()
-  const p = ctx.game.player
-  const nextRankIndex = p.rankIndex + 1
-  if (nextRankIndex >= RANKS.length) { ctx.appendLog('你已站在当前境界的极处，只能继续温养根基。', 'info'); return false }
-  const need = ctx.getNextBreakthroughNeed()
-  const location = ctx.getCurrentLocation()
-  const unavailableReason = getBreakthroughDisabledReason({
-    hasNextRank: true,
-    nextBreakthroughNeed: need,
-    cultivation: p.cultivation,
-    breakthrough: p.breakthrough,
-    rankIndex: p.rankIndex,
-    aura: location.aura,
-  })
-  if (unavailableReason) {
-    ctx.appendLog(unavailableReason, 'warn')
-    return false
-  }
-  const successRate = clamp(p.breakthroughRate + location.aura / 520 + ctx.getPlayerInsight() / 760 + p.breakthrough / (need * 2.8), 0.1, 0.62)
-  if (Math.random() < successRate) {
-    p.rankIndex = nextRankIndex
-    p.breakthrough = round(Math.max(0, p.breakthrough - need * 0.7))
-    addPlayerMetric('reputation', 2 + nextRankIndex * 2)
-    p.title = `${RANKS[nextRankIndex].name}境修士`
-    ctx.appendLog(`灵机贯体，你成功踏入${RANKS[nextRankIndex].name}境。`, 'loot')
-    ctx.updateDerivedStats()
-    ctx.adjustResource('hp', p.maxHp, 'maxHp'); ctx.adjustResource('qi', p.maxQi, 'maxQi'); ctx.adjustResource('stamina', p.maxStamina, 'maxStamina')
-    bus.emit('player:breakthrough', { success: true, rankIndex: nextRankIndex })
-    return true
-  }
-  p.breakthrough = round(p.breakthrough * 0.8); ctx.adjustResource('hp', -12, 'maxHp'); ctx.adjustResource('qi', -16, 'maxQi')
-  ctx.appendLog('冲关受挫，经脉震荡，需要重新稳固根基。', 'warn')
-  bus.emit('player:breakthrough', { success: false, rankIndex: p.rankIndex })
-  return false
 }
 
 export function consumeItem(itemId: string) {
@@ -203,41 +159,15 @@ export function sellItem(itemId: string) {
   ctx.appendLog(`你将${item.name}出售给${location.name}商人，获得${price}灵石。`, 'info')
 }
 
+/** 打输了不会死：被人救下或自己爬起来，带一级伤，身上的钱也丢一成。 */
 export function revivePlayer() {
   const ctx = getContext()
   const p = ctx.game.player
-  p.hp = Math.round(p.maxHp * 0.64); p.qi = Math.round(p.maxQi * 0.58); p.stamina = Math.round(p.maxStamina * 0.7)
-  p.money = Math.max(0, p.money - 48)
-  ctx.appendLog('你在濒危中被路人救下，损失部分灵石后重整旗鼓。', 'warn')
+  p.injury = Math.min(MAX_INJURY, (p.injury || 0) + 1)
+  ctx.updateDerivedStats()
+  p.hp = Math.max(1, Math.round(p.maxHp * 0.35)); p.qi = Math.round(p.maxQi * 0.5)
+  const lost = Math.floor(p.money * 0.1)
+  p.money -= lost
+  ctx.appendLog(lost ? `你被打得爬不起来，好不容易捡回一条命，身上丢了${lost}灵石，还带了伤。` : '你被打得爬不起来，好不容易捡回一条命，还带了伤。', 'warn')
 }
 
-export function applyPassiveAction(actionKey: string) {
-  const ctx = getContext()
-  const p = ctx.game.player
-  const action = ACTION_META[actionKey]
-  if (!action) return
-  p.action = actionKey
-  const costMultiplier = 1 + ctx.getCurrentLocation().danger * 0.03
-  // 苦修时心无旁骛，打坐练体的所得多出两成半。
-  const focus = p.mode === 'cultivation' && (actionKey === 'meditate' || actionKey === 'train') ? 1.25 : 1
-  const cultivationBoost = (1 + (p.cultivationBonus || 0) + ctx.getCurrentLocation().aura / 520) * focus
-  if (action.cost.stamina) ctx.adjustResource('stamina', -action.cost.stamina * costMultiplier, 'maxStamina')
-  if (action.cost.qi) ctx.adjustResource('qi', -action.cost.qi * costMultiplier, 'maxQi')
-  if (p.stamina <= 5) {
-    ctx.adjustResource('stamina', 12, 'maxStamina'); ctx.adjustResource('qi', 6, 'maxQi')
-    ctx.appendLog('你感到疲惫，于是短暂歇息恢复精力。', 'info'); return
-  }
-  if (action.reward.cultivation) addPlayerMetric('cultivation', action.reward.cultivation * cultivationBoost)
-  if (action.reward.qi) ctx.adjustResource('qi', action.reward.qi, 'maxQi')
-  if (action.reward.hp) ctx.adjustResource('hp', action.reward.hp, 'maxHp')
-  if (action.reward.stamina) ctx.adjustResource('stamina', action.reward.stamina, 'maxStamina')
-  if (action.reward.money) p.money += Math.round(action.reward.money * (1 + p.reputation / 220))
-  if (action.reward.reputation) addPlayerMetric('reputation', action.reward.reputation)
-  if (action.reward.breakthrough) addPlayerMetric('breakthrough', action.reward.breakthrough * (1 + ctx.getPlayerInsight() / 420) * focus)
-  if (action.reward.power) addPlayerMetric('power', action.reward.power * 0.08)
-  if (action.reward.market) p.stats.tradesCompleted += 1
-  if (actionKey === 'meditate') { p.stats.meditationSessions += 1; ctx.adjustResource('hp', 1.5, 'maxHp') }
-  if (actionKey === 'train') addPlayerMetric('insight', 0.05)
-  gainHeartMasteryFromAction(actionKey)
-  checkRankGrowth()
-}

@@ -37,20 +37,23 @@ export const RARITY_META: Record<string, { label: string; color: string; value: 
 
 export interface RankData {
   name: string
+  /** 在上一境里要攒满多少修为才能冲入此境 */
   need: number
+  /** 此境寿元（岁） */
+  lifespan: number
   qiMax: number
   hpMax: number
   staminaMax: number
 }
 
 export const RANKS: RankData[] = [
-  { name: '凡胎', need: 0, qiMax: 28, hpMax: 72, staminaMax: 92 },
-  { name: '练力', need: 120, qiMax: 36, hpMax: 88, staminaMax: 100 },
-  { name: '感气', need: 360, qiMax: 52, hpMax: 102, staminaMax: 108 },
-  { name: '炼气', need: 960, qiMax: 88, hpMax: 126, staminaMax: 116 },
-  { name: '筑基', need: 2600, qiMax: 144, hpMax: 170, staminaMax: 126 },
-  { name: '金丹', need: 6200, qiMax: 228, hpMax: 232, staminaMax: 136 },
-  { name: '元婴', need: 14000, qiMax: 336, hpMax: 312, staminaMax: 146 },
+  { name: '凡胎', need: 0, lifespan: 60, qiMax: 28, hpMax: 72, staminaMax: 92 },
+  { name: '练力', need: 100, lifespan: 70, qiMax: 36, hpMax: 88, staminaMax: 100 },
+  { name: '感气', need: 240, lifespan: 90, qiMax: 52, hpMax: 102, staminaMax: 108 },
+  { name: '炼气', need: 600, lifespan: 120, qiMax: 88, hpMax: 126, staminaMax: 116 },
+  { name: '筑基', need: 1500, lifespan: 200, qiMax: 144, hpMax: 170, staminaMax: 126 },
+  { name: '金丹', need: 3600, lifespan: 400, qiMax: 228, hpMax: 232, staminaMax: 136 },
+  { name: '元婴', need: 8000, lifespan: 800, qiMax: 336, hpMax: 312, staminaMax: 146 },
 ]
 
 export interface ModeOption {

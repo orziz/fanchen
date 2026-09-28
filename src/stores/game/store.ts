@@ -12,29 +12,19 @@ import {
   RANKS,
   SAVE_BACKUP_KEY,
   SAVE_KEY,
-  TIME_LABELS,
   WINDOW_LAYOUT_KEY,
-  OPENING_TUTORIAL_STORY_ID,
-  getBreakthroughReadyNeed,
-  getCultivationBreakthroughFloor,
-  getCultivationGateNeed,
-  getItem,
   getRealmPowerBonus,
-  getTechnique,
-  getTechniqueResolvedEffectValue,
 } from '@/config'
 import { clamp, round, findRoute } from '@/utils'
 import { bus } from '@/core/events'
 import { normalizeGameNumericState, resolveCarriedDelta } from '@/core/integerProgress'
 import { setContext, type GameContext } from '@/core/context'
 import { meetNpcsAtLocation } from '@/systems/npc'
-import { startStory } from '@/systems/story'
-import {
-  markOpeningTutorialStarted,
-  primeOpeningTutorialState,
-  shouldAutoStartOpeningTutorial,
-  syncOpeningTutorialState,
-} from '@/systems/tutorial'
+import { ensureOpportunities } from '@/systems/life/time'
+import { startLifeEvent } from '@/systems/life/events'
+import { legacyFor } from '@/systems/life/legacy'
+import { applyDerivedStats } from '@/stores/game/derived'
+import { formatShortDate } from '@/config/calendar'
 import {
   createAuctionListings,
   createGameState,
@@ -47,21 +37,13 @@ import {
   createRelationState,
   deriveLifeStage,
 } from '@/stores/game/factories'
-import { OBSOLETE_SAVE_STORAGE_KEYS, hydrateGameState, readStoredSave } from '@/stores/game/hydration'
+import { OBSOLETE_SAVE_STORAGE_KEYS, hydrateGameState, readLifeSave } from '@/stores/game/hydration'
 import { applyOrigin, isPlayableSave, looksLikeSave, type NewLifeOptions } from '@/stores/game/origin'
 
 export type { NewLifeOptions } from '@/stores/game/origin'
 
 // 浮窗布局已随旧界面退役，残留的布局记录与旧存档键一并清掉。
 const STALE_SAVE_KEYS = [...LEGACY_SAVE_KEYS, ...OBSOLETE_SAVE_STORAGE_KEYS, WINDOW_LAYOUT_KEY, ...LEGACY_WINDOW_LAYOUT_KEYS]
-
-function resolveTechniqueEffect(
-  technique: NonNullable<ReturnType<typeof getTechnique>> | null,
-  state: Pick<LearnedTechniqueState, 'mastery'> | null | undefined,
-  key: string,
-) {
-  return getTechniqueResolvedEffectValue(technique || undefined, state, key)
-}
 
 export const useGameStore = defineStore('game', () => {
   const { closeBook } = useBooks()
@@ -89,11 +71,6 @@ export const useGameStore = defineStore('game', () => {
     const next = RANKS[Math.min(player.value.rankIndex + 1, RANKS.length - 1)]
     return next ? next.need : 999999
   })
-  const cultivationGateNeed = computed(() => hasNextRank.value ? getCultivationGateNeed(nextBreakthroughNeed.value) : 0)
-  const breakthroughReadyNeed = computed(() => hasNextRank.value ? getBreakthroughReadyNeed(nextBreakthroughNeed.value) : 0)
-  const cultivationBreakthroughFloor = computed(() => (
-    hasNextRank.value ? getCultivationBreakthroughFloor(player.value.cultivation, nextBreakthroughNeed.value) : 0
-  ))
   const realmPowerBonus = computed(() => getRealmPowerBonus(player.value.rankIndex))
   const playerPower = computed(() => player.value.power + (player.value.bonusPower || 0) + realmPowerBonus.value)
   const playerInsight = computed(() => player.value.insight + (player.value.bonusInsight || 0))
@@ -162,7 +139,9 @@ export const useGameStore = defineStore('game', () => {
 
   function appendLog(text: string, type = 'info') {
     const w = game.value.world
-    const stamp = `第${w.day}日 ${TIME_LABELS[w.hour]}`
+    const stamp = formatShortDate(w.day)
+    // 同一日里一字不差的话只记一次。
+    if (game.value.log[0]?.text === text && game.value.log[0]?.stamp === stamp) return
     game.value.log.unshift({ stamp, text, type })
     if (game.value.log.length > 80) game.value.log.length = 80
     if (['warn', 'loot', 'action'].includes(type)) {
@@ -240,73 +219,8 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function updateDerivedStats() {
-    const p = game.value.player
-    const rank = RANKS[Math.min(p.rankIndex, RANKS.length - 1)]
-    const nextRank = p.rankIndex < RANKS.length - 1 ? RANKS[p.rankIndex + 1] : null
-    let maxQi = rank.qiMax
-    let maxHp = rank.hpMax
-    let maxStamina = rank.staminaMax
-    let cultivationBonus = 0
-    let breakthroughRate = 0.5
-    let powerBonus = 0
-    let insightBonus = 0
-    let charismaBonus = 0
-    ;(['weapon', 'armor'] as const).forEach((slot) => {
-      const itemId = p.equipment[slot]
-      if (!itemId) return
-      const item = getItem(itemId)
-      if (!item) return
-      if (item.effect.hp) maxHp += item.effect.hp
-      if (item.effect.qi) maxQi += item.effect.qi
-      if (item.effect.stamina) maxStamina += item.effect.stamina
-      if (item.effect.cultivation) cultivationBonus += item.effect.cultivation
-      if (item.effect.breakthroughRate) breakthroughRate += item.effect.breakthroughRate
-      if (item.effect.power) powerBonus += item.effect.power
-      if (item.effect.insight) insightBonus += item.effect.insight
-      if (item.effect.charisma) charismaBonus += item.effect.charisma
-    })
-    const heartId = p.equipment.heart
-    const heartTechnique = heartId ? getTechnique(heartId) : null
-    const heartState = heartId ? p.learnedTechniques[heartId] : null
-    if (heartTechnique && heartState) {
-      maxHp += resolveTechniqueEffect(heartTechnique, heartState, 'hp')
-      maxQi += resolveTechniqueEffect(heartTechnique, heartState, 'qi')
-      maxStamina += resolveTechniqueEffect(heartTechnique, heartState, 'stamina')
-      cultivationBonus += resolveTechniqueEffect(heartTechnique, heartState, 'cultivation')
-      breakthroughRate += resolveTechniqueEffect(heartTechnique, heartState, 'breakthroughRate')
-      powerBonus += resolveTechniqueEffect(heartTechnique, heartState, 'power')
-      insightBonus += resolveTechniqueEffect(heartTechnique, heartState, 'insight')
-      charismaBonus += resolveTechniqueEffect(heartTechnique, heartState, 'charisma')
-    }
-    if (p.masterId) { cultivationBonus += 0.02; breakthroughRate += 0.015 }
-    if (p.partnerId) { charismaBonus += 1; cultivationBonus += 0.01 }
-    if (PLAYER_SECT_ENABLED && p.sect) {
-      cultivationBonus += p.sect.buildings.library * 0.01
-      powerBonus += p.sect.buildings.dojo * 0.28
-      charismaBonus += Math.max(0, p.sect.level - 1)
-    }
-    p.maxQi = round(maxQi)
-    p.maxHp = round(maxHp)
-    p.maxStamina = round(maxStamina)
-    p.bonusPower = round(powerBonus)
-    p.bonusInsight = round(insightBonus)
-    p.bonusCharisma = round(charismaBonus)
-    p.cultivationBonus = cultivationBonus
-    p.breakthroughRate = breakthroughRate
-    if (nextRank) {
-      p.breakthrough = round(Math.max(p.breakthrough, getCultivationBreakthroughFloor(p.cultivation, nextRank.need)))
-    }
-    p.qi = clamp(p.qi, 0, p.maxQi)
-    p.hp = clamp(p.hp, 0, p.maxHp)
-    p.stamina = clamp(p.stamina, 0, p.maxStamina)
+    applyDerivedStats(game.value.player)
     bus.emit('state:derived-stats-updated')
-  }
-
-  function maybeStartOpeningTutorial() {
-    if (!shouldAutoStartOpeningTutorial(game.value.story)) return
-    if (startStory(OPENING_TUTORIAL_STORY_ID, { locationId: game.value.player.locationId }, 'overlay')) {
-      markOpeningTutorialStarted()
-    }
   }
 
   /** 把当前进度规整后落盘，并清掉旧版本遗留的存档键。 */
@@ -344,15 +258,14 @@ export const useGameStore = defineStore('game', () => {
 
   function loadGame() {
     try {
-      const stored = readStoredSave()
+      const stored = readLifeSave()
       if (!stored?.raw) { appendLog('当前浏览器里没有可读取的存档。', 'warn'); return }
       game.value = hydrateGameState(JSON.parse(stored.raw))
       commitSnapshot()
       updateDerivedStats()
       selectedLocationId.value = game.value.player.locationId
       meetNpcsAtLocation(game.value.player.locationId)
-      syncOpeningTutorialState()
-      maybeStartOpeningTutorial()
+      ensureOpportunities()
       saveState.value = `已读取 ${new Date(game.value.lastSavedAt || Date.now()).toLocaleTimeString('zh-CN', { hour12: false })}`
       appendLog(
         stored.source === 'slot-migrated'
@@ -368,17 +281,25 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  function resetGame(options: NewLifeOptions | null = null) {
+  /** 开一世新的：可带上一世的传承与世代数。 */
+  function resetGame(options: NewLifeOptions | null = null, inherit: { legacy: GameState['life']['legacy']; generation: number } | null = null) {
     game.value = createGameState()
-    primeOpeningTutorialState()
+    const p = game.value.player
     if (options) applyOrigin(game.value, options, addItemToInventory)
-    selectedLocationId.value = game.value.player.locationId
+    if (inherit) {
+      game.value.life.generation = inherit.generation
+      game.value.life.legacy = inherit.legacy
+      p.insight += inherit.legacy.insight
+      p.power += inherit.legacy.power
+      inherit.legacy.items.forEach(entry => addItemToInventory(entry.itemId, entry.quantity))
+    }
+    selectedLocationId.value = p.locationId
     closeBook()
     saveState.value = '新轮回已开启'
     updateDerivedStats()
-    meetNpcsAtLocation(game.value.player.locationId)
-    appendLog('你在青禾镇街口惊醒，怀里只剩一点零碎盘缠。', 'info')
-    maybeStartOpeningTutorial()
+    meetNpcsAtLocation(p.locationId)
+    ensureOpportunities()
+    startLifeEvent('opening')
     saveGame(false)
     saveState.value = '新轮回已保存'
     initialized.value = true
@@ -386,7 +307,13 @@ export const useGameStore = defineStore('game', () => {
   }
 
   function hasStoredSave() {
-    return Boolean(readStoredSave()?.raw)
+    return Boolean(readLifeSave()?.raw)
+  }
+
+  /** 寿尽之后再入轮回：换个名字，带着上一世的传承从青禾街口重新醒来。 */
+  function startNextLife(options: NewLifeOptions) {
+    const ended = game.value.life.ended
+    resetGame(options, ended ? { legacy: legacyFor(ended), generation: game.value.life.generation + 1 } : null)
   }
 
   /** 导出当前进度为 JSON 文本，供玩家另存为文件。 */
@@ -422,31 +349,29 @@ export const useGameStore = defineStore('game', () => {
 
   function initializeGame() {
     if (initialized.value) return
-    const stored = readStoredSave()
-    let resumedStoredSave = false
+    const stored = readLifeSave()
+    let resumed = false
     if (stored?.raw) {
       try {
         game.value = hydrateGameState(JSON.parse(stored.raw))
         commitSnapshot()
         saveState.value = stored.source === 'backup' ? '已从备份恢复' : '已载入本地存档'
-        resumedStoredSave = true
+        resumed = true
       } catch {
         game.value = createGameState()
-        primeOpeningTutorialState()
         saveState.value = '旧存档损坏，已重置'
       }
     } else {
       game.value = createGameState()
-      primeOpeningTutorialState()
       saveState.value = '未存档'
     }
     updateDerivedStats()
     selectedLocationId.value = game.value.player.locationId
     closeBook()
     meetNpcsAtLocation(game.value.player.locationId)
-    syncOpeningTutorialState()
-    appendLog(resumedStoredSave ? '旧日行程已经续上。' : '你在青禾镇街口惊醒，怀里只剩一点零碎盘缠。', 'info')
-    maybeStartOpeningTutorial()
+    ensureOpportunities()
+    if (resumed) appendLog('旧日行程已经续上。', 'info')
+    else startLifeEvent('opening')
     initialized.value = true
     bus.emit('game:initialized')
   }
@@ -479,7 +404,7 @@ export const useGameStore = defineStore('game', () => {
     bus,
     player, npcs, combat, world, market, auction, log, story,
     currentLocation, selectedLocation, rankData, hasNextRank, nextBreakthroughNeed,
-    cultivationGateNeed, breakthroughReadyNeed, cultivationBreakthroughFloor, realmPowerBonus,
+    realmPowerBonus,
     playerPower, playerInsight, playerCharisma,
     currentAffiliation, playerFaction, sect,
     getCurrentLocation, getSelectedLocation, getRankData, getNextBreakthroughNeed,
@@ -490,7 +415,7 @@ export const useGameStore = defineStore('game', () => {
     appendLog, getRegionStanding, adjustRegionStanding,
     adjustFactionStanding, adjustRelation,
     updateDerivedStats, clearLog, toggleAutoBattle,
-    saveGame, loadGame, resetGame, initializeGame, startNewLife: resetGame, hasStoredSave, exportSave, importSave,
+    saveGame, loadGame, resetGame, initializeGame, startNewLife: resetGame, startNextLife, hasStoredSave, exportSave, importSave,
     createRelationState, deriveLifeStage, createInitialSect, createInitialPlayerFaction,
     createLootBundle, createNPC, createMarketListings, createAuctionListings,
     createInitialTerritories, findRoute,

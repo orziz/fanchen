@@ -19,8 +19,7 @@
 
     <div class="top-bar__time" :data-tip="`${world.omen}`" data-tip-title="天象">
       <GameIcon :name="weatherIcon" />
-      <span class="num">第{{ world.day }}日</span>
-      <span class="top-bar__hour">{{ timeLabel }}</span>
+      <span>{{ dateLabel }}</span>
       <span class="top-bar__weather">{{ world.weather }}</span>
     </div>
 
@@ -55,10 +54,10 @@
 import { computed, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { TIME_LABELS } from '@/config'
+import { formatDate } from '@/config/calendar'
 import { formatNumber } from '@/utils'
 import { iconForWeather } from '@/art/icons'
-import { BOOKS, BOOK_LOCK_TAB, useBooks, type BookId } from '@/composables/useBooks'
+import { OPEN_BOOKS, BOOK_LOCK_TAB, useBooks, type BookId } from '@/composables/useBooks'
 import { getStageTabLockReason } from '@/systems/tutorial'
 import { sfx } from '@/audio/sfx'
 import GameIcon from '@/components/common/GameIcon.vue'
@@ -67,17 +66,15 @@ import SealAvatar from '@/components/common/SealAvatar.vue'
 defineEmits<{ settings: [] }>()
 
 const store = useGameStore()
-const { player, world, rankData, playerPower, playerInsight, story } = storeToRefs(store)
+const { player, world, rankData, story } = storeToRefs(store)
 const { activeBook, openBook, toggleBook } = useBooks()
 
-const timeLabel = computed(() => TIME_LABELS[world.value.hour] || '子时')
+const dateLabel = computed(() => formatDate(world.value.day))
 const weatherIcon = computed(() => iconForWeather(world.value.weather))
 
 const resources = computed(() => [
-  { key: 'money', label: '灵石', icon: 'stone', value: formatNumber(player.value.money), tip: '买卖、置业、入门都要用到的通货' },
-  { key: 'fame', label: '声望', icon: 'fame', value: formatNumber(player.value.reputation), tip: '江湖名声，决定能投哪些门路、进哪些秘境' },
-  { key: 'power', label: '战力', icon: 'power', value: formatNumber(Math.round(playerPower.value)), tip: '出手伤害的根本；境界、兵器与心法都会抬高' },
-  { key: 'insight', label: '悟性', icon: 'insight', value: formatNumber(Math.round(playerInsight.value)), tip: '影响冲关成败、火候积累与术法威力' },
+  { key: 'money', label: '灵石', icon: 'stone', value: formatNumber(player.value.money), tip: '口粮落脚、买药买书、打点门路都要用钱；每月初结一次生计' },
+  { key: 'fame', label: '声望', icon: 'fame', value: formatNumber(player.value.reputation), tip: '江湖名声：投门路、求引荐、进秘境都看它' },
 ])
 
 const bumped = reactive<Record<string, boolean>>({})
@@ -90,7 +87,7 @@ watch(() => resources.value.map(r => r.value), (next, prev) => {
   })
 })
 
-const books = computed(() => BOOKS.map(book => {
+const books = computed(() => OPEN_BOOKS.map(book => {
   const tab = BOOK_LOCK_TAB[book.id]
   return { ...book, lock: tab ? getStageTabLockReason(tab, story.value, player.value) : null }
 }))

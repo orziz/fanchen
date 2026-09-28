@@ -14,7 +14,7 @@
       <InkBar tone="enemy" :value="enemy.hp" :max="enemy.maxHp" :text="`${enemy.hp}`" compact />
       <div class="combat-hud__affixes">
         <span v-for="affix in affixes" :key="affix.id" class="tag tag--gold" :data-tip="affix.desc">{{ affix.label }}</span>
-        <span class="tag">战力 {{ Math.round(enemy.power) }}</span>
+        <span class="tag">体魄 {{ Math.round(enemy.power) }}</span>
       </div>
     </div>
 

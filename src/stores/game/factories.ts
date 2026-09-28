@@ -23,6 +23,9 @@ import {
   PERSONALITIES,
 } from '@/config'
 import { clamp, randomFloat, randomInt, sample, uid } from '@/utils'
+import { LIFE_SAVE_VERSION, START_BORN_DAY } from '@/config/life'
+import { monthIndexOf } from '@/config/calendar'
+import type { LifeState } from '@/types/life'
 
 export function createRelationState(): RelationState {
   return { affinity: 0, trust: 0, romance: 0, rivalry: 0, role: 'none' }
@@ -95,7 +98,7 @@ function createInitialPlayer(): PlayerState {
     qi: 18, hp: 68, stamina: 82, maxQi: 28, maxHp: 72, maxStamina: 92,
     bonusPower: 0, bonusInsight: 0, bonusCharisma: 0,
     cultivationBonus: 0, breakthroughRate: 0.18,
-    locationId: 'qinghe', mode: 'balanced', action: 'train',
+    locationId: 'qinghe', mode: 'life', action: 'rest',
     inventory: [
       { itemId: 'spirit-grain', quantity: 2 },
       { itemId: 'mist-herb', quantity: 1 },
@@ -115,6 +118,7 @@ function createInitialPlayer(): PlayerState {
     travelPlan: null,
     assets: { farms: [], workshops: [], shops: [] },
     skills: { farming: 0, crafting: 0, trading: 0 },
+    bornDay: START_BORN_DAY, injury: 0, lifespanBonus: 0,
     stats: {
       enemiesDefeated: 0, bossKills: 0, tradesCompleted: 0, tradeRoutesCompleted: 0,
       questsFinished: 0, affiliationTasksCompleted: 0, factionTasksCompleted: 0,
@@ -317,7 +321,18 @@ export function createGameState(): GameState {
     world: createInitialWorld(),
     combat: createInitialCombat(),
     story: createInitialStory(),
-    migrationFlags: { deedRefundPatchApplied: false, saveVersion: 2 },
+    migrationFlags: { deedRefundPatchApplied: false, saveVersion: LIFE_SAVE_VERSION },
     log: [], lastSavedAt: null,
+    life: createInitialLife(),
+  }
+}
+
+export function createInitialLife(): LifeState {
+  return {
+    version: LIFE_SAVE_VERSION, generation: 1,
+    opportunities: {}, opportunityXun: -1, lastMonth: monthIndexOf(1),
+    runner: null, event: null, lastSummary: null,
+    deeds: [], goalsDone: [], seenEvents: [], ended: null,
+    legacy: { insight: 0, power: 0, items: [] },
   }
 }

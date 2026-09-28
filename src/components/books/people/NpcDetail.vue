@@ -40,7 +40,7 @@
     </template>
 
     <section class="npc-detail__actions">
-      <button class="ink-btn ink-btn--primary" type="button" :aria-disabled="!here" :data-tip="here ? '上前说话' : `${npc.name}眼下在${locationName}，得先赶过去`" @click="visit">{{ visitLabel }}</button>
+      <button class="ink-btn ink-btn--primary" type="button" :aria-disabled="!here" :data-tip="here ? '上前说话，耗一日' : `${npc.name}眼下在${locationName}，得先赶过去`" @click="visit">{{ visitLabel }}</button>
       <button class="ink-btn" type="button" @click="locate"><GameIcon name="target" />山河图上找</button>
       <template v-if="met">
         <button v-for="bond in bonds" :key="bond.key" class="ink-btn" type="button" :aria-disabled="!bond.ok" :data-tip="bond.reason" @click="runBond(bond.key, bond.ok)">{{ bond.label }}</button>
@@ -62,10 +62,11 @@ import { FACTION_MAP, LOCATION_MAP, PLAYER_SECT_ENABLED, RANKS } from '@/config'
 import { formatNumber } from '@/utils'
 import {
   becomeMasterBond, becomePartner, canBecomeMaster, canBecomePartner, canRecruitDisciple, canRecruitFactionMember, declareRival,
-  explainMasterBond, explainPartnerBond, explainRecruitDisciple, explainRecruitFactionMember, recruitDisciple, recruitFactionMember, visitNpc,
+  explainMasterBond, explainPartnerBond, explainRecruitDisciple, explainRecruitFactionMember, recruitDisciple, recruitFactionMember,
 } from '@/systems/social'
 import { hasNpcVisitStory } from '@/systems/story'
 import { useBooks } from '@/composables/useBooks'
+import { visitPerson } from '@/systems/life/activities'
 import { sfx } from '@/audio/sfx'
 import GameIcon from '@/components/common/GameIcon.vue'
 import SealAvatar from '@/components/common/SealAvatar.vue'
@@ -75,7 +76,7 @@ const props = defineProps<{ npcId: string }>()
 
 const store = useGameStore()
 const { player, selectedLocationId, world } = storeToRefs(store)
-const { openBook } = useBooks()
+const { openBook, closeBook } = useBooks()
 const confirmRival = ref(false)
 
 const npc = computed(() => store.getNpc(props.npcId))
@@ -96,19 +97,18 @@ const bonds = computed(() => {
   const list = [
     { key: 'master', label: '拜其为师', ok: canBecomeMaster(props.npcId), reason: explainMasterBond(props.npcId) },
     { key: 'partner', label: '结为道侣', ok: canBecomePartner(props.npcId), reason: explainPartnerBond(props.npcId) },
-    { key: 'faction', label: '招入自家势力', ok: canRecruitFactionMember(props.npcId), reason: explainRecruitFactionMember(props.npcId) },
   ]
   if (PLAYER_SECT_ENABLED) list.push({ key: 'disciple', label: '收为弟子', ok: canRecruitDisciple(props.npcId), reason: explainRecruitDisciple(props.npcId) })
   return list
 })
 
 function visit() {
-  if (!here.value) {
+  if (!here.value || !visitPerson(props.npcId)) {
     sfx.deny()
     return
   }
   sfx.confirm()
-  visitNpc(props.npcId)
+  closeBook()
 }
 
 function locate() {

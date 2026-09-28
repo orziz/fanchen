@@ -1,96 +1,45 @@
 <template>
-  <section class="side-panel objective-card" :class="`tone-${guidance.tone}`" aria-label="当前要务">
-    <span class="objective-card__kicker">{{ guidance.kicker }}</span>
-    <h3 class="objective-card__title">{{ guidance.title }}</h3>
-    <p class="objective-card__detail">{{ guidance.detail }}</p>
-    <button v-if="guidance.actionLabel" class="ink-btn ink-btn--small" type="button" @click="follow">
-      {{ guidance.actionLabel }}<GameIcon name="chevronRight" />
-    </button>
-    <div v-if="milestone" class="objective-card__milestone" :data-tip="milestone.detail" data-tip-title="修行路标">
-      <span class="objective-card__milestone-kicker">路标</span>
-      <span class="objective-card__milestone-title">{{ milestone.title }}</span>
-      <span class="objective-card__milestone-progress num">{{ milestone.progress }}</span>
+  <section class="side-panel objective-card" aria-label="志向">
+    <span class="objective-card__kicker">{{ kicker }}</span>
+    <h3 class="objective-card__title">{{ title }}</h3>
+    <p class="objective-card__detail">{{ detail }}</p>
+    <div v-if="summary" class="objective-card__milestone" :data-tip="summary.lines.join('；')" data-tip-title="刚做完的事">
+      <span class="objective-card__milestone-kicker">刚才</span>
+      <span class="objective-card__milestone-title">{{ summary.label }}</span>
+      <span class="objective-card__milestone-progress">{{ summary.lines[0] || '' }}</span>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { REALM_TEMPLATES } from '@/config'
-import { resolveGuidance } from '@/core/guidance'
-import { getModeLabel } from '@/composables/useUIHelpers'
-import { useBooks } from '@/composables/useBooks'
-import { getActiveStoryScene, showStoryOverlay } from '@/systems/story'
-import { getOpeningTutorialObjective } from '@/systems/tutorial'
-import { performAction } from '@/systems/world'
-import { getCurrentMilestone } from '@/systems/milestones'
-import { sfx } from '@/audio/sfx'
-import GameIcon from '@/components/common/GameIcon.vue'
-
-const emit = defineEmits<{ strategy: [] }>()
+import { currentGoal } from '@/systems/life/goals'
 
 const store = useGameStore()
-const {
-  player, world, combat, story, currentLocation, currentAffiliation, cultivationGateNeed, breakthroughReadyNeed, hasNextRank,
-} = storeToRefs(store)
-const { openBook } = useBooks()
 
-const activeStory = computed(() => {
-  void story.value.activeNodeId
-  return getActiveStoryScene()
+const goal = computed(() => {
+  void store.game.life.goalsDone.length
+  return currentGoal()
 })
 
-const activeRealmName = computed(() => {
-  const realmId = world.value.realm.activeRealmId
-  return realmId ? REALM_TEMPLATES.find(realm => realm.id === realmId)?.name || null : null
+const kicker = computed(() => {
+  if (store.game.life.ended) return '一世已尽'
+  if (store.combat.currentEnemy) return '交战中'
+  return store.game.life.goalsDone.includes('trial') ? '长志' : '志向 · 拜入玉阙行院'
 })
 
-const breakthroughReady = computed(() => hasNextRank.value
-  && player.value.cultivation >= cultivationGateNeed.value
-  && player.value.breakthrough >= breakthroughReadyNeed.value)
-
-function percent(value: number, max: number) {
-  return max > 0 ? Math.max(0, Math.min(100, Math.round((value / max) * 100))) : 0
-}
-
-const guidance = computed(() => resolveGuidance({
-  tutorialObjective: getOpeningTutorialObjective(story.value, player.value),
-  activeStoryTitle: activeStory.value?.title || null,
-  enemyName: combat.value.currentEnemy?.name || null,
-  travelDestination: player.value.travelPlan?.destinationName || null,
-  hpPercent: percent(player.value.hp, player.value.maxHp),
-  qiPercent: percent(player.value.qi, player.value.maxQi),
-  staminaPercent: percent(player.value.stamina, player.value.maxStamina),
-  breakthroughReady: breakthroughReady.value,
-  canBreakthrough: breakthroughReady.value && currentLocation.value.actions.includes('breakthrough'),
-  affiliationName: currentAffiliation.value?.name || null,
-  tradeDestination: player.value.tradeRun?.destinationName || null,
-  activeRealmName: activeRealmName.value,
-  currentModeLabel: getModeLabel(player.value.mode),
-  locationName: currentLocation.value.name,
-}))
-
-const milestone = computed(() => {
-  void player.value.stats
-  return getCurrentMilestone()
+const title = computed(() => {
+  if (store.game.life.ended) return '这一世走到了尽头'
+  if (store.combat.currentEnemy) return `${store.combat.currentEnemy.name}就在眼前`
+  return goal.value?.title || '随心而行'
 })
 
-function follow() {
-  sfx.page()
-  const target = guidance.value.target
-  if (target === 'command') { emit('strategy'); return }
-  if (target === 'rest' || target === 'breakthrough') { performAction(target); return }
-  if (target === 'story') {
-    if (story.value.activeStoryId) showStoryOverlay()
-    else openBook('chronicle', 'story')
-    return
-  }
-  if (target === 'combat') return
-  if (target === 'map') { openBook('map', 'map'); return }
-  if (target === 'world') { openBook('map', 'realms'); return }
-  if (target === 'sect') { openBook('faction'); return }
-  if (target === 'market') openBook('market', 'shop')
-}
+const detail = computed(() => {
+  if (store.game.life.ended) return '坐化之后，还可再入轮回。'
+  if (store.combat.currentEnemy) return '可以交给自动出招，也可以亲手出招、服药或设法撤走。'
+  return goal.value?.detail || '眼下没有迫在眉睫的事，想做什么便做什么。'
+})
+
+const summary = computed(() => (store.game.life.runner ? null : store.game.life.lastSummary))
 </script>

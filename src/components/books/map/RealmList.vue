@@ -13,8 +13,8 @@
         <p>{{ realm.desc }}</p>
         <p class="realm-row__boss">守关：{{ realm.bossName }} · 战利：{{ realm.rewards }}</p>
       </div>
-      <button v-if="realm.active" class="ink-btn ink-btn--danger" type="button" :aria-disabled="realm.locked" :data-tip="realm.locked ? `声望需 ${realm.unlockRep}，眼下还进不去` : undefined" @click="challenge(realm.id, realm.locked)">
-        {{ realm.here ? '闯入' : '赶赴' }}
+      <button v-if="realm.active" class="ink-btn ink-btn--danger" type="button" :aria-disabled="realm.locked" :data-tip="realm.locked ? `声望需 ${realm.unlockRep}，眼下还进不去` : realm.here ? '去“此地”一栏里闯入' : undefined" @click="challenge(realm.locationId, realm.locked, realm.here)">
+        {{ realm.here ? '就在此地' : '赶赴' }}
       </button>
     </article>
     <p v-if="lastResult" class="realm-list__last">最近一战：{{ lastResult.outcome === 'victory' ? '胜' : '败' }} · {{ lastResult.enemy }}</p>
@@ -26,13 +26,15 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { LOCATION_MAP, REALM_TEMPLATES, getItem } from '@/config'
-import { travelAndChallengeRealm } from '@/systems/world'
+import { startTravel } from '@/systems/life/activities'
+import { useBooks } from '@/composables/useBooks'
 import { sfx } from '@/audio/sfx'
 import GameIcon from '@/components/common/GameIcon.vue'
 
 const store = useGameStore()
 const { player, world, combat } = storeToRefs(store)
 const lastResult = computed(() => combat.value.lastResult)
+const { closeBook } = useBooks()
 
 const realms = computed(() => REALM_TEMPLATES.map(realm => ({
   id: realm.id,
@@ -40,6 +42,7 @@ const realms = computed(() => REALM_TEMPLATES.map(realm => ({
   desc: realm.desc,
   unlockRep: realm.unlockRep,
   bossName: realm.boss.name,
+  locationId: realm.locationId,
   locationName: LOCATION_MAP.get(realm.locationId)?.name || realm.locationId,
   rewards: [`灵石 ${realm.rewards.money}`, ...realm.rewards.items.map(id => getItem(id)?.name || id)].join('、'),
   active: world.value.realm.activeRealmId === realm.id,
@@ -48,12 +51,13 @@ const realms = computed(() => REALM_TEMPLATES.map(realm => ({
   cleared: world.value.realm.bossVictories.filter(id => id === realm.id).length,
 })))
 
-function challenge(id: string, locked: boolean) {
+function challenge(locationId: string, locked: boolean, here: boolean) {
   if (locked) {
     sfx.deny()
     return
   }
   sfx.confirm()
-  travelAndChallengeRealm(id)
+  closeBook()
+  if (!here) startTravel(locationId)
 }
 </script>

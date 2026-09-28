@@ -1,92 +1,22 @@
 import { getContext } from '@/core/context'
 import { bus } from '@/core/events'
-import { addPlayerMetric } from '@/core/integerProgress'
-import type { PlayerState, TravelPlanState } from '@/types/game'
-import {
-  LOCATION_MAP, LOCATIONS, TRAVEL_EVENT_TEMPLATES, DISTRIBUTABLE_ITEMS, TIME_LABELS,
-  ACTION_META, PLAYER_SECT_ENABLED, RANKS, REALM_TEMPLATES, WORLD_EVENT_TEMPLATES,
-  getBreakthroughDisabledReason,
-} from '@/config'
-import { sample, randomInt, fillTemplate, findRoute as resolveRoute, round } from '@/utils'
-import { applyPassiveAction, attemptBreakthrough } from '@/systems/player'
-import { autoCombatTick, maybeStartEncounter, processBattleRound, startPursuitEncounter, challengeRealm } from '@/systems/combat'
-import { advanceTradeRun, resolvePassiveTrade, maybeStartBestTradeRun } from '@/systems/trade'
-import { resolveAuctionVisit, resolveAuctionTurn, refreshMarketIfNeeded, maybeActivateRealm } from '@/systems/auction'
-import { hasActiveFactionPursuit, processRelationshipTick, processSectTick, processPlayerFactionTick, processFactionStatusTick, processTerritoryStatusTick } from '@/systems/social'
+import type { PlayerState } from '@/types/game'
+import { LOCATION_MAP, WORLD_EVENT_TEMPLATES } from '@/config'
+import { calendarOf } from '@/config/calendar'
+import { sample, fillTemplate, findRoute as resolveRoute } from '@/utils'
+import { processRelationshipTick, processFactionStatusTick, processTerritoryStatusTick } from '@/systems/social'
 import { meetNpcsAtLocation, processNpcLifeTick, runNpcAI } from '@/systems/npc'
-import { processIndustryTick } from '@/systems/industry'
 import { processWorldEconomyTick } from '@/systems/worldEconomy'
-import { getManualActionLockReason } from '@/systems/tutorial'
-import { processMilestones } from '@/systems/milestones'
 
-/* ─── Travel Events ─── */
+/* ─── 路网 ─── */
 
-function triggerTravelEvent(location: ReturnType<typeof LOCATION_MAP.get>) {
-  if (!location) return
-  const ctx = getContext()
-  const event = sample(TRAVEL_EVENT_TEMPLATES)
-  if (event.kind === 'money') {
-    const value = randomInt(12, 28)
-    ctx.game.player.money += value
-    ctx.appendLog(fillTemplate(event.text, { location: location.name, value }), 'loot')
-    return
-  }
-  if (event.kind === 'item') {
-    const pool = location.marketBias
-      ? DISTRIBUTABLE_ITEMS.filter(i => i.tier <= (location.marketTier || 0) + 1 && (i.type === location.marketBias || Math.random() < 0.25))
-      : DISTRIBUTABLE_ITEMS.filter(i => i.tier <= (location.marketTier || 0) + 1)
-    const item = sample(pool.length ? pool : DISTRIBUTABLE_ITEMS)
-    ctx.addItemToInventory(item.id, 1)
-    ctx.appendLog(fillTemplate(event.text, { terrain: location.terrain, item: item.name }), 'loot')
-    return
-  }
-  ctx.adjustResource('hp', -randomInt(4, 10), 'maxHp')
-  ctx.adjustResource('qi', -randomInt(2, 8), 'maxQi')
-  addPlayerMetric('breakthrough', 1.5)
-  ctx.appendLog(event.text, 'warn')
-}
-
-function maybeTriggerFactionPursuit(source: 'travel' | 'hunt' | 'quest') {
-  const ctx = getContext()
-  const player = ctx.game.player
-  if (!player.wantedByFactionId || !hasActiveFactionPursuit(player.wantedByFactionId) || ctx.game.combat.currentEnemy) return false
-  const chance = source === 'travel' ? 0.34 : source === 'quest' ? 0.28 : 0.24
-  if (Math.random() < chance) {
-    startPursuitEncounter(player.wantedByFactionId, source)
-    return true
-  }
-  return false
-}
-
-const YANPASS_CURFEW_HOURS = new Set([10, 11, 0, 1])
-
-interface TravelOptions {
-  advanceNow?: boolean
-  consumeTime?: boolean
-  pendingAction?: string | null
-  silent?: boolean
-}
-
-interface TravelPreview {
+export interface TravelPreview {
   route: string[] | null
   segments: number
+  /** 按路段累计的日数 */
+  days: number
   viaIds: string[]
   blockedReason: string | null
-  nextStopId: string | null
-}
-
-interface TravelAdvanceResult {
-  moved: boolean
-  arrived: boolean
-  waiting: boolean
-  pendingAction: string | null
-}
-
-function canUseYanpassFastTrack(player: PlayerState) {
-  return player.affiliationId === 'yanpass-escort'
-    || (player.factionStanding['yanpass-escort'] || 0) >= 6
-    || Boolean(player.tradeRun)
-    || Boolean(player.playerFaction?.branches.caravan)
 }
 
 function canEnterJadegate(player: PlayerState) {
@@ -94,395 +24,99 @@ function canEnterJadegate(player: PlayerState) {
     || (player.factionStanding['jadegate-courtyard'] || 0) >= 12
     || player.rankIndex >= 2
     || player.reputation >= 16
-    || Boolean(player.sect)
 }
 
 function getPlayerTravelBlockReason(fromId: string, toId: string) {
-  const ctx = getContext()
-  const player = ctx.game.player
-  if (toId === 'yanpass' && YANPASS_CURFEW_HOURS.has(ctx.game.world.hour) && !canUseYanpassFastTrack(player)) {
-    return '雁回关夜里闭阖，没有边关门路或押货照验时会被拦在关外。'
-  }
-  if (toId === 'jadegate' && !canEnterJadegate(player)) {
-    return '玉阙行院只认引荐和名望，当前门路还不够硬。'
-  }
-  if (fromId === 'snowpeak' && toId === 'jadegate' && player.rankIndex < 1) {
-    return '寒魄峰往玉阙的山道灵压太重，至少得有练力底子。'
-  }
+  const player = getContext().game.player
+  if (toId === 'jadegate' && !canEnterJadegate(player)) return '玉阙行院只认引荐与名望，眼下还进不去山门。'
+  if (fromId === 'snowpeak' && toId === 'jadegate' && player.rankIndex < 1) return '寒魄峰往玉阙的山道灵压太重，至少得有练力底子。'
   return null
 }
 
-function resolvePlayerRoute(startId: string, endId: string): TravelPreview {
-  const route = resolveRoute(startId, endId, {
-    canTraverse(fromId, toId) {
-      return !getPlayerTravelBlockReason(fromId, toId)
-    },
-  })
-  if (route) {
-    return {
-      route,
-      segments: Math.max(1, route.length - 1),
-      viaIds: route.slice(1, -1),
-      blockedReason: null,
-      nextStopId: route[1] || null,
-    }
-  }
-
-  const staticRoute = resolveRoute(startId, endId)
-  if (staticRoute) {
-    for (let index = 0; index < staticRoute.length - 1; index += 1) {
-      const reason = getPlayerTravelBlockReason(staticRoute[index], staticRoute[index + 1])
-      if (reason) {
-        return {
-          route: null,
-          segments: Math.max(1, staticRoute.length - 1),
-          viaIds: staticRoute.slice(1, -1),
-          blockedReason: reason,
-          nextStopId: staticRoute[index + 1] || null,
-        }
-      }
-    }
-  }
-
-  return {
-    route: null,
-    segments: 0,
-    viaIds: [],
-    blockedReason: null,
-    nextStopId: null,
-  }
+/** 一段路走几日：平路一日，险地山路两日。 */
+export function segmentDays(fromId: string, toId: string) {
+  const from = LOCATION_MAP.get(fromId)
+  const to = LOCATION_MAP.get(toId)
+  const danger = Math.max(from?.danger || 1, to?.danger || 1)
+  return danger >= 3 ? 2 : 1
 }
 
-function describeVia(viaIds: string[]) {
-  return viaIds.map(id => LOCATION_MAP.get(id)?.name || id).join('、')
+function routeDays(route: string[]) {
+  let days = 0
+  for (let i = 0; i < route.length - 1; i += 1) days += segmentDays(route[i], route[i + 1])
+  return days
 }
-
-function resolveArrivalAction(token: string) {
-  if (token.startsWith('realm:')) {
-    challengeRealm(token.slice('realm:'.length))
-    return
-  }
-  performAction(token)
-}
-
-function ensurePlayerTravelPlan(locationId: string, pendingAction: string | null = null, silent = false) {
-  const ctx = getContext()
-  const g = ctx.game
-  if (locationId === g.player.locationId) {
-    if (pendingAction) resolveArrivalAction(pendingAction)
-    return false
-  }
-
-  const target = LOCATION_MAP.get(locationId)
-  const current = ctx.getCurrentLocation()
-  if (!target) return false
-
-  if (g.player.travelPlan?.destinationId === locationId) {
-    if (pendingAction) g.player.travelPlan.pendingAction = pendingAction
-    ctx.selectedLocationId = locationId
-    return true
-  }
-
-  const preview = resolvePlayerRoute(current.id, locationId)
-  if (!preview.route) {
-    if (!silent) {
-      const reason = preview.blockedReason || `从${current.name}当前没有门路赶到${target.name}。`
-      ctx.appendLog(reason, 'warn')
-    }
-    return false
-  }
-
-  g.player.travelPlan = {
-    route: preview.route,
-    destinationId: locationId,
-    destinationName: target.name,
-    nextIndex: 1,
-    startedDay: g.world.day,
-    pendingAction,
-    pausedReason: null,
-  }
-  ctx.selectedLocationId = locationId
-  if (!silent) {
-    const via = describeVia(preview.viaIds)
-    ctx.appendLog(via ? `你定下去${target.name}的路，准备经由${via}一路赶过去。` : `你朝${target.name}动身。`, 'info')
-  }
-  return true
-}
-
-function rebasePlayerTravelPlan(plan: TravelPlanState) {
-  return ensurePlayerTravelPlan(plan.destinationId, plan.pendingAction, true)
-}
-
-function advancePlayerTravelStep(): TravelAdvanceResult {
-  const ctx = getContext()
-  const g = ctx.game
-  const plan = g.player.travelPlan
-  if (!plan) {
-    return { moved: false, arrived: false, waiting: false, pendingAction: null }
-  }
-
-  const current = ctx.getCurrentLocation()
-  const expectedCurrentId = plan.route[Math.max(0, plan.nextIndex - 1)]
-  if (expectedCurrentId && expectedCurrentId !== current.id) {
-    const replanned = rebasePlayerTravelPlan(plan)
-    if (!replanned || !g.player.travelPlan) {
-      g.player.travelPlan = null
-      return { moved: false, arrived: false, waiting: false, pendingAction: null }
-    }
-  }
-
-  const activePlan = g.player.travelPlan
-  if (!activePlan) return { moved: false, arrived: false, waiting: false, pendingAction: null }
-  const nextStopId = activePlan.route[activePlan.nextIndex]
-  if (!nextStopId) {
-    const pendingAction = activePlan.pendingAction
-    g.player.travelPlan = null
-    return { moved: false, arrived: true, waiting: false, pendingAction }
-  }
-
-  const nextStop = LOCATION_MAP.get(nextStopId)
-  if (!nextStop) {
-    g.player.travelPlan = null
-    return { moved: false, arrived: false, waiting: false, pendingAction: null }
-  }
-
-  const blockedReason = getPlayerTravelBlockReason(current.id, nextStopId)
-  if (blockedReason) {
-    if (activePlan.pausedReason !== blockedReason) {
-      activePlan.pausedReason = blockedReason
-      ctx.appendLog(`你赶到${current.name}附近后被拦下，往${nextStop.name}的路暂时走不通。${blockedReason}`, 'warn')
-    }
-    g.player.action = 'travel'
-    return { moved: false, arrived: false, waiting: true, pendingAction: null }
-  }
-
-  activePlan.pausedReason = null
-  g.player.locationId = nextStopId
-  g.player.action = 'travel'
-  meetNpcsAtLocation(nextStopId)
-  const travelStaminaCost = ACTION_META.travel?.cost?.stamina ?? 6
-  const travelQiCost = ACTION_META.travel?.cost?.qi ?? 3
-  ctx.adjustResource('stamina', -travelStaminaCost, 'maxStamina')
-  ctx.adjustResource('qi', -travelQiCost, 'maxQi')
-  ctx.adjustRegionStanding(nextStopId, 0.25)
-  bus.emit('state:location-changed', { locationId: nextStopId })
-
-  const eventChance = 0.16 + nextStop.danger * 0.04
-  if (Math.random() < eventChance) triggerTravelEvent(nextStop)
-  maybeTriggerFactionPursuit('travel')
-
-  activePlan.nextIndex += 1
-  const arrived = activePlan.nextIndex >= activePlan.route.length
-  if (arrived) {
-    const pendingAction = activePlan.pendingAction
-    g.player.travelPlan = null
-    ctx.selectedLocationId = nextStopId
-    g.player.action = sample(nextStop.actions)
-    ctx.appendLog(`你沿着既定门路赶到${nextStop.name}。`, 'info')
-    bus.emit('travel:arrived', { locationId: nextStopId })
-    return {
-      moved: true,
-      arrived: true,
-      waiting: false,
-      pendingAction: g.combat.currentEnemy ? null : pendingAction,
-    }
-  }
-
-  const remaining = activePlan.route.slice(activePlan.nextIndex).map(id => LOCATION_MAP.get(id)?.name || id).join('、')
-  ctx.appendLog(`你先赶到${nextStop.name}落脚，去${activePlan.destinationName}还得继续经${remaining}。`, 'info')
-  return { moved: true, arrived: false, waiting: false, pendingAction: null }
-}
-
-export function consumePlayerTravelStep() {
-  const ctx = getContext()
-  const step = advancePlayerTravelStep()
-  if (!step.moved && !step.waiting && !step.arrived) return false
-  if (step.pendingAction) {
-    resolveArrivalAction(step.pendingAction)
-    return true
-  }
-  tickWorld()
-  return true
-}
-
-/* ─── Travel ─── */
 
 export function getTravelPreview(targetId: string, originId = getContext().game.player.locationId): TravelPreview {
-  if (targetId === originId) {
-    return { route: [originId], segments: 0, viaIds: [], blockedReason: null, nextStopId: null }
+  if (targetId === originId) return { route: [originId], segments: 0, days: 0, viaIds: [], blockedReason: null }
+  const route = resolveRoute(originId, targetId, { canTraverse: (from, to) => !getPlayerTravelBlockReason(from, to) })
+  if (route) {
+    return { route, segments: route.length - 1, days: routeDays(route), viaIds: route.slice(1, -1), blockedReason: null }
   }
-  return resolvePlayerRoute(originId, targetId)
-}
-
-export function travelTo(locationId: string, options: TravelOptions = {}) {
-  const ctx = getContext()
-  const g = ctx.game
-  const pendingAction = options.pendingAction ?? null
-  if (locationId === g.player.locationId) {
-    if (pendingAction) resolveArrivalAction(pendingAction)
-    return false
-  }
-  const planned = ensurePlayerTravelPlan(locationId, pendingAction, options.silent)
-  if (!planned) return false
-  if (options.advanceNow === false) return true
-
-  const step = advancePlayerTravelStep()
-  if (!step.moved) return step.waiting
-  if (step.pendingAction) {
-    resolveArrivalAction(step.pendingAction)
-    return true
-  }
-  if (options.consumeTime !== false) tickWorld()
-  return true
-}
-
-export function travelAndAct(locationId: string, action: string) {
-  return travelTo(locationId, { pendingAction: action })
-}
-
-export function travelAndChallengeRealm(realmId: string) {
-  const realm = REALM_TEMPLATES.find(entry => entry.id === realmId)
-  if (!realm) return false
-  if (getContext().game.player.locationId === realm.locationId) {
-    challengeRealm(realmId)
-    return true
-  }
-  return travelTo(realm.locationId, { pendingAction: `realm:${realmId}` })
-}
-
-export function currentLocationCanReach(targetId: string): boolean {
-  const ctx = getContext()
-  return Boolean(resolvePlayerRoute(ctx.getCurrentLocation().id, targetId).route)
-}
-
-/* ─── Action Processing ─── */
-
-export function getActionUnavailableReason(actionKey: string): string | null {
-  const ctx = getContext()
-  const g = ctx.game
-  const location = ctx.getCurrentLocation()
-  const action = ACTION_META[actionKey]
-
-  if (!action && actionKey !== 'combat') return '这个动作当前不可用。'
-  if (g.story.activeStoryId && g.story.presentation === 'overlay') return '先完成眼前剧情，再处理其他事务。'
-
-  const tutorialReason = getManualActionLockReason(actionKey, g.story, g.player)
-  if (tutorialReason) return tutorialReason
-
-  if (g.combat.currentEnemy && actionKey !== 'combat') return '交战尚未结束，先处理眼前战斗。'
-  if (actionKey === 'combat') return g.combat.currentEnemy ? null : '当前没有正在交战的对手。'
-  if (actionKey === 'rest') return null
-  if (actionKey === 'trade' && g.player.tradeRun) return null
-  if (!location.actions.includes(actionKey)) return `${location.name}没有可执行“${action.label}”的门路。`
-  if (actionKey === 'breakthrough') {
-    const hasNextRank = g.player.rankIndex < RANKS.length - 1
-    const reason = getBreakthroughDisabledReason({
-      hasNextRank,
-      nextBreakthroughNeed: ctx.getNextBreakthroughNeed(),
-      cultivation: g.player.cultivation,
-      breakthrough: g.player.breakthrough,
-      rankIndex: g.player.rankIndex,
-      aura: location.aura,
-    })
-    if (reason) return reason
-  }
-  return null
-}
-
-function processActionKey(actionKey: string | null) {
-  if (!actionKey) return
-  const ctx = getContext()
-  const g = ctx.game
-
-  if (actionKey === 'combat') { g.player.action = 'combat'; autoCombatTick(); return }
-  if (actionKey === 'breakthrough') { g.player.action = 'breakthrough'; attemptBreakthrough(); return }
-  if (actionKey === 'sect') {
-    applyPassiveAction('sect')
-    if (PLAYER_SECT_ENABLED && g.player.sect) {
-      g.player.sect.treasury += 8 + g.player.sect.buildings.market * 4
-      g.player.sect.prestige = round(g.player.sect.prestige + 1)
-    }
-    return
-  }
-
-  applyPassiveAction(actionKey)
-
-  if (actionKey === 'trade') {
-    const tradeStatus = advanceTradeRun()
-    if (tradeStatus === 'settled' || tradeStatus === 'traveling') return
-    if (g.player.mode === 'merchant' && maybeStartBestTradeRun()) return
-    resolvePassiveTrade()
-    ctx.adjustFactionStanding(g.player.affiliationId, 1)
-  }
-  if (actionKey === 'auction') resolveAuctionVisit()
-  if (['hunt', 'quest'].includes(actionKey)) {
-    if (actionKey === 'quest') g.player.stats.questsFinished += 1
-    ctx.adjustFactionStanding(g.player.affiliationId, actionKey === 'quest' ? 1.2 : 0.8)
-    if (maybeTriggerFactionPursuit(actionKey as 'hunt' | 'quest')) return
-    const started = maybeStartEncounter(actionKey)
-    if (!started) {
-      const pool = DISTRIBUTABLE_ITEMS.filter(i => i.tier <= (ctx.getCurrentLocation().marketTier || 0) + 1 && (i.type === ctx.getCurrentLocation().marketBias || Math.random() < 0.2))
-      const item = sample(pool.length ? pool : DISTRIBUTABLE_ITEMS)
-      if (Math.random() < 0.42) {
-        ctx.addItemToInventory(item.id, 1)
-        ctx.appendLog(`你在${ctx.getCurrentLocation().name}一带收获了${item.name}。`, 'loot')
-      }
-    } else {
-      autoCombatTick()
+  const staticRoute = resolveRoute(originId, targetId)
+  if (staticRoute) {
+    for (let i = 0; i < staticRoute.length - 1; i += 1) {
+      const reason = getPlayerTravelBlockReason(staticRoute[i], staticRoute[i + 1])
+      if (reason) return { route: null, segments: staticRoute.length - 1, days: routeDays(staticRoute), viaIds: staticRoute.slice(1, -1), blockedReason: reason }
     }
   }
+  return { route: null, segments: 0, days: 0, viaIds: [], blockedReason: null }
 }
 
-/** 亲手出一招：打一个回合，世界随之走过同样的时间，与自动出招一致。 */
-export function performCombatRound(action: string, skillId: string | null = null) {
-  const ctx = getContext()
-  if (!ctx.game.combat.currentEnemy) return false
-  ctx.game.player.action = 'combat'
-  processBattleRound(action, skillId)
-  tickWorld()
-  ctx.updateDerivedStats()
-  return true
+export function currentLocationCanReach(targetId: string) {
+  return Boolean(getTravelPreview(targetId).route)
 }
 
-export function performAction(actionKey: string) {
-  const ctx = getContext()
-  const unavailableReason = getActionUnavailableReason(actionKey)
-  if (unavailableReason) {
-    ctx.appendLog(unavailableReason, 'warn')
-    return false
-  }
-  processActionKey(actionKey)
-  tickWorld()
-  ctx.updateDerivedStats()
-  return true
-}
-
-/* ─── World Tick ─── */
-
-export function tickWorld() {
+/** 到了一处地方：落脚、认人、记下来过。 */
+export function arriveAt(locationId: string) {
   const ctx = getContext()
   const g = ctx.game
-  g.world.subStep += 1
-  if (g.world.subStep >= 2) {
-    g.world.subStep = 0
-    g.world.hour = (g.world.hour + 1) % TIME_LABELS.length
-    if (g.world.hour === 0) {
-      g.world.day += 1
-      g.world.weather = sample(['晴', '微雨', '大风', '寒霜', '雾起', '雷暴'])
-      g.world.omen = sample(['星辉平稳', '灵潮暗涌', '海雾倒卷', '宗门钟鸣', '赤霞流火', '北斗失位'])
-    }
-    resolveAuctionTurn()
-    refreshMarketIfNeeded()
-    maybeActivateRealm()
-    processFactionStatusTick()
-    processRelationshipTick()
-    processSectTick()
-    processPlayerFactionTick()
-    processTerritoryStatusTick()
-    processIndustryTick()
-    processWorldEconomyTick()
-    if (g.world.hour === 0) processNpcLifeTick()
-  }
+  if (!LOCATION_MAP.has(locationId)) return
+  g.player.locationId = locationId
+  ctx.selectedLocationId = locationId
+  g.story.flags[`visited.${locationId}`] = true
+  meetNpcsAtLocation(locationId)
+  ctx.adjustRegionStanding(locationId, 0.25)
+  bus.emit('state:location-changed', { locationId })
+}
+
+/* ─── 世界过一日 ─── */
+
+const WEATHER_BY_SEASON = {
+  spring: ['晴', '晴', '微雨', '微雨', '雾起', '大风'],
+  summer: ['晴', '晴', '微雨', '雷暴', '雷暴', '大风'],
+  autumn: ['晴', '晴', '大风', '雾起', '微雨', '寒霜'],
+  winter: ['晴', '寒霜', '寒霜', '大风', '雾起', '晴'],
+} as const
+
+const OMENS = ['星辉平稳', '灵潮暗涌', '海雾倒卷', '宗门钟鸣', '赤霞流火', '北斗失位']
+
+/**
+ * 世界自己过一日：天气换过，NPC、势力、地盘与商况各自推演一步。
+ * 各系统的日结以 hour === 0 为界，这里在子时跑完日结，再把时辰交回给调用方。
+ */
+export function advanceWorldDay() {
+  const g = getContext().game
+  const shownHour = g.world.hour
+  g.world.day += 1
+  g.world.hour = 0
+  g.world.subStep = 0
+  g.world.weather = sample([...WEATHER_BY_SEASON[calendarOf(g.world.day).season]])
+  if (Math.random() < 0.1) g.world.omen = sample(OMENS)
+  processFactionStatusTick()
+  processRelationshipTick()
+  processTerritoryStatusTick()
+  processWorldEconomyTick()
+  processNpcLifeTick()
   runNpcAI()
-  processMilestones()
+  g.world.hour = shownHour
+}
+
+/** 秘境开启的传闻。 */
+export function announceRealm(locationId: string, realmName: string) {
+  const loc = LOCATION_MAP.get(locationId)
+  if (!loc) return
+  const ctx = getContext()
+  ctx.appendLog(fillTemplate(sample(WORLD_EVENT_TEMPLATES).text, { location: loc.name, resource: loc.resource }), 'npc')
+  ctx.appendLog(`${realmName}在${loc.name}附近出现了波动。`, 'npc')
 }

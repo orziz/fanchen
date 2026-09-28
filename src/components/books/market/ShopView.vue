@@ -54,7 +54,8 @@ import { iconForItemType } from '@/art/icons'
 import { getMarketBiasLabel } from '@/composables/useUIHelpers'
 import { buyListing } from '@/systems/trade'
 import { getItemSellPrice, sellItem } from '@/systems/player'
-import { travelTo } from '@/systems/world'
+import { startTravel } from '@/systems/life/activities'
+import { useBooks } from '@/composables/useBooks'
 import { getLocationEconomyOverview } from '@/systems/worldEconomy'
 import { sfx } from '@/audio/sfx'
 import GameIcon from '@/components/common/GameIcon.vue'
@@ -112,8 +113,11 @@ function sell(itemId: string) {
   sellItem(itemId)
 }
 
+const { closeBook } = useBooks()
+
 function goThere() {
   sfx.confirm()
-  travelTo(placeId.value)
+  closeBook()
+  startTravel(placeId.value)
 }
 </script>

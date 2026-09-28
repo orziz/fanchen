@@ -23,6 +23,7 @@
       <button class="title-option title-option--minor" type="button" @click="$emit('settings')">
         <span class="title-option__name">声画设置</span>
       </button>
+      <p v-if="retired" class="title-screen__notice">旧日的行程已封存，这一世从头来过。</p>
     </nav>
 
     <NewLifeDialog v-else :overwrite="hasSave" @cancel="creating = false" @confirm="beginLife" />
@@ -39,6 +40,7 @@ import { useReducedMotion } from '@/composables/useSettings'
 import { sfx } from '@/audio/sfx'
 import type { NewLifeOptions } from '@/stores/game/store'
 import NewLifeDialog from '@/components/shell/NewLifeDialog.vue'
+import { hasRetiredSave } from '@/stores/game/hydration'
 
 defineEmits<{ settings: [] }>()
 
@@ -48,6 +50,7 @@ const { enterGame } = useGamePhase()
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const creating = ref(false)
 const hasSave = ref(store.hasStoredSave())
+const retired = !hasSave.value && hasRetiredSave()
 let renderer: SceneRenderer | null = null
 
 const saveSummary = computed(() => {

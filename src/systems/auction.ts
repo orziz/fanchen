@@ -107,6 +107,12 @@ export function resolveAuctionTurn() {
 
 /* ─── Market Refresh ─── */
 
+/** 换旬时各地货架补货，不另发传闻。 */
+export function restockMarkets() {
+  const g = getContext().game
+  LOCATIONS.forEach(loc => { g.market[loc.id] = createDynamicMarketListings(loc) })
+}
+
 export function refreshMarketIfNeeded() {
   const ctx = getContext()
   const g = ctx.game

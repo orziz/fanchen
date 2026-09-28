@@ -1,4 +1,5 @@
 import { getContext } from '@/core/context'
+import { DAYS_PER_YEAR } from '@/config/calendar'
 import { PLAYER_SECT_ENABLED } from '@/config'
 import { bus } from '@/core/events'
 import { LOCATION_MAP, FACTION_MAP } from '@/config'
@@ -299,7 +300,7 @@ export function processNpcLifeTick() {
   g.npcs = g.npcs.map((npc, index) => {
     if (!npc.alive) return npc
     npc.ageProgress = (npc.ageProgress || 0) + 1
-    if (npc.ageProgress >= 12) {
+    if (npc.ageProgress >= DAYS_PER_YEAR) {
       npc.ageProgress = 0
       const prevStage = npc.lifeStage
       npc.age += 1

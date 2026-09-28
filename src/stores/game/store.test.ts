@@ -2,9 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { SAVE_BACKUP_KEY, SAVE_KEY } from '@/config'
-import { gameStep } from '@/systems/autoplay'
-import { setMode } from '@/systems/player'
-import { joinFaction } from '@/systems/social/faction'
+import { botRun } from '@/testing/lifeBot'
 
 function mockStorage() {
   const data = new Map<string, string>()
@@ -48,12 +46,7 @@ describe('save import', () => {
     mockStorage()
     const store = useGameStore()
     store.initializeGame()
-    store.story.activeStoryId = null
-    store.story.presentation = null
-    store.story.flags['tutorial.opening.active'] = false
-    joinFaction('qinghe-commons')
-    setMode('adventure')
-    for (let i = 0; i < 24 * 4; i += 1) gameStep()
+    botRun(120)
     store.player.name = '沈舟'
     store.player.money = 321
     const exported = store.exportSave()

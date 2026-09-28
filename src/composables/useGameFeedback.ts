@@ -20,12 +20,12 @@ export function useGameFeedback() {
   watch(
     () => {
       const p = store.player
-      return [p.cultivation, p.breakthrough, p.money, p.reputation, p.hp] as const
+      return [p.cultivation, p.money, p.reputation, p.hp] as const
     },
     (next, prev) => {
       if (!prev || store.combat.currentEnemy || performance.now() < quietUntil) return
-      const [cult, brk, money, rep, hp] = next
-      const [pCult, pBrk, pMoney, pRep, pHp] = prev
+      const [cult, money, rep, hp] = next
+      const [pCult, pMoney, pRep, pHp] = prev
       let shown = 0
       const push = (text: string, tone: Parameters<typeof float>[1], icon?: string) => {
         if (shown >= 3) return
@@ -33,7 +33,6 @@ export function useGameFeedback() {
         float(text, tone, 'hero', icon)
       }
       if (cult > pCult) { push(`修为 +${cult - pCult}`, 'gold', 'cultivation'); sfx.gain() }
-      if (brk > pBrk) push(`火候 +${brk - pBrk}`, 'qi', 'breakthrough')
       if (money > pMoney) { push(`灵石 +${money - pMoney}`, 'gain', 'stone'); sfx.coin() }
       if (rep > pRep) push(`声望 +${rep - pRep}`, 'gain', 'fame')
       if (hp < pHp - 2) push(`气血 -${pHp - hp}`, 'loss', 'hp')
@@ -47,7 +46,7 @@ export function useGameFeedback() {
       heroMotion('surge', 1600)
       sfx.breakthrough()
     } else {
-      banner('breakthrough-fail', '冲关受挫', '经脉震荡，火候折损三成', 2600)
+      banner('breakthrough-fail', '冲关受挫', '经脉震荡，修为折损三成', 2600)
       shake(1.4)
       sfx.breakthroughFail()
     }
@@ -112,9 +111,13 @@ export function useGameFeedback() {
     banner('faction', `入${name}`, `身份：${title}`, 2600)
     sfx.chime()
   }))
-  offs.push(bus.on('milestone:completed', ({ title }: { title: string }) => {
-    banner('unlock', `路标 · ${title}`, '小有所成', 2400)
+  offs.push(bus.on('goal:completed', ({ title }: { title: string }) => {
+    banner('unlock', `志向 · ${title}`, '又近了一步', 2600)
     sfx.chime()
+  }))
+  offs.push(bus.on('life:ended', () => {
+    banner('defeat', '一世已尽', '', 3000)
+    sfx.defeat()
   }))
   offs.push(bus.on('state:inventory-changed', ({ quantity }: { quantity: number }) => {
     if (quantity > 0) sfx.loot()

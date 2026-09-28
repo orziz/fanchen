@@ -1,3 +1,5 @@
+import type { LifeState } from '@/types/life'
+
 /* ─── Inventory & Equipment ─── */
 export interface InventoryEntry { itemId: string; quantity: number }
 export interface Equipment { weapon: string | null; armor: string | null; heart: string | null }
@@ -111,6 +113,12 @@ export interface PlayerState {
   sect: SectState | null; playerFaction: PlayerFactionState | null
   tradeRun: TradeRun | null; assets: PlayerAssets; skills: PlayerSkills; stats: PlayerStats
   travelPlan: TravelPlanState | null
+  /** 出生于第几日（绝对日数，可为负），年岁由此推算 */
+  bornDay: number
+  /** 伤势 0–3 级 */
+  injury: number
+  /** 丹药、机缘添的寿元（岁） */
+  lifespanBonus: number
 }
 
 /* ─── NPC ─── */
@@ -248,4 +256,5 @@ export interface GameState {
   migrationFlags: MigrationFlags
   log: LogEntry[]
   lastSavedAt: number | null
+  life: LifeState
 }

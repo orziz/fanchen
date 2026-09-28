@@ -31,10 +31,12 @@ function show(el: HTMLElement) {
   current = el
   const rect = el.getBoundingClientRect()
   const placeBelow = rect.top < window.innerHeight * 0.3
+  // 提示框最宽 18rem、以锚点居中：离屏边太近时整体挪进来，免得被挤成一条窄栏。
+  const half = Math.min(window.innerWidth / 2 - 12, parseFloat(getComputedStyle(document.documentElement).fontSize) * 9)
   tip.value = {
     text: el.dataset.tip || '',
     title: el.dataset.tipTitle || '',
-    x: Math.min(window.innerWidth - 12, Math.max(12, rect.left + rect.width / 2)),
+    x: Math.min(window.innerWidth - 12 - half, Math.max(12 + half, rect.left + rect.width / 2)),
     y: placeBelow ? rect.bottom + 8 : rect.top - 8,
     placement: placeBelow ? 'bottom' : 'top',
   }

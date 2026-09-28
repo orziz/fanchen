@@ -1,16 +1,22 @@
 import { computed, ref } from 'vue'
 
-/** 书册：浮在场景上的功能界面，一次只开一本。 */
+/**
+ * 书册：浮在场景上的功能界面，一次只开一本。
+ * 营生（田产、工坊、铺面）属于中期经营，前期先不开放入口。
+ */
 export const BOOKS = [
-  { id: 'character' as const, label: '人物', icon: 'character', hotkey: 'C' },
-  { id: 'bag' as const, label: '行囊', icon: 'bag', hotkey: 'B' },
-  { id: 'map' as const, label: '山河', icon: 'map', hotkey: 'M' },
-  { id: 'market' as const, label: '市集', icon: 'market', hotkey: 'T' },
-  { id: 'industry' as const, label: '营生', icon: 'industry', hotkey: 'I' },
-  { id: 'faction' as const, label: '门路', icon: 'faction', hotkey: 'F' },
-  { id: 'people' as const, label: '人情', icon: 'people', hotkey: 'P' },
-  { id: 'chronicle' as const, label: '纪事', icon: 'chronicle', hotkey: 'J' },
+  { id: 'character' as const, label: '人物', icon: 'character', hotkey: 'C', hidden: false },
+  { id: 'bag' as const, label: '行囊', icon: 'bag', hotkey: 'B', hidden: false },
+  { id: 'map' as const, label: '山河', icon: 'map', hotkey: 'M', hidden: false },
+  { id: 'market' as const, label: '市集', icon: 'market', hotkey: 'T', hidden: false },
+  { id: 'industry' as const, label: '营生', icon: 'industry', hotkey: 'I', hidden: true },
+  { id: 'faction' as const, label: '门路', icon: 'faction', hotkey: 'F', hidden: false },
+  { id: 'people' as const, label: '人情', icon: 'people', hotkey: 'P', hidden: false },
+  { id: 'chronicle' as const, label: '纪事', icon: 'chronicle', hotkey: 'J', hidden: false },
 ]
+
+/** 眼下开放的书册。 */
+export const OPEN_BOOKS = BOOKS.filter(book => !book.hidden)
 
 export type BookId = typeof BOOKS[number]['id']
 

@@ -310,6 +310,7 @@ export function getFactionJoinIssues(factionId: string): string[] {
   if (!faction) return ['这方势力暂时无法接触。']
   const issues: string[] = []
   if (g.player.affiliationId === factionId) issues.push('你已经在这方势力中')
+  if (factionId === 'jadegate-courtyard' && !g.story.flags['jadegate.trial.passed']) issues.push('须先通过行院的入门试炼')
   const cooldownDays = getFactionRejoinCooldownDays(factionId)
   if (cooldownDays > 0) issues.push(`还需等待${cooldownDays}天才能重返这方势力`)
   if (g.player.locationId !== faction.locationId) issues.push(`需前往${LOCATION_MAP.get(faction.locationId)?.name || faction.locationId}`)
@@ -328,11 +329,12 @@ export function explainFactionJoin(factionId: string) {
   return issues.length ? issues.join('；') : '条件齐备，可以加入。'
 }
 
-export function joinFaction(factionId: string) {
+/** 投身一方势力；force 用于试炼、引荐等由事件直接定下的入门。 */
+export function joinFaction(factionId: string, options: { force?: boolean } = {}) {
   const ctx = getContext()
   const g = ctx.game
   const faction = FACTION_MAP.get(factionId)
-  if (!faction || !canJoinFaction(factionId)) {
+  if (!faction || (!options.force && !canJoinFaction(factionId))) {
     ctx.appendLog('眼下还没有资格加入这方势力。', 'warn')
     return
   }

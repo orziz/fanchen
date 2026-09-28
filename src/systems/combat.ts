@@ -89,6 +89,66 @@ function generateEncounter(location: { id: string; danger: number }): EnemyState
   return buildEnemy(template, location.danger, { regionId: location.id, affixIds: rollAffixes(affixCount) })
 }
 
+export interface CombatSpec {
+  templateId?: string
+  danger?: number
+  name?: string
+  boss?: boolean
+  hpMul?: number
+  powerMul?: number
+  /** 秘境首领：打赢后按秘境结算 */
+  realmId?: string
+}
+
+function blueprintFor(spec: CombatSpec, location: { id: string; danger: number }): EnemyBlueprint {
+  const template = (spec.templateId && MONSTER_TEMPLATES.find(m => m.id === spec.templateId)) || null
+  if (template) {
+    return { ...template, name: spec.name || template.name, hpMul: template.hpMul * (spec.hpMul || 1), powerMul: template.powerMul * (spec.powerMul || 1) }
+  }
+  const picked = generateEncounter(location)
+  return { id: picked.templateId, name: spec.name || picked.name, hpMul: spec.hpMul || 1, powerMul: spec.powerMul || 1, lootTypes: picked.lootTypes }
+}
+
+/** 事件里的力战：按事件给的对手与险度开打，结果由战斗结束时的总线事件回传。 */
+export function startEventCombat(spec: CombatSpec) {
+  const ctx = getContext()
+  const g = ctx.game
+  if (g.combat.currentEnemy) return g.combat.currentEnemy
+  const location = ctx.getCurrentLocation()
+  const danger = Math.max(1, spec.danger ?? location.danger)
+  const realm = spec.realmId ? REALM_TEMPLATES.find(entry => entry.id === spec.realmId) : null
+  const enemy = buildEnemy(blueprintFor(spec, location), danger, {
+    boss: spec.boss, regionId: location.id,
+    realmId: realm?.id, affixIds: realm?.boss.affixes, rewardItemIds: realm?.rewards.items,
+  })
+  if (realm) {
+    enemy.rewards.money = Math.max(enemy.rewards.money, realm.rewards.money)
+    g.combat.pendingRealmId = realm.id
+  }
+  g.combat.history = []; g.combat.currentEnemy = enemy; g.combat.autoBattle = true
+  g.combat.playerEffects = { burn: 0, guard: 0, chill: 0 }
+  addCombatHistory(`${enemy.name}拦在面前。`, 'warn')
+  bus.emit('combat:start', { enemy })
+  return enemy
+}
+
+/** 开打前的胜算估计：比一比谁先撑不住。 */
+export function estimateFight(spec: CombatSpec) {
+  const ctx = getContext()
+  const p = ctx.game.player
+  const location = ctx.getCurrentLocation()
+  const base = getDangerBaseline(Math.max(1, spec.danger ?? location.danger))
+  const template = spec.templateId ? MONSTER_TEMPLATES.find(m => m.id === spec.templateId) : null
+  const enemyHp = base.hp * (template?.hpMul || 1) * (spec.hpMul || 1) * (spec.boss ? 2.2 : 1)
+  const enemyHit = base.power * (template?.powerMul || 1) * (spec.powerMul || 1)
+  const playerHit = Math.max(6, ctx.getPlayerPower() + ctx.getPlayerInsight() * 0.28) * 0.96
+  const ratio = (p.hp / Math.max(4, enemyHit)) / (enemyHp / playerHit)
+  if (ratio >= 2) return { label: '稳操胜券', ratio }
+  if (ratio >= 1.3) return { label: '胜算颇大', ratio }
+  if (ratio >= 0.9) return { label: '胜负难料', ratio }
+  return { label: '凶多吉少', ratio }
+}
+
 export function startEncounter(source = 'hunt') {
   const ctx = getContext()
   const g = ctx.game
@@ -307,8 +367,8 @@ function resolveDefeat(enemy: EnemyState) {
   ctx.appendLog(`你败给了${enemy.name}，所幸留得性命。`, 'warn')
   ctx.game.combat.lastResult = { outcome: 'defeat', enemy: enemy.name, boss: enemy.boss }
   ctx.game.combat.currentEnemy = null; ctx.game.combat.pendingRealmId = null; ctx.game.combat.autoBattle = false
-  bus.emit('combat:defeat', { name: enemy.name })
   revivePlayer()
+  bus.emit('combat:defeat', { name: enemy.name })
 }
 
 export function processBattleRound(action = 'attack', skillId: string | null = null) {
@@ -361,11 +421,3 @@ export function autoCombatTick(): boolean {
   return true
 }
 
-export function maybeStartEncounter(actionKey: string): boolean {
-  const action = ACTION_META[actionKey]
-  if (!action || !action.reward.encounter) return false
-  const ctx = getContext()
-  if (ctx.game.combat.currentEnemy) return true
-  if (Math.random() < action.reward.encounter) { startEncounter(actionKey); return true }
-  return false
-}

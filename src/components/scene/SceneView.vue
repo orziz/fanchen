@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
 import { LOCATION_MAP } from '@/config'
@@ -45,6 +45,7 @@ import { SceneRenderer } from '@/art/scene/renderer'
 import { poseForAction } from '@/art/figures/hero'
 import { shapeForEnemy, sizeForEnemy } from '@/art/figures/enemies'
 import { useFx } from '@/composables/useFx'
+import { bus } from '@/core/events'
 import { useReducedMotion } from '@/composables/useSettings'
 import GameIcon from '@/components/common/GameIcon.vue'
 import HeroFigure from '@/components/scene/HeroFigure.vue'
@@ -62,7 +63,38 @@ const canvasEl = ref<HTMLCanvasElement | null>(null)
 let renderer: SceneRenderer | null = null
 let resizeObserver: ResizeObserver | null = null
 
-const traveling = computed(() => Boolean(player.value.travelPlan))
+/**
+ * 日夜快进：一件事过去几日，画面就把这几日的天色走一遍，人物保持做事的姿态。
+ * 只是表现，时间早已在规则层走完。
+ */
+const lapse = reactive({ active: false, hour: 0, travel: false })
+let lapseRaf = 0
+
+function playLapse(days: number, activity: string) {
+  if (reduceMotion.value || days <= 0) return
+  cancelAnimationFrame(lapseRaf)
+  const cycles = Math.min(3, Math.max(1, Math.ceil(days / 5)))
+  const duration = 650 * cycles
+  const from = world.value.hour
+  const start = performance.now()
+  lapse.active = true
+  lapse.travel = activity === 'travel' || activity === 'explore'
+  const step = (now: number) => {
+    const t = (now - start) / duration
+    if (t >= 1) {
+      lapse.active = false
+      lapse.travel = false
+      return
+    }
+    lapse.hour = Math.floor(from + t * 12 * cycles) % 12
+    lapseRaf = requestAnimationFrame(step)
+  }
+  lapseRaf = requestAnimationFrame(step)
+}
+
+const offLapse = bus.on('life:days-passed', (payload: { days: number; activity: string }) => playLapse(payload.days, payload.activity))
+
+const traveling = computed(() => lapse.travel || (Boolean(store.game.life.runner) && player.value.action === 'travel'))
 const fighting = computed(() => Boolean(combat.value.currentEnemy))
 const enemy = computed(() => combat.value.currentEnemy)
 const pose = computed(() => poseForAction(player.value.action, traveling.value, fighting.value))
@@ -80,7 +112,7 @@ const heroFloats = computed(() => fx.floats.filter(f => f.target === 'hero'))
 const enemyFloats = computed(() => fx.floats.filter(f => f.target === 'enemy'))
 
 const heroLight = computed(() => {
-  const light = resolveLight(world.value.hour, resolveWeather(world.value.weather))
+  const light = resolveLight(lapse.active ? lapse.hour : world.value.hour, resolveWeather(world.value.weather))
   return (1 - light.night * 0.45).toFixed(2)
 })
 
@@ -89,7 +121,7 @@ const sceneInput = computed(() => {
   return {
     key: location.id,
     archetype: resolveArchetype(location),
-    hour: world.value.hour,
+    hour: lapse.active ? lapse.hour : world.value.hour,
     weather: resolveWeather(world.value.weather),
     travel: traveling.value,
     heroEffect: (!fighting.value && !traveling.value && ['meditate', 'breakthrough'].includes(player.value.action) ? 'qi' : 'none') as 'qi' | 'none',
@@ -132,6 +164,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  offLapse()
+  cancelAnimationFrame(lapseRaf)
   resizeObserver?.disconnect()
   renderer?.destroy()
   renderer = null
