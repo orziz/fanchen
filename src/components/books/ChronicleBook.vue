@@ -17,13 +17,6 @@
       <p v-if="!current && !history.length" class="empty-note">尚无悬着的线头，江湖里多走动，自有际遇找上门来。</p>
     </section>
 
-    <section v-else-if="tab === 'tasks'" class="task-sections">
-      <h4 class="sheet__heading">门中差使</h4>
-      <AffiliationTasks />
-      <h4 class="sheet__heading">行会收货单</h4>
-      <OrdersView />
-    </section>
-
     <section v-else class="log-view">
       <div class="filter-chips">
         <button v-for="f in filters" :key="f.id" class="filter-chip" :class="{ 'is-active': filter === f.id }" type="button" @click="filter = f.id">{{ f.label }}<span class="num">{{ f.count }}</span></button>
@@ -47,8 +40,6 @@ import { getActiveStoryScene, getSuspendedStoryScene, resumeSuspendedStory, show
 import { useBooks } from '@/composables/useBooks'
 import { sfx } from '@/audio/sfx'
 import BookFrame from '@/components/books/BookFrame.vue'
-import AffiliationTasks from '@/components/books/faction/AffiliationTasks.vue'
-import OrdersView from '@/components/books/industry/OrdersView.vue'
 
 const store = useGameStore()
 const { story, log } = storeToRefs(store)
@@ -77,7 +68,6 @@ const history = computed(() => story.value.history.slice(0, 16).map((entry, inde
 
 const tabs = computed(() => [
   { id: 'story', label: '剧情', badge: current.value ? '续' : '' },
-  { id: 'tasks', label: '委托' },
   { id: 'log', label: '纪事', badge: log.value.length || '' },
 ])
 

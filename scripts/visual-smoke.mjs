@@ -44,35 +44,31 @@ async function verifyViewport(name, viewport) {
   await page.getByRole('button', { name: /踏入凡尘/ }).click()
   await page.getByRole('button', { name: '入世' }).click()
 
-  const overlay = page.locator('.story-overlay')
-  await overlay.waitFor({ state: 'visible' })
-  await assertInsideViewport(page, '.story-overlay__panel')
-  const firstChoice = page.locator('.story-choice-button:not(:disabled)').first()
-  await firstChoice.waitFor({ state: 'visible' })
-  assert.equal(await firstChoice.evaluate(element => element === document.activeElement), true, `${name}: first story choice should receive focus`)
+  // 开场是一卷事件：选择之前，时间不走。
+  await page.locator('.event-scroll').first().waitFor({ state: 'visible' })
+  await assertInsideViewport(page, '.event-scroll')
+  assert.ok(await page.locator('.event-choice').count() >= 2, `${name}: opening should offer choices`)
   assert.equal(await hasHorizontalOverflow(page), false, `${name}: opening screen has horizontal overflow`)
-
-  // 开场剧情遮罩打开时，时辰不应推进（1x 下 8 秒足够走过至少一个时辰）。
   const timeBefore = await page.locator('.top-bar__time').textContent()
-  await page.waitForTimeout(8_000)
-  const timeAfter = await page.locator('.top-bar__time').textContent()
-  assert.equal(timeAfter, timeBefore, `${name}: world advanced while the story dialog was open`)
+  await page.waitForTimeout(3_000)
+  assert.equal(await page.locator('.top-bar__time').textContent(), timeBefore, `${name}: time passed without the player doing anything`)
   await page.screenshot({ path: `${outputDir}/${name}-opening.png` })
 
-  await completeOpeningTutorial(page, name)
-  assert.equal(await overlay.count(), 0, `${name}: story overlay should close at the terminal node`)
-  assert.match(await page.locator('.book__title').textContent(), /门路/, `${name}: tutorial should finish on the affiliation book`)
-  await assertInsideViewport(page, '.book')
-  await page.waitForTimeout(450)
-  await page.screenshot({ path: `${outputDir}/${name}-affiliation.png` })
-
-  await page.keyboard.press('Escape')
-  await page.locator('.book').waitFor({ state: 'detached' })
-  for (const selector of ['.top-bar', '.character-card', '.objective-card', '.action-dock']) {
+  await page.locator('.event-choice').first().click()
+  await page.locator('.event-scroll__continue').click()
+  await page.waitForFunction(() => !document.querySelector('.event-scroll'))
+  for (const selector of ['.top-bar', '.character-card', '.objective-card', '.local-panel', '.action-dock']) {
     await assertInsideViewport(page, selector)
   }
   assert.equal(await hasHorizontalOverflow(page), false, `${name}: gameplay screen has horizontal overflow`)
   assert.equal(await sceneHasInk(page), true, `${name}: scene canvas rendered nothing`)
+
+  // 做一件事：练体，选最短的时长，做完要务卡上记下“刚才”。
+  await page.locator('.action-btn', { hasText: '练体' }).click()
+  await page.locator('.duration-pop__option').first().click()
+  await page.locator('.objective-card__milestone-title', { hasText: '练体' }).waitFor({ state: 'visible' })
+  await page.waitForTimeout(450)
+  await page.screenshot({ path: `${outputDir}/${name}-after-training.png` })
 
   await page.keyboard.press('j')
   await page.locator('.book').waitFor({ state: 'visible' })
@@ -103,17 +99,6 @@ async function verifyPortraitHint(viewport) {
   assert.equal(await hasHorizontalOverflow(page), false, 'portrait: rotate hint has horizontal overflow')
   await page.screenshot({ path: `${outputDir}/phone-portrait.png` })
   await context.close()
-}
-
-async function completeOpeningTutorial(page, name) {
-  await page.getByRole('button', { name: /我想拜入宗门/ }).click()
-  await page.getByRole('button', { name: /先看看青禾周遭的路脉/ }).click()
-  assert.equal(await page.locator('.story-overlay').isVisible(), true, `${name}: story disappeared after opening the map`)
-  await page.getByRole('button', { name: /把护身和口粮先收下/ }).click()
-  await page.getByRole('button', { name: /去青禾找一家势力挂靠/ }).click()
-  await page.locator('.story-choice-button--finish').click()
-  await page.locator('.story-overlay').waitFor({ state: 'detached' })
-  await page.locator('.book').waitFor({ state: 'visible' })
 }
 
 async function hasHorizontalOverflow(page) {

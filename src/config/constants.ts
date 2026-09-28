@@ -10,21 +10,6 @@ export const PLAYER_SECT_ENABLED = false
 export const PLAYER_SECT_CREATE_BLOCK_TEXT = '山门未启，眼下还不是另立宗门的时候。'
 export const PLAYER_SECT_FROZEN_TEXT = '山门暂封，旧日门内事务先行封存，只留账册与名录备查。'
 
-/** 每跳间隔（毫秒）：一跳为半个时辰，一日二十四跳。 */
-export const LOOP_INTERVALS: Record<number, number> = {
-  1: 3000,
-  2: 1500,
-  4: 750,
-  10: 300,
-}
-
-export const SPEED_OPTIONS = [
-  { value: 1, label: '1x' },
-  { value: 2, label: '2x' },
-  { value: 4, label: '4x' },
-  { value: 10, label: '10x' },
-] as const
-
 export const TIME_LABELS = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'] as const
 
 export const RARITY_META: Record<string, { label: string; color: string; value: number }> = {

@@ -2,6 +2,7 @@ import { getContext } from '@/core/context'
 import { LOCATION_MAP, getItem } from '@/config'
 import { randomFloat } from '@/utils'
 import { getTechniqueLearnIssues, hasLearnedTechnique } from '@/systems/techniques'
+import { getKnowledgeLearnIssues, hasLearnedKnowledge } from '@/systems/knowledge'
 import { getTravelPreview } from '@/systems/world'
 import { hasNpcVisitStory, tryStartNpcVisitStory } from '@/systems/story'
 import { breakthroughIssue, meditateGain, nextRealmNeed, trainGain } from '@/systems/life/cultivation'
@@ -94,11 +95,15 @@ export function listActivities(): ActivityView[] {
   }
   for (const entry of p.inventory) {
     const item = getItem(entry.itemId)
-    if (item?.type !== 'manual' || !item.manualSkillId || hasLearnedTechnique(item.manualSkillId)) continue
+    if (item?.type !== 'manual') continue
+    const technique = item.manualSkillId && !hasLearnedTechnique(item.manualSkillId)
+    const knowledge = !item.manualSkillId && item.knowledgeId && !hasLearnedKnowledge(item.knowledgeId)
+    if (!technique && !knowledge) continue
+    const issue = technique ? getTechniqueLearnIssues(item.manualSkillId!)[0] : getKnowledgeLearnIssues(item.knowledgeId!)[0]
     list.push({
-      id: `study:${item.id}`, label: `研读${item.name}`, icon: 'scroll',
-      options: [{ days: 10, preview: '读通便能学会' }],
-      issue: getTechniqueLearnIssues(item.manualSkillId)[0] || null, hint: item.desc,
+      id: `study:${item.id}`, label: '研读', icon: 'scroll',
+      options: [{ days: 10, preview: `读通《${item.name}》便能学会` }],
+      issue: issue || null, hint: item.desc,
     })
   }
   list.push({

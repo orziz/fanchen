@@ -21,7 +21,7 @@
           <li v-for="(rank, index) in ranks" :key="rank.name" class="realm-ladder__step" :class="{ 'is-current': index === player.rankIndex, 'is-past': index < player.rankIndex }">
             <span class="realm-ladder__name">{{ rank.name }}</span>
             <span class="realm-ladder__need num">{{ index === 0 ? '起点' : `修为 ${rank.need}` }}</span>
-            <span class="realm-ladder__gain num">战力 +{{ index * realmPowerStep }} · 气血 {{ rank.hpMax }}</span>
+            <span class="realm-ladder__gain num">寿元 {{ rank.lifespan }} · 气血 {{ rank.hpMax }}</span>
           </li>
         </ol>
 
@@ -56,7 +56,8 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useGameStore } from '@/stores/game'
-import { RANKS, REALM_POWER_PER_RANK, getGrowthProgressNote } from '@/config'
+import { RANKS } from '@/config'
+import { ageOf, lifespanOf, nextRealmNeed } from '@/systems/life/cultivation'
 import { formatNumber } from '@/utils'
 import BookFrame from '@/components/books/BookFrame.vue'
 import GameIcon from '@/components/common/GameIcon.vue'
@@ -69,7 +70,6 @@ const {
 } = storeToRefs(store)
 
 const ranks = RANKS
-const realmPowerStep = REALM_POWER_PER_RANK
 
 const stats = computed(() => [
   { label: '战力', icon: 'power', value: formatNumber(Math.round(playerPower.value)), tip: '体魄、兵器、心法与境界之和' },
@@ -80,14 +80,14 @@ const stats = computed(() => [
   { label: '气血', icon: 'hp', value: `${player.value.hp}/${player.value.maxHp}`, tip: '归零即落败，被人救回也要折损灵石' },
 ])
 
-const growthNote = computed(() => getGrowthProgressNote({
-  hasNextRank: hasNextRank.value,
-  nextBreakthroughNeed: nextBreakthroughNeed.value,
-  cultivation: player.value.cultivation,
-  breakthrough: player.value.breakthrough,
-  rankIndex: player.value.rankIndex,
-  aura: currentLocation.value.aura,
-}))
+const growthNote = computed(() => {
+  const p = player.value
+  const need = nextRealmNeed(p.rankIndex)
+  const age = ageOf(p)
+  const left = lifespanOf(p) - age
+  const progress = need ? `这一境修为 ${Math.floor(p.cultivation)} / ${need}` : '已到境界尽头'
+  return `${age}岁，寿元还剩${left}年。${progress}。`
+})
 
 const master = computed(() => (player.value.masterId ? store.getNpc(player.value.masterId) : null))
 const partner = computed(() => (player.value.partnerId ? store.getNpc(player.value.partnerId) : null))

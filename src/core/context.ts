@@ -22,7 +22,6 @@ export interface GameContext {
 
   /* ─── UI / meta state ─── */
   selectedLocationId: string
-  speed: number
   saveState: string
 
   /* ─── Computed-like getters (kept as methods for framework-agnostic compat) ─── */

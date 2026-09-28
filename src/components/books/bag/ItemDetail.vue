@@ -49,6 +49,9 @@ import {
 import { iconForItemType } from '@/art/icons'
 import { describeItemEffect, getItemTypeLabel } from '@/composables/useUIHelpers'
 import { consumeItem, getItemSellPrice, sellItem, stashManualToSect } from '@/systems/player'
+import { startLocalActivity } from '@/systems/life/activities'
+import { useBooks } from '@/composables/useBooks'
+import { isBusy } from '@/systems/life/runner'
 import { getKnowledgeLearnIssues, hasLearnedKnowledge } from '@/systems/knowledge'
 import { getTechniqueLearnIssues, hasLearnedTechnique } from '@/systems/techniques'
 import { sfx } from '@/audio/sfx'
@@ -58,6 +61,8 @@ const props = defineProps<{ itemId: string; quantity: number }>()
 
 const store = useGameStore()
 const { player, currentLocation } = storeToRefs(store)
+const { closeBook } = useBooks()
+const busy = computed(() => { void store.game.life.runner; void store.game.life.event; return isBusy() })
 
 const TIER_NAMES = ['零', '一', '二', '三', '四', '五', '六']
 
@@ -91,12 +96,12 @@ const primary = computed(() => {
     if (it.manualSkillId) {
       if (hasLearnedTechnique(it.manualSkillId)) return { visible: true, label: '已学会', disabled: true, title: '这门功法你已经学会了。' }
       const issues = getTechniqueLearnIssues(it.manualSkillId)
-      return { visible: true, label: '研习秘籍', disabled: issues.length > 0, title: issues.join('；') }
+      return { visible: true, label: '研读（十日）', disabled: issues.length > 0 || busy.value, title: issues.join('；') || (busy.value ? '手头的事还没做完' : '闭门读上十日便能学会') }
     }
     if (it.knowledgeId) {
       if (hasLearnedKnowledge(it.knowledgeId)) return { visible: true, label: '已研读', disabled: true, title: '这份札记你已经读过了。' }
       const issues = getKnowledgeLearnIssues(it.knowledgeId)
-      return { visible: true, label: '研读札记', disabled: issues.length > 0, title: issues.join('；') }
+      return { visible: true, label: '研读（十日）', disabled: issues.length > 0 || busy.value, title: issues.join('；') || (busy.value ? '手头的事还没做完' : '闭门读上十日便能读通') }
     }
     return { visible: true, label: '研读', disabled: true, title: '这册文字残缺，读不出门道。' }
   }
@@ -113,6 +118,11 @@ function usePrimary() {
     return
   }
   sfx.confirm()
+  if (item.value?.type === 'manual') {
+    closeBook()
+    startLocalActivity(`study:${props.itemId}`)
+    return
+  }
   consumeItem(props.itemId)
 }
 

@@ -1,5 +1,5 @@
 <template>
-  <Transition name="scroll-in">
+  <Transition name="scroll-in" mode="out-in">
     <section v-if="view && view.stage !== 'fighting'" :key="view.id + view.stage" class="event-scroll" role="dialog" aria-modal="false" :aria-label="view.title">
       <header class="event-scroll__head">
         <span class="event-scroll__seal" aria-hidden="true">事</span>

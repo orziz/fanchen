@@ -49,7 +49,6 @@ export const useGameStore = defineStore('game', () => {
   const { closeBook } = useBooks()
   const game = ref<GameState>(createGameState())
   const selectedLocationId = ref('qinghe')
-  const speed = ref(1)
   const saveState = ref('未存档')
   const feedback = ref<{ text: string; type: string } | null>(null)
   const initialized = ref(false)
@@ -381,8 +380,6 @@ export const useGameStore = defineStore('game', () => {
     bus,
     get selectedLocationId() { return selectedLocationId.value },
     set selectedLocationId(v: string) { selectedLocationId.value = v },
-    get speed() { return speed.value },
-    set speed(v: number) { speed.value = v },
     get saveState() { return saveState.value },
     set saveState(v: string) { saveState.value = v },
     getCurrentLocation, getSelectedLocation, getRankData, getNextBreakthroughNeed,
@@ -400,7 +397,7 @@ export const useGameStore = defineStore('game', () => {
   setContext(contextAdapter)
 
   return {
-    game, selectedLocationId, speed, saveState, feedback, initialized,
+    game, selectedLocationId, saveState, feedback, initialized,
     bus,
     player, npcs, combat, world, market, auction, log, story,
     currentLocation, selectedLocation, rankData, hasNextRank, nextBreakthroughNeed,
