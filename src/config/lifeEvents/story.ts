@@ -4,12 +4,12 @@ import type { LifeEventDef } from '@/types/life'
 export const STORY_EVENTS: LifeEventDef[] = [
   {
     id: 'opening', title: '青禾街口',
-    text: '天刚蒙蒙亮，有人拿扁担捅了捅你。是个挑菜的老汉：“后生，睡柴垛边上要着凉的。”\n\n你坐起来摸了摸怀里，钱袋瘪瘪的。你从家里出来，是奔着玉阙行院去的。听人说那里每年收外院弟子，进去了就能学仙法。',
+    text: '天刚蒙蒙亮，有人拿扁担捅了捅你。是个挑菜的老汉：“后生，睡柴垛边上要着凉的。”\n\n你坐起来摸了摸怀里，钱袋瘪瘪的。你从家里出来，是奔着玉阙行院去的。听人说那里收外院弟子，进去了就能学仙法。',
     choices: [
       {
         label: '跟老汉打听玉阙',
         success: {
-          text: '老汉把你上下打量一番，笑了：“玉阙？那是仙家待的地方。人家收的是有修为、有人作保的，你这身板，先在镇上把力气练出来再说。”\n\n他往街那头一指：“缺钱就去铺子里帮工，镇外河滩上也有草药能换钱。”走前，他从菜担底下抽出一杆木枪，连同半袋粗米塞进你怀里：“我家老大当年用的，放着也是放着。”',
+          text: '老汉把扁担换了个肩：“玉阙？你认得里头的人？没人作保，去了也是白去。”他往街那头一指，“先找个活干吧，前街几家铺子正缺人手。”\n\n菜担边上斜插着一杆木枪，是他早起走夜路防野狗的。老汉把枪抽出来递给你：“我这把老骨头用不着了，你拿着防身。”又从担子里摸出两小袋粗米，一并给了你。',
           effects: { items: [{ itemId: 'spirit-grain', quantity: 2 }, { itemId: 'wood-spear', quantity: 1 }], flag: 'opening.done' },
           hook: 'equipStarter',
         },
@@ -17,7 +17,7 @@ export const STORY_EVENTS: LifeEventDef[] = [
       {
         label: '谢过老汉，自己想办法',
         success: {
-          text: '老汉摇摇头，挑起担子走了，走出几步又折回来，把半袋粗米塞进你怀里。\n\n你站在街口想了想，先得有口饭吃。镇上的铺子缺人手，镇外的河滩上长着草药。',
+          text: '老汉摇摇头，挑起担子走了，走出几步又折回来，把两小袋粗米放在你脚边。\n\n你站在街口想了想，先得有口饭吃。镇上的铺子缺人手，镇外的河滩上长着草药。',
           effects: { items: [{ itemId: 'spirit-grain', quantity: 2 }], flag: 'opening.done' },
         },
       },
@@ -29,8 +29,8 @@ export const STORY_EVENTS: LifeEventDef[] = [
     choices: [
       {
         label: '上前试根骨', check: { stat: 'power', difficulty: 6 },
-        success: { text: '你一掌按在测骨石上，石面亮起一层淡光。执事点了点头：“下一关。”', next: 'jadegate-trial-heart' },
-        failure: { text: '测骨石只闪了一下就暗了。执事摆摆手：“回去再练练，下一旬再来。”' },
+        success: { text: '你一掌按在测骨石上，石面亮起一层淡光。执事在册子上画了个勾：“下一关。”', next: 'jadegate-trial-heart' },
+        failure: { text: '测骨石只闪了一下就暗了。执事头也没抬：“回去再练练，下一旬再来。”' },
       },
       { label: '先看别人试', success: { text: '你挤出人群，在场边看别人试了几轮。' } },
     ],

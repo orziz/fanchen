@@ -34,8 +34,8 @@ export const WILD_EVENTS: LifeEventDef[] = [
         failure: { text: '你腿上挨了两口，一路退了回去。' },
       },
       {
-        label: '扔半袋米引开', cost: { items: [{ itemId: 'spirit-grain', quantity: 1 }] },
-        success: { text: '野狗叼起米袋就跑。那是你两天的口粮。' },
+        label: '扔一小袋米引开', cost: { items: [{ itemId: 'spirit-grain', quantity: 1 }] },
+        success: { text: '野狗叼起米袋，头也不回地跑了。' },
       },
       {
         label: '慢慢往后退', check: { stat: 'insight', difficulty: 3 },
@@ -51,11 +51,11 @@ export const WILD_EVENTS: LifeEventDef[] = [
     choices: [
       {
         label: '拿草膏给他止血', cost: { items: [{ itemId: 'herb-paste', quantity: 1 }] },
-        success: { text: '猎户疼得直抽气，缓过来以后硬塞给你一张刚硝好的兽皮：“往后进山，报我韩老四的名字。”', effects: { items: [{ itemId: 'beast-hide', quantity: 1 }], reputation: 2 } },
+        success: { text: '猎户疼得直抽气，缓过来以后，非要你收下一张刚硝好的兽皮：“我叫韩老四，就住东边山脚。往后路过，进来喝碗水。”', effects: { items: [{ itemId: 'beast-hide', quantity: 1 }], reputation: 2 } },
       },
       {
         label: '帮他掰开兽夹', check: { stat: 'power', difficulty: 4 },
-        success: { text: '兽夹“咔”一声弹开。猎户扶着你站起来，摸出几块灵石塞给你。', effects: { money: 8, reputation: 2 } },
+        success: { text: '兽夹“咔”一声弹开。猎户扶着你站起来，摸出几块灵石往你手里放。', effects: { money: 8, reputation: 2 } },
         failure: { text: '兽夹纹丝不动。你跑回去叫了人来，来回折腾了一整天。', effects: { reputation: 1, days: 1 } },
       },
       { label: '装没听见', success: { text: '你绕开了那片林子。走出去很远，还能听见他在喊。' } },
@@ -68,7 +68,7 @@ export const WILD_EVENTS: LifeEventDef[] = [
     choices: [
       {
         label: '挖出来看看', check: { stat: 'insight', difficulty: 4 },
-        success: { text: '匣子里是一沓没叫虫蛀透的旧册页，底下压着几块灵石。', effects: { items: [{ itemId: 'blank-codex', quantity: 1 }], money: 12 } },
+        success: { text: '匣子里是一沓没写过字的册页，纸还韧着，底下压着几块灵石。', effects: { items: [{ itemId: 'blank-codex', quantity: 1 }], money: 12 } },
         failure: { text: '匣子一碰就散了架，里头只剩烂木屑。你后脖颈一阵发凉，赶紧走了。' },
       },
       { label: '培上土，拜一拜', success: { text: '你把土培回去拍实，又拜了三拜。', effects: { cultivation: 3 } } },
@@ -94,7 +94,7 @@ export const WILD_EVENTS: LifeEventDef[] = [
     choices: [
       {
         label: '找块高地辨方向', check: { stat: 'insight', difficulty: 5 },
-        success: { text: '你爬上一块大石头，远远看见了{location}的炊烟。' },
+        success: { text: '你爬上一块大石头，总算认出了来时的那道山梁。' },
         failure: { text: '你在雾里转了两天，才摸回认得的路上。', effects: { days: 2 } },
       },
       { label: '原地等雾散', success: { text: '你靠着树一直坐到第二天晌午，雾才散干净。', effects: { days: 1 } } },
@@ -120,20 +120,20 @@ export const WILD_EVENTS: LifeEventDef[] = [
   },
   {
     id: 'bandits', title: '剪径毛贼',
-    text: '路边跳出两个蒙着脸的汉子，手里的柴刀晃了晃：“把钱袋留下。”',
+    text: '路边跳出两个蒙着脸的汉子，手里的柴刀晃了晃：“身上的钱，掏出来。”',
     when: { kinds: ['wild', 'travel'], minDanger: 2, weight: 1 },
     choices: [
-      { label: '把钱袋扔过去', success: { text: '两人掂了掂钱袋，嘟囔了一句“穷鬼”，钻回林子去了。', effects: { money: -20 } } },
+      { label: '掏钱了事', success: { text: '你掏出一把灵石扔过去。两人掂了掂，嘟囔了一句“穷鬼”，钻回林子去了。', effects: { money: -20 } } },
       {
         label: '跟他们拼了',
         fight: { templateId: 'road-bandit', name: '剪径毛贼', hpMul: 1.2 },
         success: { text: '两个毛贼抱着头跑了，慌里慌张还掉下一个钱袋。', effects: { money: 15, reputation: 2 } },
-        failure: { text: '你被打翻在地，钱袋也叫他们搜走了。', effects: { money: -15 } },
+        failure: { text: '你被打翻在地，怀里的灵石叫他们搜走了一把。', effects: { money: -15 } },
       },
       {
         label: '说自己是猎社的人', check: { stat: 'charisma', difficulty: 4 },
         success: { text: '两人对看了一眼，嘀咕了几句，退回林子里去了。' },
-        failure: { text: '“少来这套。”对方一脚把你踹翻，把钱袋翻了个底朝天。', effects: { money: -25 } },
+        failure: { text: '“少来这套。”对方一脚把你踹翻，从你怀里掏走了一把灵石。', effects: { money: -25 } },
       },
     ],
   },
@@ -172,7 +172,7 @@ export const WILD_EVENTS: LifeEventDef[] = [
     text: '路边躺着个行商，额头上一道口子，货担散了一地。看样子刚遭了劫。',
     when: { kinds: ['wild', 'travel'], maxDanger: 3, weight: 1 },
     choices: [
-      { label: '扶他去最近的镇子', success: { text: '进了镇子，行商摸出几块灵石塞给你：“这回要不是你，我就交代在那儿了。”', effects: { money: 10, reputation: 3, days: 1 } } },
+      { label: '扶他去最近的镇子', success: { text: '进了镇子，行商从鞋底里抠出几块灵石给你：“这回要不是你，我就交代在那儿了。”', effects: { money: 10, reputation: 3, days: 1 } } },
       {
         label: '给他敷上草膏', cost: { items: [{ itemId: 'herb-paste', quantity: 1 }] },
         success: { text: '行商缓过劲来，从担子里抽出两匹布塞给你，说什么也要你收下。', effects: { items: [{ itemId: 'cloth-roll', quantity: 2 }], reputation: 2 } },
@@ -200,7 +200,7 @@ export const WILD_EVENTS: LifeEventDef[] = [
     choices: [
       {
         label: '顺着脚印追', check: { stat: 'power', difficulty: 3 },
-        success: { text: '你扑了个满怀，按住一只肥兔子。卖了几块灵石，还混了碗热汤喝。', effects: { money: 6, hp: 15 } },
+        success: { text: '你扑进雪里，两手正按住兔子的后背。兔子卖了几块灵石，你还混了碗热汤喝。', effects: { money: 6, hp: 15 } },
         failure: { text: '兔子钻进了洞。你在雪地里白冻了一天。', effects: { days: 1 } },
       },
       { label: '太冷了，回去', success: { text: '你把手揣进袖子，往回走了。' } },

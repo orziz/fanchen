@@ -67,6 +67,11 @@ function attitudeOf(affinity: number) {
   return '脸色不大好看'
 }
 
+/** 生人只估个年纪；熟了就不必再报。 */
+function looksAge(age: number) {
+  return age < 20 ? '十几岁' : `${chineseNumber(Math.floor(age / 10) * 10)}来岁`
+}
+
 const CHAT_LINES = [
   '{npc}说起{location}这阵子的米价，又抱怨了几句天气，临走把你送到了门口。',
   '你们从晌午一直聊到太阳偏西，{npc}留你喝了碗茶。',
@@ -110,10 +115,11 @@ function visitEvent(npcId: string | null): LifeEventDef | null {
   choices.push({ label: '告辞', success: { text: '你起身告辞。' } })
   // 传闻里说的若就是此地的事，当面再提就别扭了。
   const news = npc.lastEvent && !npc.lastEvent.includes(here) ? `听说近来${npc.lastEvent}。` : ''
+  const who = relation.affinity >= 10 ? '' : `${npc.name}是${npc.profession || '本地人'}，看着${looksAge(npc.age)}。`
   return {
     id: 'visit',
     title: `拜访 · ${npc.name}`,
-    text: `${npc.name}是${npc.profession || '本地人'}，今年${chineseNumber(npc.age)}岁。${news}见你进门，${attitudeOf(relation.affinity)}。`,
+    text: `${who}${news}${who ? '' : npc.name}见你进门，${attitudeOf(relation.affinity)}。`,
     choices,
   }
 }
@@ -147,7 +153,7 @@ function teahouseEvent(): LifeEventDef {
     id: 'teahouse', title: '茶馆打听', text,
     choices: [
       { label: '喝完茶就走', success: { text: '你把茶喝干，起身走了。' } },
-      { label: '给说书先生添壶茶，问问前路', hint: '问问眼下该往哪儿使劲', cost: { money: 3 }, success: { text: '说书先生把茶碗往边上一推，压低了嗓子：', hook: 'goalTip' } },
+      { label: '添壶茶问问前路', hint: '问说书先生眼下该往哪儿使劲', cost: { money: 3 }, success: { text: '说书先生把茶碗往边上一推，压低了嗓子：', hook: 'goalTip' } },
     ],
   }
 }
@@ -161,13 +167,13 @@ function realmEvent(): LifeEventDef | null {
   const location = LOCATION_MAP.get(realm.locationId)
   return {
     id: 'realm', title: `秘境 · ${realm.name}`,
-    text: `${realm.desc}\n\n守在里头的是${realm.boss.name}。进去了就只能打到底。`,
+    text: `${realm.desc}\n\n守在里头的是${realm.boss.name}。`,
     choices: [
       {
-        label: '闯进去',
+        label: '闯进去', hint: '进去了就不能退',
         blocked: ctx.game.player.reputation < realm.unlockRep ? `声望需${realm.unlockRep}才进得去` : undefined,
         fight: { name: realm.boss.name, boss: true, danger: (location?.danger || 1) + 1, hpMul: realm.boss.hpMul, powerMul: realm.boss.powerMul, realmId: realm.id },
-        success: { text: `${realm.boss.name}倒了下去。你在它守着的地方翻出了些东西。`, effects: { reputation: 4 } },
+        success: { text: `${realm.boss.name}倒了下去。你在${realm.boss.name}守着的地方翻出了些东西。`, effects: { reputation: 4 } },
         failure: { text: '你被打出了秘境，浑身是伤。' },
       },
       { label: '再等等', success: { text: '你在外头站了很久，还是没进去。' } },

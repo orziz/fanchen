@@ -160,14 +160,14 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       intro: {
         id: 'intro',
         speakerMode: 'narrator',
-        text: '跟人聊得多了，你觉出{location}有些事对不上：药铺的货越收越多，价钱却不见涨；这阵子还总有生面孔在打听新来的人。',
+        text: '跟人聊得多了，你觉出{location}有些事不对劲：别家药铺都停了收，只有一家还在一车车往里运；这阵子还总有生面孔在打听新来的人。',
         choices: [
           {
             id: 'follow-trade',
             text: '盯一盯那家药铺',
             effects: [
               { kind: 'set-flag', key: 'story.mainline.trade-route' },
-              { kind: 'append-log', logType: 'action', text: '你在{location}的药铺对面蹲了两个晌午。' },
+              { kind: 'append-log', logType: 'action', text: '你在{location}的药铺对面守了两天。' },
             ],
             next: 'trade-route',
           },
@@ -185,7 +185,7 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       'trade-route': {
         id: 'trade-route',
         speakerMode: 'narrator',
-        text: '你在药铺对面的茶摊上坐了两个晌午。第二天傍晚，一辆盖着油布的车从后门进去，天黑透了才出来，车辙压得很深。',
+        text: '你在药铺对面的茶摊上守了两天。第二天傍晚，一辆盖着油布的车从后门进去，天黑透了才出来，车辙压得很深。',
       },
       'field-route': {
         id: 'field-route',
@@ -214,7 +214,7 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
         choices: [
           {
             id: 'ask-rumor',
-            text: '跟对方打听打听这一带的事',
+            text: '打听这一带的事',
             effects: [
               { kind: 'add-relation', affinity: 2, trust: 1 },
               { kind: 'set-flag', key: 'story.rumor.heard' },
@@ -224,7 +224,7 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
           },
           {
             id: 'tip-for-truth',
-            text: '塞过去十块灵石，请对方多说几句',
+            text: '塞十块灵石打听',
             conditions: [{ kind: 'money-at-least', amount: 10 }],
             effects: [
               { kind: 'add-money', amount: -10 },
@@ -250,7 +250,7 @@ export const STORY_DEFINITIONS: StoryDefinition[] = [
       favor: {
         id: 'favor',
         speakerMode: 'npc',
-        text: '{npc}把灵石揣进袖子，凑近了些：“想知道哪儿有活干，去茶馆坐坐，那儿消息最灵。进林子别一个人去，也别走夜路。”',
+        text: '{npc}把灵石揣进袖子，凑近了些：“往后有人拉你进林子挖宝，别去。上个月跟去的两个，到现在都没回来。”',
       },
     },
   },

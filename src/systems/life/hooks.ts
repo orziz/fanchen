@@ -102,8 +102,8 @@ const far = (days: number) => (days <= 0 ? '就在这儿' : `离这儿${chineseN
 function goalTip() {
   const here = getContext().game.player.locationId
   const goal = currentGoal()?.id
-  if (goal === 'foothold') return ['“手头紧？镇上几家铺子都缺短工。再不然去镇外河滩转转，雾心草药铺是收的。”']
-  if (goal === 'strength') return ['“想练出力气，没别的巧，天天练。药铺有种养元散，冲关前吃一包，稳当些。”']
+  if (goal === 'foothold') return ['“手头紧？镇上的铺子缺短工。河滩上的雾心草，药铺也收。”']
+  if (goal === 'strength') return ['“练力气哪有什么巧，天天练呗。药铺有种养元散，冲关前喝一包，稳当。”']
   if (goal === 'heart') {
     const stall = nearest(loc => opportunitiesAt(loc.id).some(card => card.templateId === 'old-bookstall'))
       || nearest(loc => loc.id !== here && loc.tags.some(tag => TOWN_TAGS.includes(tag)))
@@ -114,7 +114,7 @@ function goalTip() {
   }
   if (goal === 'sense') {
     const spot = nearest(loc => loc.aura >= 34 && (loc.actions.includes('meditate') || loc.aura >= 30) && loc.danger <= 3)
-    if (spot) return [`“要感气，得找灵气厚的地方坐。${spot.location.name}就不错，${far(spot.days)}。”`]
+    if (spot) return [`“想感气，得找灵气厚的地方坐。${spot.location.name}就行，${far(spot.days)}。”`]
   }
   if (goal === 'referral') return ['“玉阙收人，得有人作保。行院的执事常在玉阙、云梯岭、丹井坪一带找人跑腿，你多替他们跑几趟，自然有人肯替你说话。”']
   if (goal === 'trial') return ['“行院每旬都有试炼，到了玉阙就能报名。根骨、心性、身手，三关都得过。”']

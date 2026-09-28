@@ -31,14 +31,14 @@ export const ERRAND_EVENTS: LifeEventDef[] = [
         label: '护住粮车',
         fight: { templateId: 'road-bandit', name: '劫粮匪', hpMul: 1.3 },
         success: { text: '劫匪被你打跑了，粮车一粒米也没少。乡社多给了你十灵石。', effects: { money: 35, standing: 5, reputation: 3 } },
-        failure: { text: '你被打倒在地，粮车叫人抢走了大半。乡社的人没说什么，脸色很难看。', effects: { standing: -2 } },
+        failure: { text: '你被打倒在地，车上的粮袋叫人搬走了大半。乡社的人没说什么，脸色很难看。', effects: { standing: -2 } },
       },
       { label: '弃车逃走', success: { text: '你拽着老汉钻进林子。粮是保不住了，回去还不知道怎么跟乡社交代。', effects: { standing: -4 } } },
     ],
   },
   {
     id: 'beast-bounty', title: '悬赏除害',
-    text: '猎社贴了张悬赏：{location}附近有野兽伤人，谁除掉赏三十灵石。',
+    text: '猎社贴了张悬赏：{location}附近有头畜生夜里下山，咬死了两头猪，还伤了人。谁除掉它，赏三十灵石。',
     choices: [
       {
         label: '进山除害',
@@ -69,7 +69,7 @@ export const ERRAND_EVENTS: LifeEventDef[] = [
     id: 'autumn-harvest', title: '秋收帮工',
     text: '秋收抢晒，田里正缺人手。一天管两顿饭，干完还给工钱。',
     choices: [
-      { label: '下田帮忙', success: { text: '四天下来，你晒脱了一层皮，挑两担谷子上坡也不喘了。', effects: { money: 16, standing: 3, power: 0.5, days: 4 } } },
+      { label: '下田帮忙', success: { text: '四天下来，你晒脱了一层皮，连挑两趟谷子上坡也不喘了。', effects: { money: 16, standing: 3, power: 0.5, days: 4 } } },
       { label: '另有打算', success: { text: '田埂上的管事冲你背影嘟囔了一句“懒骨头”。' } },
     ],
   },
@@ -132,11 +132,11 @@ export const ERRAND_EVENTS: LifeEventDef[] = [
     text: '行院药圃里的灵草生了虫。管药圃的师兄急得团团转，正招人捉虫翻土。',
     choices: [
       {
-        label: '一片片叶子细细地捉', check: { stat: 'insight', difficulty: 5 },
+        label: '翻开叶子捉虫', check: { stat: 'insight', difficulty: 5 },
         success: { text: '你翻着叶子背面一片片找虫卵。两天下来，药圃干干净净，师兄问了你的名字。', effects: { money: 10, standing: 4, days: 2 } },
-        failure: { text: '你错拔了两株灵草，师兄心疼得直咂嘴，工钱还是给了。', effects: { money: 6, standing: 1, days: 2 } },
+        failure: { text: '你翻叶子时手重，折断了两株灵草的嫩茎。师兄心疼得直咂嘴，工钱还是给了。', effects: { money: 6, standing: 1, days: 2 } },
       },
-      { label: '只帮着翻土', success: { text: '粗活干了两天，出了一身汗。师兄点了点头。', effects: { money: 6, standing: 2, days: 2 } } },
+      { label: '只帮着翻土', success: { text: '粗活干了两天，出了一身汗。师兄拍了拍你肩上的土。', effects: { money: 6, standing: 2, days: 2 } } },
     ],
   },
   {
@@ -149,7 +149,7 @@ export const ERRAND_EVENTS: LifeEventDef[] = [
         success: { text: '你把扑上来的野兽打退，丹炉稳稳当当进了山门。执事难得笑了一下。', effects: { money: 18, standing: 6 } },
         failure: { text: '丹炉磕掉了一只耳朵。执事叹了口气：“下回小心。”', effects: { standing: 1 } },
       },
-      { label: '推说力气不够', success: { text: '执事摆摆手，让你走了。' } },
+      { label: '推说力气不够', success: { text: '执事“嗯”了一声，转头问别人去了。' } },
     ],
   },
   {
@@ -161,7 +161,7 @@ export const ERRAND_EVENTS: LifeEventDef[] = [
         success: { text: '你一路小跑把信送到，采回来的药也挑不出毛病。执事在簿子上给你记了一笔。', effects: { money: 15, standing: 4 } },
         failure: { text: '山路难走，你晚了一天才回来。执事皱了皱眉，还是收下了药。', effects: { money: 8, standing: 2, days: 1 } },
       },
-      { label: '不接', success: { text: '执事点点头，喊了下一个。' } },
+      { label: '不接', success: { text: '执事也不多话，喊了下一个。' } },
     ],
   },
 ]

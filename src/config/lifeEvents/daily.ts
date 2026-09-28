@@ -5,13 +5,13 @@ export const DAILY_EVENTS: LifeEventDef[] = [
   /* ─── 做工 ─── */
   {
     id: 'wage-cheat', title: '克扣工钱',
-    text: '掌柜把工钱数了两遍，只给了你一半：“活干得糙，就这些。”',
+    text: '掌柜把工钱数了两遍，只往柜上推了一半：“活干得糙，就这些。”',
     when: { kinds: ['work'], weight: 1 },
     choices: [
       {
         label: '跟他理论', check: { stat: 'charisma', difficulty: 3 },
         success: { text: '你把干了哪些活一样样数出来，旁边看热闹的也帮腔。掌柜脸上挂不住，把钱补齐了。', effects: { money: 4 } },
-        failure: { text: '掌柜喊来两个伙计，把你推出了门，那一半也没给。', effects: { money: -3 } },
+        failure: { text: '掌柜喊来两个伙计，把你推出了门，柜上那一半也收了回去。', effects: { money: -3 } },
       },
       { label: '算了', success: { text: '你把钱揣进怀里走了。这家铺子，下回不来了。' } },
     ],
@@ -21,7 +21,7 @@ export const DAILY_EVENTS: LifeEventDef[] = [
     text: '药铺的孙掌柜看你手脚勤快，留你吃了顿饭，问你愿不愿意替他去镇外收两天药。',
     when: { kinds: ['work'], weight: 1 },
     choices: [
-      { label: '答应下来', success: { text: '你跑了两天，一担一担把药挑回来。孙掌柜翻了翻成色，说下回还找你。', effects: { money: 12, standing: 2, days: 2 } } },
+      { label: '答应下来', success: { text: '你跑了两天，一担一担把药挑回来。孙掌柜翻了翻筐里的药，说下回还找你。', effects: { money: 12, standing: 2, days: 2 } } },
       { label: '这回就不去了', success: { text: '孙掌柜也不勉强，又给你盛了碗饭。', effects: { hp: 10 } } },
     ],
   },
@@ -57,7 +57,7 @@ export const DAILY_EVENTS: LifeEventDef[] = [
   /* ─── 静坐 ─── */
   {
     id: 'sudden-insight', title: '气机一动',
-    text: '坐到第五天夜里，你忽然觉得身上的气动了一下，像是有扇门开了条缝。',
+    text: '坐到半夜，你忽然觉得身上的气动了一下，像是有扇门开了条缝。',
     when: { kinds: ['meditate'], weight: 1 },
     choices: [
       {
@@ -70,15 +70,15 @@ export const DAILY_EVENTS: LifeEventDef[] = [
   },
   {
     id: 'inner-demon', title: '旧事扰心',
-    text: '一闭眼，旧事就往外冒：饿肚子的那个冬天，被人赶出门的那个雨夜……',
+    text: '一闭眼，旧事就往外冒：离家那天娘站在门口的样子，家里断粮的那个冬天……',
     when: { kinds: ['meditate'], minRank: 1, weight: 0.7 },
     choices: [
       {
         label: '不躲，由它去', check: { stat: 'insight', difficulty: 6 },
-        success: { text: '你没躲，由着那些事一件件过去。天亮时再想起那个雨夜，胸口已经不发紧了。', effects: { cultivation: 12, insight: 1 } },
+        success: { text: '你没躲，由着那些事一件件过去。天亮时再想起离家那天，胸口已经不发紧了。', effects: { cultivation: 12, insight: 1 } },
         failure: { text: '心一乱，气血往上翻，你吐出一口血来。', effects: { cultivation: -8, injury: 1 } },
       },
-      { label: '起来走走', success: { text: '你起身在院子里走了几圈，打桶井水洗了把脸。' } },
+      { label: '起来走走', success: { text: '你睁开眼，起身活动了一下手脚，等心跳慢下来。' } },
     ],
   },
   {
@@ -99,7 +99,7 @@ export const DAILY_EVENTS: LifeEventDef[] = [
     choices: [
       { label: '答应下来', success: { text: '你跟着商队走了一天。到了地方，领头的数钱倒是爽快。', effects: { money: 12, days: 1 } } },
       {
-        label: '跟着走一段，听他们闲聊',
+        label: '随队听闲话',
         success: { text: '伙计们一路上说些哪里米贵、哪条路不太平的闲话。有个老伙计问你往哪儿去，听你说完，咂了咂嘴：', hook: 'goalTip' },
       },
     ],
@@ -134,8 +134,8 @@ export const DAILY_EVENTS: LifeEventDef[] = [
       {
         label: '比划两下',
         fight: { templateId: 'road-bandit', name: '背剑游侠', powerMul: 1.1 },
-        success: { text: '游侠收剑往后一跳，哈哈一笑：“行啊你！”抛给你一小块灵石当彩头。', effects: { reputation: 3, cultivation: 5, money: 8 } },
-        failure: { text: '你输了一招。游侠把你拉起来，拿剑鞘点了点你的肋下和膝弯：“这两处，空得很。”', effects: { cultivation: 3 } },
+        success: { text: '游侠收剑往后一跳，哈哈一笑：“行啊你！”抛给你几块灵石当彩头。', effects: { reputation: 3, cultivation: 5, money: 8 } },
+        failure: { text: '你输了一招。游侠把你拉起来，拿剑鞘点了点你的肋下：“光顾着护脸，底下全露着。”', effects: { cultivation: 3 } },
       },
       { label: '拱手推了', success: { text: '游侠撇撇嘴：“没劲。”背着剑走了。' } },
     ],
